@@ -18,4 +18,8 @@
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\RPGGame\RPGGame.csproj" />
+  </ItemGroup>
+
 </Project>
