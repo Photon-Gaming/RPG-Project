@@ -18,8 +18,10 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
-    - name: Build Projects
-      run: dotnet build -r win-x64 --no-self-contained -c Release -p:TreatWarningsAsErrors=true -p:EnableWindowsTargeting=true -warnaserror
+    - name: Build Game
+      run: dotnet build RPGGame/RPGGame.csproj -r win-x64 --no-self-contained -c Release -p:TreatWarningsAsErrors=true -p:EnableWindowsTargeting=true -warnaserror
+    - name: Build Editor
+      run: dotnet build RPGLevelEditor/RPGLevelEditor.csproj -r win-x64 --no-self-contained -c Release -p:TreatWarningsAsErrors=true -p:EnableWindowsTargeting=true -warnaserror
     - name: Upload Game Build Artifact
       uses: actions/upload-artifact@v4
       with:
