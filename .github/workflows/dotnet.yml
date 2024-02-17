@@ -19,7 +19,7 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Build Projects
-      run: dotnet build -a win-x64 -c Release -p:TreatWarningsAsErrors=true -p:EnableWindowsTargeting=true -warnaserror
+      run: dotnet build -r win-x64 --no-self-contained -c Release -p:TreatWarningsAsErrors=true -p:EnableWindowsTargeting=true -warnaserror
     - name: Upload Game Build Artifact
       uses: actions/upload-artifact@v4
       with:
