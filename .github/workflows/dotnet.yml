@@ -1,0 +1,34 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: .NET
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Build Projects
+      run: dotnet build -c Release -p:TreatWarningsAsErrors=true -warnaserror
+    - name: Upload Game Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: RPGGame
+        path: RPGGame/bin/Release/net6.0/
+        if-no-files-found: error
+    - name: Upload Editor Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: RPGLevelEditor
+        path: RPGLevelEditor/bin/Release/net8.0-windows/
+        if-no-files-found: error
