@@ -1,13 +1,10 @@
 ﻿using System;
-using Microsoft.Xna.Framework;
 
 namespace RPGGame.GameObject
 {
     [Serializable]
     public record RoomFile(
-        string[,] TileMap,
-        bool[,] CollisionMap,
-        Point Size
+        Tile[,] TileMap
     );
 
     public class Room(RoomFile roomFile)
