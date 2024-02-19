@@ -57,7 +57,7 @@ namespace RPGGame
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(currentWorld.CurrentRoom.BackgroundColor);
 
             spriteBatch.Begin();
 
