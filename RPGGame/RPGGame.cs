@@ -61,7 +61,7 @@ namespace RPGGame
 
             spriteBatch.Begin();
 
-            tileDraw.DrawTileGrid(new Point(50, 50), currentWorld.CurrentRoom.FileData.TileMap);
+            tileDraw.DrawTileGridCentered(currentWorld.CurrentRoom.FileData.TileMap);
 
             spriteBatch.End();
 

@@ -19,6 +19,16 @@
         "Texture": "white",
         "IsCollision": false
       }
+    ],
+    [
+      {
+        "Texture": "white",
+        "IsCollision": false
+      },
+      {
+        "Texture": "black",
+        "IsCollision": true
+      }
     ]
   ],
   "Entities": [],
