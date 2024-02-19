@@ -4,7 +4,8 @@ namespace RPGGame.GameObject
 {
     [Serializable]
     public record RoomFile(
-        Tile[,] TileMap
+        Tile[,] TileMap,
+        Entity[] Entities
     );
 
     public class Room(RoomFile roomFile)
