@@ -1,11 +1,24 @@
 {
   "TileMap": [
-    [ "white", "black" ],
-    [ "black", "white" ]
-  ],
-  "CollisionMap": [
-    [ true, false ],
-    [ false, true ]
-  ],
-  "Size":  "2, 2"
+    [
+      {
+        "Texture": "white",
+        "IsCollision": false
+      },
+      {
+        "Texture": "black",
+        "IsCollision": true
+      }
+    ],
+    [
+      {
+        "Texture": "black",
+        "IsCollision": true
+      },
+      {
+        "Texture": "white",
+        "IsCollision": false
+      }
+    ]
+  ]
 }
