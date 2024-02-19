@@ -1,26 +1,18 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
+using Newtonsoft.Json;
 
 namespace RPGGame.GameObject
 {
     [Serializable]
-    public record RoomFile(
-        Tile[,] TileMap,
-        Entity[] Entities,
-        Color BackgroundColor
-    );
-
-    public class Room
+    [JsonObject(MemberSerialization.OptIn)]
+    public class Room(Tile[,] tileMap, Entity[] entities, Color backgroundColor)
     {
-        public RoomFile FileData { get; }
-
-        public Color BackgroundColor { get; protected set; }
-
-        public Room(RoomFile roomFile)
-        {
-            FileData = roomFile;
-
-            BackgroundColor = FileData.BackgroundColor;
-        }
+        [JsonProperty]
+        public Tile[,] TileMap { get; protected set; } = tileMap;
+        [JsonProperty]
+        public Entity[] Entities { get; protected set; } = entities;
+        [JsonProperty]
+        public Color BackgroundColor { get; protected set; } = backgroundColor;
     }
 }

@@ -36,9 +36,9 @@ namespace RPGGame
 
             rpgContentLoader = new RPGContentLoader(Content.RootDirectory);
 
-            GameObject.WorldFile defaultWorldFile = rpgContentLoader.LoadWorldFile(defaultWorldName);
-            GameObject.RoomFile defaultRoomFile = rpgContentLoader.LoadRoomFile(defaultWorldFile.DefaultRoomName);
-            currentWorld = new GameObject.World(defaultWorldFile, new GameObject.Player(), new GameObject.Room(defaultRoomFile));
+            currentWorld = rpgContentLoader.LoadWorld(defaultWorldName);
+            currentWorld.ChangePlayer(new GameObject.Player());
+            currentWorld.ChangeRoom(rpgContentLoader.LoadRoom(currentWorld.DefaultRoomName));
 
             tileDraw = new ScreenDrawing.TileDrawing(this);
         }
@@ -61,7 +61,7 @@ namespace RPGGame
 
             spriteBatch.Begin();
 
-            tileDraw.DrawTileGridCentered(currentWorld.CurrentRoom.FileData.TileMap);
+            tileDraw.DrawTileGridCentered(currentWorld.CurrentRoom.TileMap);
 
             spriteBatch.End();
 
