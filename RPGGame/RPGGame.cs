@@ -8,8 +8,8 @@ namespace RPGGame
     {
         public const string TextureFolder = "Textures";
 
-        internal GraphicsDeviceManager Graphics;
-        internal SpriteBatch SpriteBatch;
+        internal GraphicsDeviceManager graphics;
+        internal SpriteBatch spriteBatch;
 
         private const string defaultWorldName = "default";
 
@@ -18,7 +18,7 @@ namespace RPGGame
 
         public RPGGame()
         {
-            Graphics = new GraphicsDeviceManager(this);
+            graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
         }
@@ -30,7 +30,7 @@ namespace RPGGame
 
         protected override void LoadContent()
         {
-            SpriteBatch = new SpriteBatch(GraphicsDevice);
+            spriteBatch = new SpriteBatch(GraphicsDevice);
 
             rpgContentLoader = new RPGContentLoader(Content.RootDirectory);
 
@@ -55,11 +55,11 @@ namespace RPGGame
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            SpriteBatch.Begin();
+            spriteBatch.Begin();
 
             ScreenDrawing.TileDrawing.DrawTile(this, Point.Zero, "black");
 
-            SpriteBatch.End();
+            spriteBatch.End();
 
             base.Draw(gameTime);
         }

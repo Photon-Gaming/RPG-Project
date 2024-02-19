@@ -12,7 +12,7 @@ namespace RPGGame.ScreenDrawing
         public static void DrawTile(RPGGame game, Point screenPosition, string tileTextureName)
         {
             Texture2D texture = game.Content.Load<Texture2D>(Path.Join(TileTextureFolder, tileTextureName));
-            game.SpriteBatch.Draw(texture, new Rectangle(screenPosition, TileSize), Color.White);
+            game.spriteBatch.Draw(texture, new Rectangle(screenPosition, TileSize), Color.White);
         }
     }
 }
