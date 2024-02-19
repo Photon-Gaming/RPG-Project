@@ -6,8 +6,10 @@ namespace RPGGame
 {
     public class RPGGame : Game
     {
-        private GraphicsDeviceManager graphics;
-        private SpriteBatch spriteBatch;
+        public const string TextureFolder = "Textures";
+
+        internal GraphicsDeviceManager Graphics;
+        internal SpriteBatch SpriteBatch;
 
         private const string defaultWorldName = "default";
 
@@ -16,21 +18,19 @@ namespace RPGGame
 
         public RPGGame()
         {
-            graphics = new GraphicsDeviceManager(this);
+            Graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
         }
 
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
-
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
-            spriteBatch = new SpriteBatch(GraphicsDevice);
+            SpriteBatch = new SpriteBatch(GraphicsDevice);
 
             rpgContentLoader = new RPGContentLoader(Content.RootDirectory);
 
@@ -55,7 +55,11 @@ namespace RPGGame
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // TODO: Add your drawing code here
+            SpriteBatch.Begin();
+
+            ScreenDrawing.TileDrawing.DrawTile(this, Point.Zero, "black");
+
+            SpriteBatch.End();
 
             base.Draw(gameTime);
         }
