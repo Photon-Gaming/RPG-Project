@@ -6,8 +6,8 @@ namespace RPGGame
 {
     public class RPGGame : Game
     {
-        private GraphicsDeviceManager _graphics;
-        private SpriteBatch _spriteBatch;
+        private GraphicsDeviceManager graphics;
+        private SpriteBatch spriteBatch;
 
         private const string defaultWorldName = "default";
 
@@ -16,7 +16,7 @@ namespace RPGGame
 
         public RPGGame()
         {
-            _graphics = new GraphicsDeviceManager(this);
+            graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
         }
@@ -30,7 +30,7 @@ namespace RPGGame
 
         protected override void LoadContent()
         {
-            _spriteBatch = new SpriteBatch(GraphicsDevice);
+            spriteBatch = new SpriteBatch(GraphicsDevice);
 
             rpgContentLoader = new RPGContentLoader(Content.RootDirectory);
 
