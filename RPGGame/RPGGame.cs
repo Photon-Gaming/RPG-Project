@@ -16,6 +16,8 @@ namespace RPGGame
         private RPGContentLoader rpgContentLoader;
         private GameObject.World currentWorld;
 
+        private ScreenDrawing.TileDrawing tileDraw;
+
         public RPGGame()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -37,6 +39,8 @@ namespace RPGGame
             GameObject.WorldFile defaultWorldFile = rpgContentLoader.LoadWorldFile(defaultWorldName);
             GameObject.RoomFile defaultRoomFile = rpgContentLoader.LoadRoomFile(defaultWorldFile.DefaultRoomName);
             currentWorld = new GameObject.World(defaultWorldFile, new GameObject.Player(), new GameObject.Room(defaultRoomFile));
+
+            tileDraw = new ScreenDrawing.TileDrawing(this);
         }
 
         protected override void Update(GameTime gameTime)
@@ -57,7 +61,7 @@ namespace RPGGame
 
             spriteBatch.Begin();
 
-            ScreenDrawing.TileDrawing.DrawTile(this, Point.Zero, "black");
+            tileDraw.DrawTileGrid(new Point(50, 50), currentWorld.CurrentRoom.FileData.TileMap);
 
             spriteBatch.End();
 
