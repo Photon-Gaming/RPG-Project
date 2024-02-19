@@ -1,0 +1,25 @@
+{
+  "TileMap": [
+    [
+      {
+        "Texture": "white",
+        "IsCollision": false
+      },
+      {
+        "Texture": "black",
+        "IsCollision": true
+      }
+    ],
+    [
+      {
+        "Texture": "black",
+        "IsCollision": true
+      },
+      {
+        "Texture": "white",
+        "IsCollision": false
+      }
+    ]
+  ],
+  "Entities": []
+}

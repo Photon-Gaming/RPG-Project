@@ -13,3 +13,9 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin Rooms/test.json
+/copy:Rooms/test.json
+
+#begin Worlds/default.json
+/copy:Worlds/default.json
+
