@@ -9,6 +9,11 @@ namespace RPGGame
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
+        private const string defaultWorldName = "default";
+
+        private RPGContentLoader rpgContentLoader;
+        private GameObject.World currentWorld;
+
         public RPGGame()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -27,7 +32,11 @@ namespace RPGGame
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            // TODO: use this.Content to load your game content here
+            rpgContentLoader = new RPGContentLoader(Content.RootDirectory);
+
+            GameObject.WorldFile defaultWorldFile = rpgContentLoader.LoadWorldFile(defaultWorldName);
+            GameObject.RoomFile defaultRoomFile = rpgContentLoader.LoadRoomFile(defaultWorldFile.DefaultRoomName);
+            currentWorld = new GameObject.World(defaultWorldFile, new GameObject.Player(), new GameObject.Room(defaultRoomFile));
         }
 
         protected override void Update(GameTime gameTime)

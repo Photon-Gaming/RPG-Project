@@ -1,16 +1,18 @@
 ﻿using System;
-using Microsoft.Xna.Framework;
 
 namespace RPGGame.GameObject
 {
     [Serializable]
     public record WorldFile(
-        (string RoomName, Vector2 MapPosition)[] RoomPositions,
         string DefaultRoomName
     );
 
-    public class World(WorldFile worldFile)
+    public class World(WorldFile worldFile, Player defaultPlayer, Room defaultRoom)
     {
+        public Player CurrentPlayer { get; } = defaultPlayer;
+
+        public Room CurrentRoom { get; private set; } = defaultRoom;
+
         public WorldFile FileData { get; } = worldFile;
     }
 }
