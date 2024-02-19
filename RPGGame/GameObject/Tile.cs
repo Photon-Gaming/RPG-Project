@@ -3,9 +3,8 @@
 namespace RPGGame.GameObject
 {
     [Serializable]
-    public class Tile
-    {
-        public string Texture { get; set; } = "";
-        public bool IsCollision { get; set; } = false;
-    }
+    public readonly record struct Tile(
+        string Texture,
+        bool IsCollision
+    );
 }
