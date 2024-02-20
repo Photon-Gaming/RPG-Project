@@ -19,7 +19,23 @@
         "Texture": "white",
         "IsCollision": false
       }
+    ],
+    [
+      {
+        "Texture": "white",
+        "IsCollision": false
+      },
+      {
+        "Texture": "black",
+        "IsCollision": true
+      }
     ]
   ],
-  "Entities": []
+  "Entities": [],
+  "BackgroundColor": {
+    "R": 100,
+    "G": 149,
+    "B": 237,
+    "A": 255
+  }
 }

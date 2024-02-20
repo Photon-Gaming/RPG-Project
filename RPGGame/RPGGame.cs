@@ -6,37 +6,41 @@ namespace RPGGame
 {
     public class RPGGame : Game
     {
-        private GraphicsDeviceManager _graphics;
-        private SpriteBatch _spriteBatch;
+        public const string TextureFolder = "Textures";
+
+        internal GraphicsDeviceManager graphics;
+        internal SpriteBatch spriteBatch;
 
         private const string defaultWorldName = "default";
 
         private RPGContentLoader rpgContentLoader;
         private GameObject.World currentWorld;
 
+        private ScreenDrawing.TileDrawing tileDraw;
+
         public RPGGame()
         {
-            _graphics = new GraphicsDeviceManager(this);
+            graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
         }
 
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
-
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
-            _spriteBatch = new SpriteBatch(GraphicsDevice);
+            spriteBatch = new SpriteBatch(GraphicsDevice);
 
             rpgContentLoader = new RPGContentLoader(Content.RootDirectory);
 
-            GameObject.WorldFile defaultWorldFile = rpgContentLoader.LoadWorldFile(defaultWorldName);
-            GameObject.RoomFile defaultRoomFile = rpgContentLoader.LoadRoomFile(defaultWorldFile.DefaultRoomName);
-            currentWorld = new GameObject.World(defaultWorldFile, new GameObject.Player(), new GameObject.Room(defaultRoomFile));
+            currentWorld = rpgContentLoader.LoadWorld(defaultWorldName);
+            currentWorld.ChangePlayer(new GameObject.Player());
+            currentWorld.ChangeRoom(rpgContentLoader.LoadRoom(currentWorld.DefaultRoomName));
+
+            tileDraw = new ScreenDrawing.TileDrawing(this);
         }
 
         protected override void Update(GameTime gameTime)
@@ -53,9 +57,13 @@ namespace RPGGame
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(currentWorld.CurrentRoom.BackgroundColor);
 
-            // TODO: Add your drawing code here
+            spriteBatch.Begin();
+
+            tileDraw.DrawTileGridCentered(currentWorld.CurrentRoom.TileMap);
+
+            spriteBatch.End();
 
             base.Draw(gameTime);
         }

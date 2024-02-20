@@ -2,5 +2,5 @@
 
 namespace RPGGame.GameObject
 {
-    public class Player() : Entity(new EntityFile(Vector2.Zero, Vector2.One));
+    public class Player() : Entity(Vector2.Zero, Vector2.One);
 }

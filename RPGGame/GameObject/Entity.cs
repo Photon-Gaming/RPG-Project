@@ -1,27 +1,17 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
+using Newtonsoft.Json;
 
 namespace RPGGame.GameObject
 {
     [Serializable]
-    public record EntityFile(
-        Vector2 Position,
-        Vector2 Size
-    );
-
-    public class Entity
+    [JsonObject(MemberSerialization.OptIn)]
+    public class Entity(Vector2 position, Vector2 size)
     {
-        public EntityFile FileData { get; }
+        [JsonProperty]
+        public Vector2 Position { get; protected set; } = position;
 
-        public Vector2 Position { get; protected set; }
-        public Vector2 Size { get; protected set; }
-
-        public Entity(EntityFile entityFile)
-        {
-            FileData = entityFile;
-
-            Position = FileData.Position;
-            Size = FileData.Size;
-        }
+        [JsonProperty]
+        public Vector2 Size { get; protected set; } = size;
     }
 }

@@ -10,7 +10,7 @@ namespace RPGGame
         private string worldFolder => Path.Join(ContentFolderPath, "Worlds");
         private string roomFolder => Path.Join(ContentFolderPath, "Rooms");
 
-        public GameObject.WorldFile LoadWorldFile(string worldName)
+        public GameObject.World LoadWorld(string worldName)
         {
             string worldFilePath = Path.Join(worldFolder, worldName);
             worldFilePath = Path.ChangeExtension(worldFilePath, "json");
@@ -20,10 +20,10 @@ namespace RPGGame
                 throw new FileNotFoundException();
             }
 
-            return JsonConvert.DeserializeObject<GameObject.WorldFile>(File.ReadAllText(worldFilePath));
+            return JsonConvert.DeserializeObject<GameObject.World>(File.ReadAllText(worldFilePath));
         }
 
-        public GameObject.RoomFile LoadRoomFile(string roomName)
+        public GameObject.Room LoadRoom(string roomName)
         {
             string roomFilePath = Path.Join(roomFolder, roomName);
             roomFilePath = Path.ChangeExtension(roomFilePath, "json");
@@ -33,7 +33,7 @@ namespace RPGGame
                 throw new FileNotFoundException();
             }
 
-            return JsonConvert.DeserializeObject<GameObject.RoomFile>(File.ReadAllText(roomFilePath));
+            return JsonConvert.DeserializeObject<GameObject.Room>(File.ReadAllText(roomFilePath));
         }
     }
 }

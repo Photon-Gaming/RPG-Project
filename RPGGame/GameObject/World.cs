@@ -1,18 +1,27 @@
 ﻿using System;
+using Newtonsoft.Json;
 
 namespace RPGGame.GameObject
 {
     [Serializable]
-    public record WorldFile(
-        string DefaultRoomName
-    );
-
-    public class World(WorldFile worldFile, Player defaultPlayer, Room defaultRoom)
+    [JsonObject(MemberSerialization.OptIn)]
+    public class World(string defaultRoomName)
     {
-        public Player CurrentPlayer { get; } = defaultPlayer;
+        [JsonProperty]
+        public string DefaultRoomName { get; } = defaultRoomName;
 
-        public Room CurrentRoom { get; private set; } = defaultRoom;
+        public Player CurrentPlayer { get; protected set; }
 
-        public WorldFile FileData { get; } = worldFile;
+        public Room CurrentRoom { get; protected set; }
+
+        public void ChangePlayer(Player player)
+        {
+            CurrentPlayer = player;
+        }
+
+        public void ChangeRoom(Room room)
+        {
+            CurrentRoom = room;
+        }
     }
 }
