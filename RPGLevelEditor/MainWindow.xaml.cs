@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using Microsoft.Win32;
 
 namespace RPGLevelEditor
 {
@@ -10,6 +11,19 @@ namespace RPGLevelEditor
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void OpenRoomItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog dialog = new()
+            {
+                CheckFileExists = true,
+                CheckPathExists = true
+            };
+            if (dialog.ShowDialog() ?? false)
+            {
+                new RoomEditor(dialog.FileName, this).Show();
+            }
         }
     }
 }
