@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RPGLevelEditor"
         mc:Ignorable="d"
-        Title="RPG Editor" Height="450" Width="800">
+        Title="RPG Editor" Height="450" Width="800" Closed="Window_Closed">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="1*"/>
@@ -14,6 +14,9 @@
         <Menu Grid.Row="0">
             <MenuItem Header="_File">
                 <MenuItem Header="Open _Room..." Click="OpenRoomItem_OnClick"/>
+            </MenuItem>
+            <MenuItem Header="_Config">
+                <MenuItem Header="Set _Texture Path..." Click="TexturePathItem_OnClick"/>
             </MenuItem>
         </Menu>
     </Grid>
