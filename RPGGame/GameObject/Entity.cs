@@ -16,23 +16,18 @@ namespace RPGGame.GameObject
 
         public virtual bool Move(Vector2 targetPos, bool relative)
         {
-            bool success = true;
-
             if (relative)
             {
                 targetPos += Position;
             }
 
-            if (targetPos.X > 0 && targetPos.Y > 0)
+            if (targetPos.X < 0 || targetPos.Y < 0)
             {
-                Position = targetPos;
+                return false;
             }
-            else
-            {
-                success = false;
-            }
-           
-            return success;
+
+            Position = targetPos;
+            return true;
         }
     }
 }
