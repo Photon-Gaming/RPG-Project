@@ -19,11 +19,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\placeholder.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\RPGGame\RPGGame.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\placeholder.png" />
   </ItemGroup>
 
 </Project>

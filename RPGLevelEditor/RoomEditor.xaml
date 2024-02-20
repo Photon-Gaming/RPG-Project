@@ -9,13 +9,14 @@
     <Grid>
         <TabControl>
             <TabItem Header="Tile Map">
-                <Grid>
+                <Grid x:Name="tileMapGrid">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <ScrollViewer Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible">
-                        <Grid x:Name="tileGridDisplay" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid x:Name="tileGridDisplay"/>
                             <!-- Center point marker -->
                             <Rectangle HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Blue" Width="3" Height="16"/>
                             <Rectangle HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Red" Width="16" Height="3"/>
