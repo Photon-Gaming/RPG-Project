@@ -79,7 +79,7 @@ namespace RPGLevelEditor
             {
                 for (int y = 0; y < ySize; y++)
                 {
-                    Point gridPos = new(x * TileSize.X, y * TileSize.Y);
+                    Point gridPos = new(x, y);
                     string texturePath = Path.Join(
                         ParentWindow.EditorConfig.TextureFolderPath, TileTextureFolder, OpenRoom.TileMap[x, y].Texture);
                     texturePath = Path.ChangeExtension(texturePath, "png");
@@ -89,16 +89,20 @@ namespace RPGLevelEditor
                         texturePath = "pack://application:,,,/Resources/placeholder.png";
                     }
 
-                    _ = tileGridDisplay.Children.Add(new Image()
+                    Image newElement = new()
                     {
-                        Margin = new Thickness(gridPos.X, gridPos.Y, 0, 0),
+                        Margin = new Thickness(gridPos.X * TileSize.X, gridPos.Y * TileSize.Y, 0, 0),
                         Source = new BitmapImage(new Uri(texturePath)),
                         Width = TileSize.X,
                         Height = TileSize.Y,
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Top,
-                        Stretch = Stretch.Fill
-                    });
+                        Stretch = Stretch.Fill,
+                        Tag = gridPos
+                    };
+                    newElement.MouseDown += GridSquare_MouseDown;
+                    newElement.MouseEnter += GridSquare_MouseEnter;
+                    _ = tileGridDisplay.Children.Add(newElement);
                 }
             }
         }
@@ -134,6 +138,21 @@ namespace RPGLevelEditor
             }
         }
 
+        private void ReplaceTileAtPosition(Point position)
+        {
+            if (SelectedTextureName is null)
+            {
+                return;
+            }
+
+            int x = (int)position.X;
+            int y = (int)position.Y;
+
+            OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { Texture = SelectedTextureName };
+
+            RefreshTileGrid();
+        }
+
         private void TextureSelect_MouseUp(object sender, MouseButtonEventArgs e)
         {
             SelectedTextureName = (sender as Border)?.Tag as string;
@@ -155,6 +174,24 @@ namespace RPGLevelEditor
                     TileSize = new Point(newX, newY);
                     RefreshTileGrid();
                 }
+            }
+        }
+
+        private void GridSquare_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e is { ChangedButton: MouseButton.Left, ButtonState: MouseButtonState.Pressed }
+                && sender is FrameworkElement { Tag: Point position })
+            {
+                ReplaceTileAtPosition(position);
+            }
+        }
+
+        private void GridSquare_MouseEnter(object sender, MouseEventArgs e)
+        {
+            if (e is { LeftButton: MouseButtonState.Pressed }
+                && sender is FrameworkElement { Tag: Point position })
+            {
+                ReplaceTileAtPosition(position);
             }
         }
     }
