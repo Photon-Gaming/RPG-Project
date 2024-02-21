@@ -20,6 +20,7 @@ namespace RPGLevelEditor
         public RPGGame.GameObject.Room OpenRoom { get; }
 
         public Microsoft.Xna.Framework.Point TileSize { get; set; } = new(32, 32);
+        public string? SelectedTextureName { get; set; }
 
         public RoomEditor(string roomPath, MainWindow parent)
         {
@@ -51,12 +52,13 @@ namespace RPGLevelEditor
 
             Title += " - " + RoomPath;
 
+            UpdateTextureSelectionPanel();
             RefreshTileGrid();
         }
 
         public void RefreshTileGrid()
         {
-            tileMapGrid.Background = new SolidColorBrush(new System.Windows.Media.Color()
+            tileMapScroll.Background = new SolidColorBrush(new System.Windows.Media.Color()
             {
                 R = OpenRoom.BackgroundColor.R,
                 G = OpenRoom.BackgroundColor.G,
@@ -93,6 +95,43 @@ namespace RPGLevelEditor
                     });
                 }
             }
+        }
+
+        public void UpdateTextureSelectionPanel()
+        {
+            textureSelectPanel.Children.Clear();
+
+            string textureFolder = Path.Join(ParentWindow.EditorConfig.TextureFolderPath, TileTextureFolder);
+
+            foreach (string texturePath in Directory.EnumerateFiles(textureFolder, "*.png"))
+            {
+                string textureName = Path.GetFileNameWithoutExtension(texturePath);
+
+                Border newElement = new()
+                {
+                    Margin = new Thickness(3),
+                    Width = 32,
+                    Height = 32,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    BorderBrush = Brushes.OrangeRed,
+                    BorderThickness = new Thickness(textureName == SelectedTextureName ? 2 : 0),
+                    Child = new Image()
+                    {
+                        Source = new BitmapImage(new Uri(texturePath)),
+                        Stretch = Stretch.Fill
+                    },
+                    Tag = textureName
+                };
+                newElement.MouseUp += TextureSelect_MouseUp;
+                _ = textureSelectPanel.Children.Add(newElement);
+            }
+        }
+
+        private void TextureSelect_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            SelectedTextureName = (sender as Border)?.Tag as string;
+            UpdateTextureSelectionPanel();
         }
     }
 }

@@ -9,12 +9,12 @@
     <Grid>
         <TabControl>
             <TabItem Header="Tile Map">
-                <Grid x:Name="tileMapGrid">
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <ScrollViewer Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible">
+                    <ScrollViewer x:Name="tileMapScroll" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible">
                         <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Grid x:Name="tileGridDisplay"/>
                             <!-- Center point marker -->
@@ -27,6 +27,9 @@
                             <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Magenta" Width="3" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}" Margin="0,0,-3,0"/>
                             <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Green" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="3" Margin="0,0,0,-3"/>
                         </Grid>
+                    </ScrollViewer>
+                    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Background="#FFE0E0E0">
+                        <WrapPanel x:Name="textureSelectPanel" Width="152"/>
                     </ScrollViewer>
                 </Grid>
             </TabItem>
