@@ -1,10 +1,10 @@
 ﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Newtonsoft.Json;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace RPGLevelEditor
 {
@@ -19,7 +19,7 @@ namespace RPGLevelEditor
         public string RoomPath { get; }
         public RPGGame.GameObject.Room OpenRoom { get; }
 
-        public Microsoft.Xna.Framework.Point TileSize { get; set; } = new(32, 32);
+        public Point TileSize { get; set; } = new(32, 32);
         public string? SelectedTextureName { get; set; }
 
         public RoomEditor(string roomPath, MainWindow parent)
@@ -48,7 +48,9 @@ namespace RPGLevelEditor
                         "Room Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
-            OpenRoom ??= new RPGGame.GameObject.Room(new RPGGame.GameObject.Tile[0, 0], Array.Empty<RPGGame.GameObject.Entity>(), Color.CornflowerBlue);
+            OpenRoom ??= new RPGGame.GameObject.Room(new RPGGame.GameObject.Tile[0, 0],
+                Array.Empty<RPGGame.GameObject.Entity>(),
+                Microsoft.Xna.Framework.Color.CornflowerBlue);
 
             Title += " - " + RoomPath;
 
@@ -58,7 +60,7 @@ namespace RPGLevelEditor
 
         public void RefreshTileGrid()
         {
-            tileMapScroll.Background = new SolidColorBrush(new System.Windows.Media.Color()
+            tileMapScroll.Background = new SolidColorBrush(new Color()
             {
                 R = OpenRoom.BackgroundColor.R,
                 G = OpenRoom.BackgroundColor.G,
@@ -68,12 +70,16 @@ namespace RPGLevelEditor
 
             tileGridDisplay.Children.Clear();
 
-            for (int x = 0; x < OpenRoom.TileMap.GetLength(0); x++)
+            int xSize = OpenRoom.TileMap.GetLength(0);
+            int ySize = OpenRoom.TileMap.GetLength(1);
+            tileGridDisplay.Width = xSize * TileSize.X;
+            tileGridDisplay.Height = ySize * TileSize.Y;
+
+            for (int x = 0; x < xSize; x++)
             {
-                for (int y = 0; y < OpenRoom.TileMap.GetLength(1); y++)
+                for (int y = 0; y < ySize; y++)
                 {
-                    Microsoft.Xna.Framework.Point gridPos = new(x, y);
-                    gridPos *= TileSize;
+                    Point gridPos = new(x * TileSize.X, y * TileSize.Y);
                     string texturePath = Path.Join(
                         ParentWindow.EditorConfig.TextureFolderPath, TileTextureFolder, OpenRoom.TileMap[x, y].Texture);
                     texturePath = Path.ChangeExtension(texturePath, "png");
@@ -128,10 +134,28 @@ namespace RPGLevelEditor
             }
         }
 
-        private void TextureSelect_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void TextureSelect_MouseUp(object sender, MouseButtonEventArgs e)
         {
             SelectedTextureName = (sender as Border)?.Tag as string;
             UpdateTextureSelectionPanel();
+        }
+
+        private void tileMapScroll_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                // Prevent zoom from also scrolling
+                e.Handled = true;
+
+                // Logarithmic zooming makes zoom look more "linear" to the eye
+                double newX = Math.Exp(Math.Log(TileSize.X) + (e.Delta * 0.0007));
+                double newY = Math.Exp(Math.Log(TileSize.Y) + (e.Delta * 0.0007));
+                if (TileSize.X + newX > 0 && TileSize.Y + newY > 0)
+                {
+                    TileSize = new Point(newX, newY);
+                    RefreshTileGrid();
+                }
+            }
         }
     }
 }
