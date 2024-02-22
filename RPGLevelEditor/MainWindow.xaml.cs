@@ -11,6 +11,7 @@ namespace RPGLevelEditor
     public partial class MainWindow : Window
     {
         public const string ConfigFileName = "editor_config.json";
+        public const string TextureFolderName = "Textures";
 
         public Config EditorConfig { get; set; }
 
@@ -39,7 +40,7 @@ namespace RPGLevelEditor
             if (EditorConfig is null)
             {
                 EditorConfig = new Config();
-                _ = MessageBox.Show(this, "New config file created. Please configure the paths to the game resources.",
+                _ = MessageBox.Show(this, "New config file created. Please configure the path to the game Content folder.",
                     "First run", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
@@ -57,15 +58,16 @@ namespace RPGLevelEditor
             }
         }
 
-        private void TexturePathItem_OnClick(object sender, RoutedEventArgs e)
+        private void ContentPathItem_OnClick(object sender, RoutedEventArgs e)
         {
             OpenFolderDialog dialog = new()
             {
-                ValidateNames = true
+                ValidateNames = true,
+                Title = @"Select the RPGGame\Content folder"
             };
             if (dialog.ShowDialog() ?? false)
             {
-                EditorConfig.TextureFolderPath = dialog.FolderName;
+                EditorConfig.ContentFolderPath = dialog.FolderName;
             }
         }
 

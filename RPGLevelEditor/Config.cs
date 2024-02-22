@@ -3,6 +3,6 @@
     [Serializable]
     public class Config
     {
-        public string TextureFolderPath { get; set; } = "";
+        public string ContentFolderPath { get; set; } = "";
     }
 }

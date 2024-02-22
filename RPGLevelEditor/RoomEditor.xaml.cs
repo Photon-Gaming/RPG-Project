@@ -13,7 +13,8 @@ namespace RPGLevelEditor
     /// </summary>
     public partial class RoomEditor : Window
     {
-        public const string TileTextureFolder = "Tiles";
+        public const string TileTextureFolderName = "Tiles";
+        public readonly string TileTextureFolderPath;
 
         public MainWindow ParentWindow { get; }
         public string RoomPath { get; }
@@ -30,6 +31,9 @@ namespace RPGLevelEditor
             RoomPath = roomPath;
             Owner = parent;
             ParentWindow = parent;
+
+            TileTextureFolderPath = Path.Join(ParentWindow.EditorConfig.ContentFolderPath,
+                MainWindow.TextureFolderName, TileTextureFolderName);
 
             if (File.Exists(RoomPath))
             {
@@ -81,8 +85,7 @@ namespace RPGLevelEditor
                 for (int y = 0; y < ySize; y++)
                 {
                     Point gridPos = new(x, y);
-                    string texturePath = Path.Join(
-                        ParentWindow.EditorConfig.TextureFolderPath, TileTextureFolder, OpenRoom.TileMap[x, y].Texture);
+                    string texturePath = Path.Join(TileTextureFolderPath, OpenRoom.TileMap[x, y].Texture);
                     texturePath = Path.ChangeExtension(texturePath, "png");
 
                     if (!File.Exists(texturePath))
@@ -112,9 +115,7 @@ namespace RPGLevelEditor
         {
             textureSelectPanel.Children.Clear();
 
-            string textureFolder = Path.Join(ParentWindow.EditorConfig.TextureFolderPath, TileTextureFolder);
-
-            foreach (string texturePath in Directory.EnumerateFiles(textureFolder, "*.png"))
+            foreach (string texturePath in Directory.EnumerateFiles(TileTextureFolderPath, "*.png"))
             {
                 string textureName = Path.GetFileNameWithoutExtension(texturePath);
 

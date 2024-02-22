@@ -16,7 +16,7 @@
                 <MenuItem Header="Open _Room..." Click="OpenRoomItem_OnClick"/>
             </MenuItem>
             <MenuItem Header="_Config">
-                <MenuItem Header="Set _Texture Path..." Click="TexturePathItem_OnClick"/>
+                <MenuItem Header="Set _Content Folder Path..." Click="ContentPathItem_OnClick"/>
             </MenuItem>
         </Menu>
     </Grid>
