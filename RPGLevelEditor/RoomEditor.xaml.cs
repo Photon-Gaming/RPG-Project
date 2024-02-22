@@ -34,6 +34,13 @@ namespace RPGLevelEditor
 
             TileTextureFolderPath = Path.Join(ParentWindow.EditorConfig.ContentFolderPath,
                 MainWindow.TextureFolderName, TileTextureFolderName);
+            if (!Directory.Exists(TileTextureFolderPath))
+            {
+                _ = MessageBox.Show(this,
+                    @"The specified Content folder does not contain a Textures\Tiles folder. " +
+                    "Please make sure you have configured the correct folder path in the main window.",
+                    "Room Load Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
 
             if (File.Exists(RoomPath))
             {
@@ -114,6 +121,11 @@ namespace RPGLevelEditor
         public void UpdateTextureSelectionPanel()
         {
             textureSelectPanel.Children.Clear();
+
+            if (!Directory.Exists(TileTextureFolderPath))
+            {
+                return;
+            }
 
             foreach (string texturePath in Directory.EnumerateFiles(TileTextureFolderPath, "*.png"))
             {
