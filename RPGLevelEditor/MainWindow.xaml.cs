@@ -43,22 +43,13 @@ namespace RPGLevelEditor
                 _ = MessageBox.Show(this, "New config file created. Please configure the path to the game Content folder.",
                     "First run", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-        }
-
-        private void OpenRoomItem_OnClick(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog dialog = new()
+            if (EditorConfig.ContentFolderPath == "")
             {
-                CheckFileExists = true,
-                CheckPathExists = true
-            };
-            if (dialog.ShowDialog() ?? false)
-            {
-                new RoomEditor(dialog.FileName, this).Show();
+                PromptSetContentPath();
             }
         }
 
-        private void ContentPathItem_OnClick(object sender, RoutedEventArgs e)
+        private void PromptSetContentPath()
         {
             OpenFolderDialog dialog = new()
             {
@@ -69,6 +60,25 @@ namespace RPGLevelEditor
             {
                 EditorConfig.ContentFolderPath = dialog.FolderName;
             }
+        }
+
+        private void OpenRoomItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog dialog = new()
+            {
+                CheckFileExists = true,
+                CheckPathExists = true,
+                Title = "Open Room"
+            };
+            if (dialog.ShowDialog() ?? false)
+            {
+                new RoomEditor(dialog.FileName, this).Show();
+            }
+        }
+
+        private void ContentPathItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            PromptSetContentPath();
         }
 
         private void Window_Closed(object sender, EventArgs e)
