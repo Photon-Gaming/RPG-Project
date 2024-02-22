@@ -8,10 +8,10 @@
         Title="RPG Editor" Height="450" Width="800" Closed="Window_Closed">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="1*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="20*"/>
         </Grid.RowDefinitions>
-        <Menu Grid.Row="0">
+        <Menu Grid.Row="0" Padding="0,0,0,3">
             <MenuItem Header="_File">
                 <MenuItem Header="Open _Room..." Click="OpenRoomItem_OnClick"/>
             </MenuItem>

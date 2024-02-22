@@ -5,9 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RPGLevelEditor"
         mc:Ignorable="d"
-        Title="Room Editor" Height="450" Width="800">
+        Title="Room Editor" Height="450" Width="800" Closing="Window_Closing">
     <Grid>
-        <TabControl>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="20*"/>
+        </Grid.RowDefinitions>
+        <Menu Grid.Row="0" Padding="0,0,0,3">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Save" Click="SaveItem_OnClick"/>
+            </MenuItem>
+        </Menu>
+        <TabControl Grid.Row="1">
             <TabItem Header="Tile Map">
                 <Grid>
                     <Grid.ColumnDefinitions>

@@ -21,6 +21,7 @@ namespace RPGLevelEditor
 
         public Point TileSize { get; set; } = new(32, 32);
         public string? SelectedTextureName { get; set; }
+        public bool UnsavedChanges { get; set; } = false;
 
         public RoomEditor(string roomPath, MainWindow parent)
         {
@@ -138,6 +139,22 @@ namespace RPGLevelEditor
             }
         }
 
+        public void Save()
+        {
+            try
+            {
+                File.WriteAllText(RoomPath, JsonConvert.SerializeObject(OpenRoom, Formatting.Indented));
+                UnsavedChanges = false;
+            }
+            catch (Exception exc)
+            {
+                _ = MessageBox.Show(this,
+                    $"An error occured saving the room file. Your changes have not been saved." +
+                    $"\n\n{exc.GetType().Name}: {exc.Message}",
+                    "Room Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void ReplaceTileAtPosition(Point position)
         {
             if (SelectedTextureName is null)
@@ -147,6 +164,8 @@ namespace RPGLevelEditor
 
             int x = (int)position.X;
             int y = (int)position.Y;
+
+            UnsavedChanges = true;
 
             OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { Texture = SelectedTextureName };
 
@@ -192,6 +211,30 @@ namespace RPGLevelEditor
                 && sender is FrameworkElement { Tag: Point position })
             {
                 ReplaceTileAtPosition(position);
+            }
+        }
+
+        private void SaveItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            Save();
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (UnsavedChanges)
+            {
+                MessageBoxResult result =  MessageBox.Show(this, "You have unsaved changes. Would you like to save them before closing?",
+                    "Unsaved changes", MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Cancel);
+                if (result == MessageBoxResult.Cancel)
+                {
+                    // Stop window from closing if cancel is pressed
+                    e.Cancel = true;
+                    return;
+                }
+                if (result == MessageBoxResult.Yes)
+                {
+                    Save();
+                }
             }
         }
     }
