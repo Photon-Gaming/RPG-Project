@@ -111,6 +111,7 @@ namespace RPGLevelEditor
                         Stretch = Stretch.Fill,
                         Tag = gridPos
                     };
+                    RenderOptions.SetBitmapScalingMode(newElement, BitmapScalingMode.NearestNeighbor);
                     newElement.MouseDown += GridSquare_MouseDown;
                     newElement.MouseEnter += GridSquare_MouseEnter;
                     _ = tileGridDisplay.Children.Add(newElement);
