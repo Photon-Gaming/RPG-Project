@@ -1,0 +1,47 @@
+﻿<Window x:Class="RPGLevelEditor.RoomEditor"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RPGLevelEditor"
+        mc:Ignorable="d"
+        Title="Room Editor" Height="450" Width="800" Closing="Window_Closing">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="20*"/>
+        </Grid.RowDefinitions>
+        <Menu Grid.Row="0" Padding="0,0,0,3">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Save" Click="SaveItem_OnClick"/>
+            </MenuItem>
+        </Menu>
+        <TabControl Grid.Row="1">
+            <TabItem Header="Tile Map">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ScrollViewer x:Name="tileMapScroll" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" PreviewMouseWheel="tileMapScroll_PreviewMouseWheel">
+                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}">
+                            <Grid x:Name="tileGridDisplay"/>
+                            <!-- Center point marker -->
+                            <Rectangle HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Blue" Width="3" Height="16"/>
+                            <Rectangle HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Red" Width="16" Height="3"/>
+                            <!-- Origin marker -->
+                            <Rectangle HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Blue" Width="3" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}" Margin="-3,0,0,0"/>
+                            <Rectangle HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Red" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="3" Margin="0,-3,0,0"/>
+                            <!-- Limit marker -->
+                            <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Magenta" Width="3" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}" Margin="0,0,-3,0"/>
+                            <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Green" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="3" Margin="0,0,0,-3"/>
+                        </Grid>
+                    </ScrollViewer>
+                    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Background="#FFE0E0E0">
+                        <WrapPanel x:Name="textureSelectPanel" Width="152"/>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
