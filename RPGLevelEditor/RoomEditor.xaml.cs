@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Media;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -18,11 +19,14 @@ namespace RPGLevelEditor
 
         public MainWindow ParentWindow { get; }
         public string RoomPath { get; }
-        public RPGGame.GameObject.Room OpenRoom { get; }
+        public RPGGame.GameObject.Room OpenRoom { get; private set; }
 
         public Point TileSize { get; set; } = new(32, 32);
         public string? SelectedTextureName { get; set; }
         public bool UnsavedChanges { get; set; } = false;
+
+        private readonly Stack<RPGGame.GameObject.Room> undoStack = new();
+        private readonly Stack<RPGGame.GameObject.Room> redoStack = new();
 
         public RoomEditor(string roomPath, MainWindow parent)
         {
@@ -72,6 +76,9 @@ namespace RPGLevelEditor
 
         public void RefreshTileGrid()
         {
+            undoItem.IsEnabled = undoStack.Count > 0;
+            redoItem.IsEnabled = redoStack.Count > 0;
+
             tileMapScroll.Background = new SolidColorBrush(new Color()
             {
                 R = OpenRoom.BackgroundColor.R,
@@ -170,6 +177,36 @@ namespace RPGLevelEditor
             }
         }
 
+        public bool Undo()
+        {
+            if (undoStack.TryPop(out RPGGame.GameObject.Room? previousRoom))
+            {
+                redoStack.Push((RPGGame.GameObject.Room)OpenRoom.Clone());
+                OpenRoom = previousRoom;
+                RefreshTileGrid();
+                return true;
+            }
+            return false;
+        }
+
+        public bool Redo()
+        {
+            if (redoStack.TryPop(out RPGGame.GameObject.Room? previousRoom))
+            {
+                undoStack.Push((RPGGame.GameObject.Room)OpenRoom.Clone());
+                OpenRoom = previousRoom;
+                RefreshTileGrid();
+                return true;
+            }
+            return false;
+        }
+
+        private void PushUndoStack()
+        {
+            redoStack.Clear();
+            undoStack.Push((RPGGame.GameObject.Room)OpenRoom.Clone());
+        }
+
         private void ReplaceTileAtPosition(Point position)
         {
             if (SelectedTextureName is null)
@@ -180,7 +217,14 @@ namespace RPGLevelEditor
             int x = (int)position.X;
             int y = (int)position.Y;
 
+            if (SelectedTextureName == OpenRoom.TileMap[x, y].Texture)
+            {
+                // Nothing to change
+                return;
+            }
+
             UnsavedChanges = true;
+            PushUndoStack();
 
             OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { Texture = SelectedTextureName };
 
@@ -255,6 +299,16 @@ namespace RPGLevelEditor
             Save();
         }
 
+        private void undoItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            _ = Undo();
+        }
+
+        private void redoItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            _ = Redo();
+        }
+
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             if (UnsavedChanges)
@@ -271,6 +325,25 @@ namespace RPGLevelEditor
                 {
                     Save();
                 }
+            }
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Z when e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control):
+                    if (!Undo())
+                    {
+                        SystemSounds.Exclamation.Play();
+                    }
+                    break;
+                case Key.Y when e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control):
+                    if (!Redo())
+                    {
+                        SystemSounds.Exclamation.Play();
+                    }
+                    break;
             }
         }
     }
