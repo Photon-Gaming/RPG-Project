@@ -146,6 +146,7 @@ namespace RPGLevelEditor
                         Source = new BitmapImage(new Uri(texturePath)),
                         Stretch = Stretch.Fill
                     },
+                    ToolTip = textureName,
                     Tag = textureName
                 };
                 newElement.MouseUp += TextureSelect_MouseUp;
