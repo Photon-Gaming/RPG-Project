@@ -228,6 +228,27 @@ namespace RPGLevelEditor
             }
         }
 
+        private void tileMapScroll_MouseMove(object sender, MouseEventArgs e)
+        {
+            Point relativeMousePos = e.GetPosition(tileGridDisplay);
+            relativeMousePos = new Point(relativeMousePos.X / TileSize.X, relativeMousePos.Y / TileSize.Y);
+
+            mousePositionLabel.Content = $"Mouse: ({relativeMousePos.X:N2}, {relativeMousePos.Y:N2})";
+            gridPositionLabel.Content = $"Grid: ({(int)relativeMousePos.X:N0}, {(int)relativeMousePos.Y:N0})";
+
+            if (relativeMousePos.X >= 0 && relativeMousePos.X < OpenRoom.TileMap.GetLength(0)
+                && relativeMousePos.Y >= 0 && relativeMousePos.Y < OpenRoom.TileMap.GetLength(1))
+            {
+                mouseTextureLabel.Content = $"Texture: {OpenRoom.TileMap[(int)relativeMousePos.X, (int)relativeMousePos.Y].Texture}";
+                mouseCollisionLabel.Content = $"Collision: {OpenRoom.TileMap[(int)relativeMousePos.X, (int)relativeMousePos.Y].IsCollision}";
+            }
+            else
+            {
+                mouseTextureLabel.Content = "Texture: N/A";
+                mouseCollisionLabel.Content = "Collision: N/A";
+            }
+        }
+
         private void SaveItem_OnClick(object sender, RoutedEventArgs e)
         {
             Save();
