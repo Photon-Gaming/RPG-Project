@@ -20,6 +20,9 @@
                 <MenuItem x:Name="undoItem" Header="_Undo" InputGestureText="Ctrl+Z" Click="undoItem_OnClick"/>
                 <MenuItem x:Name="redoItem" Header="_Redo" InputGestureText="Ctrl+Y" Click="redoItem_OnClick"/>
             </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem x:Name="gridOverlayItem" Header="_Show Grid Overlay" IsCheckable="True" Click="gridOverlayItem_OnClick"/>
+            </MenuItem>
         </Menu>
         <TabControl Grid.Row="1">
             <TabItem Header="Tile Map">

@@ -116,12 +116,42 @@ namespace RPGLevelEditor
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Top,
                         Stretch = Stretch.Fill,
+                        SnapsToDevicePixels = true,
                         Tag = gridPos
                     };
                     RenderOptions.SetBitmapScalingMode(newElement, BitmapScalingMode.NearestNeighbor);
                     newElement.MouseDown += GridSquare_MouseDown;
                     newElement.MouseEnter += GridSquare_MouseEnter;
                     _ = tileGridDisplay.Children.Add(newElement);
+                }
+            }
+
+            if (gridOverlayItem.IsChecked)
+            {
+                for (int x = 1; x < xSize; x++)
+                {
+                    _ = tileGridDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
+                    {
+                        Height = tileGridDisplay.Height,
+                        Width = 3,
+                        Margin = new Thickness(x * TileSize.X - 1, 0, 0, 0),
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Fill = Brushes.DarkGoldenrod
+                    });
+                }
+
+                for (int y = 1; y < ySize; y++)
+                {
+                    _ = tileGridDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
+                    {
+                        Height = 3,
+                        Width = tileGridDisplay.Width,
+                        Margin = new Thickness(0, y * TileSize.Y - 1, 0, 0),
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Top,
+                        Fill = Brushes.DarkGoldenrod
+                    });
                 }
             }
         }
@@ -307,6 +337,11 @@ namespace RPGLevelEditor
         private void redoItem_OnClick(object sender, RoutedEventArgs e)
         {
             _ = Redo();
+        }
+
+        private void gridOverlayItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            RefreshTileGrid();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
