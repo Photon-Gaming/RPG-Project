@@ -5,15 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RPGLevelEditor"
         mc:Ignorable="d"
-        Title="Room Editor" Height="450" Width="800" Closing="Window_Closing">
+        Title="Room Editor" Height="450" Width="800" Closing="Window_Closing" KeyDown="Window_KeyDown">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="20*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Menu Grid.Row="0" Padding="0,0,0,3">
             <MenuItem Header="_File">
                 <MenuItem Header="_Save" Click="SaveItem_OnClick"/>
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem x:Name="undoItem" Header="_Undo" InputGestureText="Ctrl+Z" Click="undoItem_OnClick"/>
+                <MenuItem x:Name="redoItem" Header="_Redo" InputGestureText="Ctrl+Y" Click="redoItem_OnClick"/>
+            </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem x:Name="gridOverlayItem" Header="_Show Grid Overlay" IsCheckable="True" Click="gridOverlayItem_OnClick"/>
             </MenuItem>
         </Menu>
         <TabControl Grid.Row="1">
@@ -23,7 +31,7 @@
                         <ColumnDefinition Width="1*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <ScrollViewer x:Name="tileMapScroll" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" PreviewMouseWheel="tileMapScroll_PreviewMouseWheel">
+                    <ScrollViewer x:Name="tileMapScroll" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" PreviewMouseWheel="tileMapScroll_PreviewMouseWheel" MouseMove="tileMapScroll_MouseMove">
                         <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}">
                             <Grid x:Name="tileGridDisplay"/>
                             <!-- Center point marker -->
@@ -43,5 +51,22 @@
                 </Grid>
             </TabItem>
         </TabControl>
+        <StatusBar Grid.Row="2">
+            <StatusBarItem>
+                <Label x:Name="mousePositionLabel" Content="Mouse: (0.00, 0.00)" Padding="0"/>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <Label x:Name="gridPositionLabel" Content="Grid: (0, 0)" Padding="0"/>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <Label x:Name="mouseTextureLabel" Content="Texture: N/A" Padding="0"/>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <Label x:Name="mouseCollisionLabel" Content="Collision: N/A" Padding="0"/>
+            </StatusBarItem>
+        </StatusBar>
     </Grid>
 </Window>

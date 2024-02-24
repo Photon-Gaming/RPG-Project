@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Media;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -18,11 +19,14 @@ namespace RPGLevelEditor
 
         public MainWindow ParentWindow { get; }
         public string RoomPath { get; }
-        public RPGGame.GameObject.Room OpenRoom { get; }
+        public RPGGame.GameObject.Room OpenRoom { get; private set; }
 
         public Point TileSize { get; set; } = new(32, 32);
         public string? SelectedTextureName { get; set; }
         public bool UnsavedChanges { get; set; } = false;
+
+        private readonly Stack<RPGGame.GameObject.Room> undoStack = new();
+        private readonly Stack<RPGGame.GameObject.Room> redoStack = new();
 
         public RoomEditor(string roomPath, MainWindow parent)
         {
@@ -72,6 +76,9 @@ namespace RPGLevelEditor
 
         public void RefreshTileGrid()
         {
+            undoItem.IsEnabled = undoStack.Count > 0;
+            redoItem.IsEnabled = redoStack.Count > 0;
+
             tileMapScroll.Background = new SolidColorBrush(new Color()
             {
                 R = OpenRoom.BackgroundColor.R,
@@ -109,12 +116,42 @@ namespace RPGLevelEditor
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Top,
                         Stretch = Stretch.Fill,
+                        SnapsToDevicePixels = true,
                         Tag = gridPos
                     };
                     RenderOptions.SetBitmapScalingMode(newElement, BitmapScalingMode.NearestNeighbor);
                     newElement.MouseDown += GridSquare_MouseDown;
                     newElement.MouseEnter += GridSquare_MouseEnter;
                     _ = tileGridDisplay.Children.Add(newElement);
+                }
+            }
+
+            if (gridOverlayItem.IsChecked)
+            {
+                for (int x = 1; x < xSize; x++)
+                {
+                    _ = tileGridDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
+                    {
+                        Height = tileGridDisplay.Height,
+                        Width = 3,
+                        Margin = new Thickness(x * TileSize.X - 1, 0, 0, 0),
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Fill = Brushes.DarkGoldenrod
+                    });
+                }
+
+                for (int y = 1; y < ySize; y++)
+                {
+                    _ = tileGridDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
+                    {
+                        Height = 3,
+                        Width = tileGridDisplay.Width,
+                        Margin = new Thickness(0, y * TileSize.Y - 1, 0, 0),
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Top,
+                        Fill = Brushes.DarkGoldenrod
+                    });
                 }
             }
         }
@@ -146,6 +183,7 @@ namespace RPGLevelEditor
                         Source = new BitmapImage(new Uri(texturePath)),
                         Stretch = Stretch.Fill
                     },
+                    ToolTip = textureName,
                     Tag = textureName
                 };
                 newElement.MouseUp += TextureSelect_MouseUp;
@@ -169,6 +207,36 @@ namespace RPGLevelEditor
             }
         }
 
+        public bool Undo()
+        {
+            if (undoStack.TryPop(out RPGGame.GameObject.Room? previousRoom))
+            {
+                redoStack.Push((RPGGame.GameObject.Room)OpenRoom.Clone());
+                OpenRoom = previousRoom;
+                RefreshTileGrid();
+                return true;
+            }
+            return false;
+        }
+
+        public bool Redo()
+        {
+            if (redoStack.TryPop(out RPGGame.GameObject.Room? previousRoom))
+            {
+                undoStack.Push((RPGGame.GameObject.Room)OpenRoom.Clone());
+                OpenRoom = previousRoom;
+                RefreshTileGrid();
+                return true;
+            }
+            return false;
+        }
+
+        private void PushUndoStack()
+        {
+            redoStack.Clear();
+            undoStack.Push((RPGGame.GameObject.Room)OpenRoom.Clone());
+        }
+
         private void ReplaceTileAtPosition(Point position)
         {
             if (SelectedTextureName is null)
@@ -179,7 +247,14 @@ namespace RPGLevelEditor
             int x = (int)position.X;
             int y = (int)position.Y;
 
+            if (SelectedTextureName == OpenRoom.TileMap[x, y].Texture)
+            {
+                // Nothing to change
+                return;
+            }
+
             UnsavedChanges = true;
+            PushUndoStack();
 
             OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { Texture = SelectedTextureName };
 
@@ -228,9 +303,45 @@ namespace RPGLevelEditor
             }
         }
 
+        private void tileMapScroll_MouseMove(object sender, MouseEventArgs e)
+        {
+            Point relativeMousePos = e.GetPosition(tileGridDisplay);
+            relativeMousePos = new Point(relativeMousePos.X / TileSize.X, relativeMousePos.Y / TileSize.Y);
+
+            mousePositionLabel.Content = $"Mouse: ({relativeMousePos.X:N2}, {relativeMousePos.Y:N2})";
+            gridPositionLabel.Content = $"Grid: ({(int)relativeMousePos.X:N0}, {(int)relativeMousePos.Y:N0})";
+
+            if (relativeMousePos.X >= 0 && relativeMousePos.X < OpenRoom.TileMap.GetLength(0)
+                && relativeMousePos.Y >= 0 && relativeMousePos.Y < OpenRoom.TileMap.GetLength(1))
+            {
+                mouseTextureLabel.Content = $"Texture: {OpenRoom.TileMap[(int)relativeMousePos.X, (int)relativeMousePos.Y].Texture}";
+                mouseCollisionLabel.Content = $"Collision: {OpenRoom.TileMap[(int)relativeMousePos.X, (int)relativeMousePos.Y].IsCollision}";
+            }
+            else
+            {
+                mouseTextureLabel.Content = "Texture: N/A";
+                mouseCollisionLabel.Content = "Collision: N/A";
+            }
+        }
+
         private void SaveItem_OnClick(object sender, RoutedEventArgs e)
         {
             Save();
+        }
+
+        private void undoItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            _ = Undo();
+        }
+
+        private void redoItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            _ = Redo();
+        }
+
+        private void gridOverlayItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            RefreshTileGrid();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -249,6 +360,25 @@ namespace RPGLevelEditor
                 {
                     Save();
                 }
+            }
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Z when e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control):
+                    if (!Undo())
+                    {
+                        SystemSounds.Exclamation.Play();
+                    }
+                    break;
+                case Key.Y when e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control):
+                    if (!Redo())
+                    {
+                        SystemSounds.Exclamation.Play();
+                    }
+                    break;
             }
         }
     }
