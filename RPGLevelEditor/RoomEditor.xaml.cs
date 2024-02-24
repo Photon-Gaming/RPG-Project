@@ -14,6 +14,13 @@ namespace RPGLevelEditor
     /// </summary>
     public partial class RoomEditor : Window
     {
+        public readonly struct StateStackFrame(int x, int y, RPGGame.GameObject.Tile tile)
+        {
+            public readonly int X = x;
+            public readonly int Y = y;
+            public readonly RPGGame.GameObject.Tile Tile = tile;
+        }
+
         public const string TileTextureFolderName = "Tiles";
         public readonly string TileTextureFolderPath;
 
@@ -36,8 +43,8 @@ namespace RPGLevelEditor
             }
         }
 
-        private readonly Stack<RPGGame.GameObject.Room> undoStack = new();
-        private readonly Stack<RPGGame.GameObject.Room> redoStack = new();
+        private readonly Stack<StateStackFrame> undoStack = new();
+        private readonly Stack<StateStackFrame> redoStack = new();
 
         private readonly Dictionary<string, ImageSource> imageCache = new();
 
@@ -107,12 +114,12 @@ namespace RPGLevelEditor
 
         public bool Undo()
         {
-            if (undoStack.TryPop(out RPGGame.GameObject.Room? previousRoom))
+            if (undoStack.TryPop(out StateStackFrame state))
             {
-                redoStack.Push((RPGGame.GameObject.Room)OpenRoom.Clone());
-                OpenRoom = previousRoom;
+                redoStack.Push(new StateStackFrame(state.X, state.Y, OpenRoom.TileMap[state.X, state.Y]));
+                OpenRoom.TileMap[state.X, state.Y] = state.Tile;
 
-                CreateTileGrid();
+                UpdateTileTexture(state.X, state.Y);
 
                 undoItem.IsEnabled = undoStack.Count > 0;
                 redoItem.IsEnabled = true;
@@ -124,12 +131,12 @@ namespace RPGLevelEditor
 
         public bool Redo()
         {
-            if (redoStack.TryPop(out RPGGame.GameObject.Room? previousRoom))
+            if (redoStack.TryPop(out StateStackFrame state))
             {
-                undoStack.Push((RPGGame.GameObject.Room)OpenRoom.Clone());
-                OpenRoom = previousRoom;
+                undoStack.Push(new StateStackFrame(state.X, state.Y, OpenRoom.TileMap[state.X, state.Y]));
+                OpenRoom.TileMap[state.X, state.Y] = state.Tile;
 
-                CreateTileGrid();
+                UpdateTileTexture(state.X, state.Y);
 
                 redoItem.IsEnabled = redoStack.Count > 0;
                 undoItem.IsEnabled = true;
@@ -147,7 +154,10 @@ namespace RPGLevelEditor
         /// </remarks>
         public void ChangeDimensions(int xSize, int ySize)
         {
-            PushUndoStack();
+            undoStack.Clear();
+            redoStack.Clear();
+            undoItem.IsEnabled = false;
+            redoItem.IsChecked = false;
 
             int oldXSize = OpenRoom.TileMap.GetLength(0);
             int oldYSize = OpenRoom.TileMap.GetLength(1);
@@ -346,12 +356,12 @@ namespace RPGLevelEditor
             }
         }
 
-        private void PushUndoStack()
+        private void PushUndoStack(int x, int y)
         {
             UnsavedChanges = true;
 
             redoStack.Clear();
-            undoStack.Push((RPGGame.GameObject.Room)OpenRoom.Clone());
+            undoStack.Push(new StateStackFrame(x, y, OpenRoom.TileMap[x, y]));
 
             undoItem.IsEnabled = true;
             redoItem.IsEnabled = false;
@@ -373,7 +383,7 @@ namespace RPGLevelEditor
                 return;
             }
 
-            PushUndoStack();
+            PushUndoStack(x, y);
 
             OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { Texture = SelectedTextureName };
 
