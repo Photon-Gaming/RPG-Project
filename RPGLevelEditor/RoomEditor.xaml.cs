@@ -243,8 +243,41 @@ namespace RPGLevelEditor
             return false;
         }
 
+        /// <summary>
+        /// Change the size of the currently open room.
+        /// </summary>
+        /// <remarks>
+        /// If the target dimensions are smaller than the current dimensions, out of bounds tiles and entities will be deleted.
+        /// </remarks>
+        public void ChangeDimensions(int xSize, int ySize)
+        {
+            PushUndoStack();
+
+            int oldXSize = OpenRoom.TileMap.GetLength(0);
+            int oldYSize = OpenRoom.TileMap.GetLength(1);
+            RPGGame.GameObject.Tile[,] newTileMap = new RPGGame.GameObject.Tile[xSize, ySize];
+
+            for (int x = 0; x < xSize; x++)
+            {
+                for (int y = 0; y < ySize; y++)
+                {
+                    newTileMap[x, y] = x < oldXSize && y < oldYSize
+                        ? OpenRoom.TileMap[x, y]
+                        : new RPGGame.GameObject.Tile(SelectedTextureName ?? "", false);
+                }
+            }
+
+            OpenRoom = new RPGGame.GameObject.Room(newTileMap,
+                OpenRoom.Entities.Where(e => e.Position.X < xSize && e.Position.Y < ySize)
+                    .Select(e => (RPGGame.GameObject.Entity)e.Clone()).ToArray(),
+                OpenRoom.BackgroundColor);
+
+            RefreshTileGrid();
+        }
+
         private void PushUndoStack()
         {
+            UnsavedChanges = true;
             redoStack.Clear();
             undoStack.Push((RPGGame.GameObject.Room)OpenRoom.Clone());
         }
@@ -265,7 +298,6 @@ namespace RPGLevelEditor
                 return;
             }
 
-            UnsavedChanges = true;
             PushUndoStack();
 
             OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { Texture = SelectedTextureName };
@@ -354,6 +386,37 @@ namespace RPGLevelEditor
         private void gridOverlayItem_OnClick(object sender, RoutedEventArgs e)
         {
             RefreshTileGrid();
+        }
+
+        private void DimensionsItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (SelectedTextureName is null)
+            {
+                _ = MessageBox.Show(this, "Please select a texture before changing room dimensions",
+                    "No texture", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            int xLength = OpenRoom.TileMap.GetLength(0);
+            int yLength = OpenRoom.TileMap.GetLength(1);
+
+            ToolWindows.DimensionsDialog dialog = new(xLength, yLength);
+            if (dialog.ShowDialog() ?? false)
+            {
+                if (dialog.X < xLength || dialog.Y < yLength)
+                {
+                    MessageBoxResult result = MessageBox.Show(this, 
+                        "The entered dimensions are smaller than the current dimensions. " +
+                        "Shrinking the room will cause tiles and entities outside the new boundaries to be lost.\n\n" +
+                        "Are you sure you want to continue?",
+                        "Potential loss", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+                    if (result != MessageBoxResult.Yes)
+                    {
+                        return;
+                    }
+                }
+                ChangeDimensions(dialog.X, dialog.Y);
+            }
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
