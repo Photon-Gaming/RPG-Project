@@ -35,7 +35,12 @@
                     </Grid.ColumnDefinitions>
                     <ScrollViewer x:Name="tileMapScroll" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" PreviewMouseWheel="tileMapScroll_PreviewMouseWheel" MouseMove="tileMapScroll_MouseMove">
                         <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}">
+                            <Grid.LayoutTransform>
+                                <ScaleTransform x:Name="tileMapScaleTransform" CenterX="0.5" CenterY="0.5"/>
+                            </Grid.LayoutTransform>
                             <Grid x:Name="tileGridDisplay"/>
+                            <Grid x:Name="gridOverlayXDisplay"/>
+                            <Grid x:Name="gridOverlayYDisplay"/>
                             <!-- Center point marker -->
                             <Rectangle HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Blue" Width="3" Height="16"/>
                             <Rectangle HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Red" Width="16" Height="3"/>

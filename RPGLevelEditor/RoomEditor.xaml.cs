@@ -17,12 +17,13 @@ namespace RPGLevelEditor
         public const string TileTextureFolderName = "Tiles";
         public readonly string TileTextureFolderPath;
 
+        public static readonly Point TileSize = new(32, 32);
+
         public MainWindow ParentWindow { get; }
         public string RoomPath { get; }
         public RPGGame.GameObject.Room OpenRoom { get; private set; }
 
-        public Point TileSize { get; set; } = new(32, 32);
-        public string? SelectedTextureName { get; set; }
+        public string? SelectedTextureName { get; private set; }
 
         private bool _unsavedChanges = false;
         public bool UnsavedChanges
@@ -37,6 +38,8 @@ namespace RPGLevelEditor
 
         private readonly Stack<RPGGame.GameObject.Room> undoStack = new();
         private readonly Stack<RPGGame.GameObject.Room> redoStack = new();
+
+        private readonly Dictionary<string, ImageSource> imageCache = new();
 
         public RoomEditor(string roomPath, MainWindow parent, bool forceCreateNew = false)
         {
@@ -83,124 +86,7 @@ namespace RPGLevelEditor
             Title += " - " + RoomPath;
 
             UpdateTextureSelectionPanel();
-            RefreshTileGrid();
-        }
-
-        public void RefreshTileGrid()
-        {
-            undoItem.IsEnabled = undoStack.Count > 0;
-            redoItem.IsEnabled = redoStack.Count > 0;
-
-            tileMapScroll.Background = new SolidColorBrush(new Color()
-            {
-                R = OpenRoom.BackgroundColor.R,
-                G = OpenRoom.BackgroundColor.G,
-                B = OpenRoom.BackgroundColor.B,
-                A = OpenRoom.BackgroundColor.A
-            });
-
-            tileGridDisplay.Children.Clear();
-
-            int xSize = OpenRoom.TileMap.GetLength(0);
-            int ySize = OpenRoom.TileMap.GetLength(1);
-            tileGridDisplay.Width = xSize * TileSize.X;
-            tileGridDisplay.Height = ySize * TileSize.Y;
-
-            for (int x = 0; x < xSize; x++)
-            {
-                for (int y = 0; y < ySize; y++)
-                {
-                    Point gridPos = new(x, y);
-                    string texturePath = Path.Join(TileTextureFolderPath, OpenRoom.TileMap[x, y].Texture);
-                    texturePath = Path.ChangeExtension(texturePath, "png");
-
-                    if (!File.Exists(texturePath))
-                    {
-                        texturePath = "pack://application:,,,/Resources/placeholder.png";
-                    }
-
-                    Image newElement = new()
-                    {
-                        Margin = new Thickness(gridPos.X * TileSize.X, gridPos.Y * TileSize.Y, 0, 0),
-                        Source = new BitmapImage(new Uri(texturePath)),
-                        Width = TileSize.X,
-                        Height = TileSize.Y,
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                        VerticalAlignment = VerticalAlignment.Top,
-                        Stretch = Stretch.Fill,
-                        SnapsToDevicePixels = true,
-                        Tag = gridPos
-                    };
-                    RenderOptions.SetBitmapScalingMode(newElement, BitmapScalingMode.NearestNeighbor);
-                    newElement.MouseDown += GridSquare_MouseDown;
-                    newElement.MouseEnter += GridSquare_MouseEnter;
-                    _ = tileGridDisplay.Children.Add(newElement);
-                }
-            }
-
-            if (gridOverlayItem.IsChecked)
-            {
-                for (int x = 1; x < xSize; x++)
-                {
-                    _ = tileGridDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
-                    {
-                        Height = tileGridDisplay.Height,
-                        Width = 3,
-                        Margin = new Thickness(x * TileSize.X - 1, 0, 0, 0),
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Fill = Brushes.DarkGoldenrod
-                    });
-                }
-
-                for (int y = 1; y < ySize; y++)
-                {
-                    _ = tileGridDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
-                    {
-                        Height = 3,
-                        Width = tileGridDisplay.Width,
-                        Margin = new Thickness(0, y * TileSize.Y - 1, 0, 0),
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Top,
-                        Fill = Brushes.DarkGoldenrod
-                    });
-                }
-            }
-        }
-
-        public void UpdateTextureSelectionPanel()
-        {
-            textureSelectPanel.Children.Clear();
-
-            if (!Directory.Exists(TileTextureFolderPath))
-            {
-                return;
-            }
-
-            foreach (string texturePath in Directory.EnumerateFiles(TileTextureFolderPath, "*.png"))
-            {
-                string textureName = Path.GetFileNameWithoutExtension(texturePath);
-
-                Border newElement = new()
-                {
-                    Margin = new Thickness(3),
-                    Width = 32,
-                    Height = 32,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    VerticalAlignment = VerticalAlignment.Top,
-                    BorderBrush = Brushes.OrangeRed,
-                    BorderThickness = new Thickness(textureName == SelectedTextureName ? 2 : 0),
-                    Child = new Image()
-                    {
-                        Source = new BitmapImage(new Uri(texturePath)),
-                        Stretch = Stretch.Fill
-                    },
-                    ToolTip = textureName,
-                    Tag = textureName
-                };
-                newElement.MouseUp += TextureSelect_MouseUp;
-                _ = textureSelectPanel.Children.Add(newElement);
-            }
+            CreateTileGrid();
         }
 
         public void Save()
@@ -225,7 +111,12 @@ namespace RPGLevelEditor
             {
                 redoStack.Push((RPGGame.GameObject.Room)OpenRoom.Clone());
                 OpenRoom = previousRoom;
-                RefreshTileGrid();
+
+                CreateTileGrid();
+
+                undoItem.IsEnabled = undoStack.Count > 0;
+                redoItem.IsEnabled = true;
+
                 return true;
             }
             return false;
@@ -237,7 +128,12 @@ namespace RPGLevelEditor
             {
                 undoStack.Push((RPGGame.GameObject.Room)OpenRoom.Clone());
                 OpenRoom = previousRoom;
-                RefreshTileGrid();
+
+                CreateTileGrid();
+
+                redoItem.IsEnabled = redoStack.Count > 0;
+                undoItem.IsEnabled = true;
+
                 return true;
             }
             return false;
@@ -272,14 +168,193 @@ namespace RPGLevelEditor
                     .Select(e => (RPGGame.GameObject.Entity)e.Clone()).ToArray(),
                 OpenRoom.BackgroundColor);
 
-            RefreshTileGrid();
+            CreateTileGrid();
+        }
+
+        private void CreateTileGrid()
+        {
+            UpdateGridBackground();
+
+            tileGridDisplay.Children.Clear();
+
+            int xSize = OpenRoom.TileMap.GetLength(0);
+            int ySize = OpenRoom.TileMap.GetLength(1);
+            tileGridDisplay.Width = xSize * TileSize.X;
+            tileGridDisplay.Height = ySize * TileSize.Y;
+
+            for (int x = 0; x < xSize; x++)
+            {
+                for (int y = 0; y < ySize; y++)
+                {
+                    Point gridPos = new(x, y);
+                    string textureName = OpenRoom.TileMap[x, y].Texture;
+
+                    if (!imageCache.TryGetValue(textureName, out ImageSource? imageSource))
+                    {
+                        string texturePath = Path.Join(TileTextureFolderPath, textureName);
+                        texturePath = Path.ChangeExtension(texturePath, "png");
+
+                        if (!File.Exists(texturePath))
+                        {
+                            texturePath = "pack://application:,,,/Resources/placeholder.png";
+                        }
+
+                        imageSource = new BitmapImage(new Uri(texturePath));
+
+                        imageCache[textureName] = imageSource;
+                    }
+                    
+
+                    Image newElement = new()
+                    {
+                        Margin = new Thickness(gridPos.X * TileSize.X, gridPos.Y * TileSize.Y, 0, 0),
+                        Source = imageSource,
+                        Width = TileSize.X,
+                        Height = TileSize.Y,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top,
+                        Stretch = Stretch.Fill,
+                        SnapsToDevicePixels = true,
+                        Tag = gridPos
+                    };
+                    RenderOptions.SetBitmapScalingMode(newElement, BitmapScalingMode.NearestNeighbor);
+                    newElement.MouseDown += GridSquare_MouseDown;
+                    newElement.MouseEnter += GridSquare_MouseEnter;
+                    _ = tileGridDisplay.Children.Add(newElement);
+                }
+            }
+
+            CreateGridOverlay();
+        }
+
+        private void UpdateTileTexture(int x, int y)
+        {
+            int ySize = OpenRoom.TileMap.GetLength(1);
+
+            if (!(tileGridDisplay.Children[x * ySize + y] is Image { Tag: Point existingGrid } imageElement && existingGrid == new Point(x, y)))
+            {
+                // Child doesn't match expected values - recreate grid
+                CreateTileGrid();
+                return;
+            }
+
+            string textureName = OpenRoom.TileMap[x, y].Texture;
+
+            if (!imageCache.TryGetValue(textureName, out ImageSource? imageSource))
+            {
+                string texturePath = Path.Join(TileTextureFolderPath, textureName);
+                texturePath = Path.ChangeExtension(texturePath, "png");
+
+                if (!File.Exists(texturePath))
+                {
+                    texturePath = "pack://application:,,,/Resources/placeholder.png";
+                }
+
+                imageSource = new BitmapImage(new Uri(texturePath));
+
+                imageCache[textureName] = imageSource;
+            }
+
+            imageElement.Source = imageSource;
+        }
+
+        private void UpdateGridBackground()
+        {
+            tileMapScroll.Background = new SolidColorBrush(new Color()
+            {
+                R = OpenRoom.BackgroundColor.R,
+                G = OpenRoom.BackgroundColor.G,
+                B = OpenRoom.BackgroundColor.B,
+                A = OpenRoom.BackgroundColor.A
+            });
+        }
+
+        private void CreateGridOverlay()
+        {
+            gridOverlayXDisplay.Children.Clear();
+            gridOverlayYDisplay.Children.Clear();
+
+            int xSize = OpenRoom.TileMap.GetLength(0);
+            int ySize = OpenRoom.TileMap.GetLength(1);
+            gridOverlayXDisplay.Width = xSize * TileSize.X;
+            gridOverlayXDisplay.Height = ySize * TileSize.Y;
+            gridOverlayYDisplay.Width = xSize * TileSize.X;
+            gridOverlayYDisplay.Height = ySize * TileSize.Y;
+
+            if (gridOverlayItem.IsChecked)
+            {
+                for (int x = 1; x < xSize; x++)
+                {
+                    _ = gridOverlayXDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
+                    {
+                        Height = gridOverlayXDisplay.Height,
+                        Width = 3,
+                        Margin = new Thickness(x * TileSize.X - 1, 0, 0, 0),
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Fill = Brushes.DarkGoldenrod
+                    });
+                }
+
+                for (int y = 1; y < ySize; y++)
+                {
+                    _ = gridOverlayYDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
+                    {
+                        Height = 3,
+                        Width = gridOverlayYDisplay.Width,
+                        Margin = new Thickness(0, y * TileSize.Y - 1, 0, 0),
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Top,
+                        Fill = Brushes.DarkGoldenrod
+                    });
+                }
+            }
+        }
+
+        private void UpdateTextureSelectionPanel()
+        {
+            textureSelectPanel.Children.Clear();
+
+            if (!Directory.Exists(TileTextureFolderPath))
+            {
+                return;
+            }
+
+            foreach (string texturePath in Directory.EnumerateFiles(TileTextureFolderPath, "*.png"))
+            {
+                string textureName = Path.GetFileNameWithoutExtension(texturePath);
+
+                Border newElement = new()
+                {
+                    Margin = new Thickness(3),
+                    Width = 32,
+                    Height = 32,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    BorderBrush = Brushes.OrangeRed,
+                    BorderThickness = new Thickness(textureName == SelectedTextureName ? 2 : 0),
+                    Child = new Image()
+                    {
+                        Source = new BitmapImage(new Uri(texturePath)),
+                        Stretch = Stretch.Fill
+                    },
+                    ToolTip = textureName,
+                    Tag = textureName
+                };
+                newElement.MouseUp += TextureSelect_MouseUp;
+                _ = textureSelectPanel.Children.Add(newElement);
+            }
         }
 
         private void PushUndoStack()
         {
             UnsavedChanges = true;
+
             redoStack.Clear();
             undoStack.Push((RPGGame.GameObject.Room)OpenRoom.Clone());
+
+            undoItem.IsEnabled = true;
+            redoItem.IsEnabled = false;
         }
 
         private void ReplaceTileAtPosition(Point position)
@@ -302,7 +377,7 @@ namespace RPGLevelEditor
 
             OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { Texture = SelectedTextureName };
 
-            RefreshTileGrid();
+            UpdateTileTexture(x, y);
         }
 
         private void TextureSelect_MouseUp(object sender, MouseButtonEventArgs e)
@@ -319,12 +394,11 @@ namespace RPGLevelEditor
                 e.Handled = true;
 
                 // Logarithmic zooming makes zoom look more "linear" to the eye
-                double newX = Math.Exp(Math.Log(TileSize.X) + (e.Delta * 0.0007));
-                double newY = Math.Exp(Math.Log(TileSize.Y) + (e.Delta * 0.0007));
-                if (TileSize.X + newX > 0 && TileSize.Y + newY > 0)
+                double newScale = Math.Exp(Math.Log(tileMapScaleTransform.ScaleX) + (e.Delta * 0.0007));
+                if (newScale > 0)
                 {
-                    TileSize = new Point(newX, newY);
-                    RefreshTileGrid();
+                    tileMapScaleTransform.ScaleX = newScale;
+                    tileMapScaleTransform.ScaleY = newScale;
                 }
             }
         }
@@ -385,7 +459,7 @@ namespace RPGLevelEditor
 
         private void gridOverlayItem_OnClick(object sender, RoutedEventArgs e)
         {
-            RefreshTileGrid();
+            CreateGridOverlay();
         }
 
         private void DimensionsItem_OnClick(object sender, RoutedEventArgs e)
