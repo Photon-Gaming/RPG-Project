@@ -13,6 +13,8 @@
         </Grid.RowDefinitions>
         <Menu Grid.Row="0" Padding="0,0,0,3">
             <MenuItem Header="_File">
+                <MenuItem Header="_New Room..." Click="NewRoomItem_OnClick"/>
+                <Separator/>
                 <MenuItem Header="Open _Room..." Click="OpenRoomItem_OnClick"/>
             </MenuItem>
             <MenuItem Header="_Config">

@@ -68,7 +68,24 @@ namespace RPGLevelEditor
             {
                 CheckFileExists = true,
                 CheckPathExists = true,
+                Filter = "JSON files (*.json)|*.json",
                 Title = "Open Room"
+            };
+            if (dialog.ShowDialog() ?? false)
+            {
+                new RoomEditor(dialog.FileName, this).Show();
+            }
+        }
+
+        private void NewRoomItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog dialog = new()
+            {
+                CheckFileExists = false,
+                CheckPathExists = true,
+                AddExtension = true,
+                Filter = "JSON file (*.json)|*.json",
+                Title = "Create Room"
             };
             if (dialog.ShowDialog() ?? false)
             {
