@@ -89,7 +89,7 @@ namespace RPGLevelEditor
             };
             if (dialog.ShowDialog() ?? false)
             {
-                new RoomEditor(dialog.FileName, this).Show();
+                new RoomEditor(dialog.FileName, this, true).Show();
             }
         }
 

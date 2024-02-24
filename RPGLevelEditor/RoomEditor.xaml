@@ -67,6 +67,9 @@
             <StatusBarItem>
                 <Label x:Name="mouseCollisionLabel" Content="Collision: N/A" Padding="0"/>
             </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <Label x:Name="unsavedChangesLabel" Content="" Padding="0"/>
+            </StatusBarItem>
         </StatusBar>
     </Grid>
 </Window>

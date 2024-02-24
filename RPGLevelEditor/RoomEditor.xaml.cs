@@ -23,12 +23,22 @@ namespace RPGLevelEditor
 
         public Point TileSize { get; set; } = new(32, 32);
         public string? SelectedTextureName { get; set; }
-        public bool UnsavedChanges { get; set; } = false;
+
+        private bool _unsavedChanges = false;
+        public bool UnsavedChanges
+        {
+            get => _unsavedChanges;
+            set
+            {
+                _unsavedChanges = value;
+                unsavedChangesLabel.Content = _unsavedChanges ? "UNSAVED" : "";
+            }
+        }
 
         private readonly Stack<RPGGame.GameObject.Room> undoStack = new();
         private readonly Stack<RPGGame.GameObject.Room> redoStack = new();
 
-        public RoomEditor(string roomPath, MainWindow parent)
+        public RoomEditor(string roomPath, MainWindow parent, bool forceCreateNew = false)
         {
             InitializeComponent();
 
@@ -46,7 +56,7 @@ namespace RPGLevelEditor
                     "Room Load Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
-            if (File.Exists(RoomPath))
+            if (!forceCreateNew && File.Exists(RoomPath))
             {
                 try
                 {
@@ -67,6 +77,8 @@ namespace RPGLevelEditor
             OpenRoom ??= new RPGGame.GameObject.Room(new RPGGame.GameObject.Tile[0, 0],
                 Array.Empty<RPGGame.GameObject.Entity>(),
                 Microsoft.Xna.Framework.Color.CornflowerBlue);
+
+            UnsavedChanges = forceCreateNew;
 
             Title += " - " + RoomPath;
 
