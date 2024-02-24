@@ -48,6 +48,8 @@ namespace RPGLevelEditor
 
         private readonly Dictionary<string, ImageSource> imageCache = new();
 
+        private Point lastDrawnPoint = new();
+
         public RoomEditor(string roomPath, MainWindow parent, bool forceCreateNew = false)
         {
             InitializeComponent();
@@ -213,7 +215,6 @@ namespace RPGLevelEditor
 
                         imageCache[textureName] = imageSource;
                     }
-                    
 
                     Image newElement = new()
                     {
@@ -302,6 +303,7 @@ namespace RPGLevelEditor
                         Margin = new Thickness(x * TileSize.X - 1, 0, 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Center,
+                        IsHitTestVisible = false,
                         Fill = Brushes.DarkGoldenrod
                     });
                 }
@@ -315,6 +317,7 @@ namespace RPGLevelEditor
                         Margin = new Thickness(0, y * TileSize.Y - 1, 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Center,
                         VerticalAlignment = VerticalAlignment.Top,
+                        IsHitTestVisible = false,
                         Fill = Brushes.DarkGoldenrod
                     });
                 }
@@ -418,6 +421,7 @@ namespace RPGLevelEditor
             if (e is { ChangedButton: MouseButton.Left, ButtonState: MouseButtonState.Pressed }
                 && sender is FrameworkElement { Tag: Point position })
             {
+                lastDrawnPoint = position;
                 ReplaceTileAtPosition(position);
             }
         }
@@ -427,7 +431,36 @@ namespace RPGLevelEditor
             if (e is { LeftButton: MouseButtonState.Pressed }
                 && sender is FrameworkElement { Tag: Point position })
             {
-                ReplaceTileAtPosition(position);
+                // Bresenham's line algorithm - removes gaps between drawn points when moving cursor quickly
+                int x1 = (int)lastDrawnPoint.X;
+                int y1 = (int)lastDrawnPoint.Y;
+                int x2 = (int)position.X;
+                int y2 = (int)position.Y;
+                int dx = Math.Abs(x2 - x1);
+                int dy = Math.Abs(y2 - y1);
+                int sx = x1 < x2 ? 1 : -1;
+                int sy = y1 < y2 ? 1 : -1;
+                int err = dx - dy;
+                while (true)
+                {
+                    ReplaceTileAtPosition(position);
+                    if (x1 == x2 && y1 == y2)
+                    {
+                        // End reached
+                        break;
+                    }
+                    int e2 = err * 2;
+                    if (e2 > -dy)
+                    {
+                        err -= dy;
+                        x1 += sx;
+                    }
+                    if (e2 < dx)
+                    {
+                        err += dx;
+                        y1 += sy;
+                    }
+                }
             }
         }
 
