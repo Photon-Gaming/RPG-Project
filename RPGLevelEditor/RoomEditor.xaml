@@ -21,6 +21,7 @@
                 <MenuItem x:Name="redoItem" Header="_Redo" InputGestureText="Ctrl+Y" Click="redoItem_OnClick"/>
                 <Separator/>
                 <MenuItem Header="Change Room _Dimensions..." Click="DimensionsItem_OnClick"/>
+                <MenuItem Header="Change Room _Background Colour..." Click="BackgroundColourItem_OnClick"/>
             </MenuItem>
             <MenuItem Header="_View">
                 <MenuItem x:Name="gridOverlayItem" Header="_Show Grid Overlay" IsCheckable="True" Click="gridOverlayItem_OnClick"/>

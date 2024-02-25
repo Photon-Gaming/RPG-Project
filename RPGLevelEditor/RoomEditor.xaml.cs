@@ -547,6 +547,32 @@ namespace RPGLevelEditor
             }
         }
 
+        private void BackgroundColourItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            ToolWindows.ColorDialog dialog = new()
+            {
+                SelectedColor = new Color()
+                {
+                    R = OpenRoom.BackgroundColor.R,
+                    G = OpenRoom.BackgroundColor.G,
+                    B = OpenRoom.BackgroundColor.B,
+                    A = byte.MaxValue
+                },
+                StartFullOpen = true
+            };
+            if (dialog.ShowDialog(this))
+            {
+                OpenRoom.BackgroundColor = new Microsoft.Xna.Framework.Color()
+                {
+                    R = dialog.SelectedColor.R,
+                    G = dialog.SelectedColor.G,
+                    B = dialog.SelectedColor.B,
+                    A = byte.MaxValue
+                };
+                UpdateGridBackground();
+            }
+        }
+
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             if (UnsavedChanges)
