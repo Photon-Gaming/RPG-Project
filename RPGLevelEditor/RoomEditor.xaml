@@ -12,13 +12,19 @@
             <RowDefinition Height="20*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Menu Grid.Row="0" Padding="0,0,0,3">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Padding="0,0,0,3">
             <MenuItem Header="_File">
                 <MenuItem Header="_Save" InputGestureText="Ctrl+S" Click="SaveItem_OnClick"/>
             </MenuItem>
             <MenuItem Header="_Edit">
                 <MenuItem x:Name="undoItem" Header="_Undo" InputGestureText="Ctrl+Z" Click="undoItem_OnClick"/>
                 <MenuItem x:Name="redoItem" Header="_Redo" InputGestureText="Ctrl+Y" Click="redoItem_OnClick"/>
+                <Separator/>
+                <MenuItem x:Name="collisionEditItem" Header="Edit _Collision" IsCheckable="True" Click="collisionEditItem_OnClick"/>
                 <Separator/>
                 <MenuItem Header="Change Room _Dimensions..." Click="DimensionsItem_OnClick"/>
                 <MenuItem Header="Change Room _Background Colour..." Click="BackgroundColourItem_OnClick"/>
@@ -27,39 +33,34 @@
                 <MenuItem x:Name="gridOverlayItem" Header="_Show Grid Overlay" IsCheckable="True" Click="gridOverlayItem_OnClick"/>
             </MenuItem>
         </Menu>
-        <TabControl Grid.Row="1">
-            <TabItem Header="Tile Map">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <ScrollViewer x:Name="tileMapScroll" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" PreviewMouseWheel="tileMapScroll_PreviewMouseWheel" MouseMove="tileMapScroll_MouseMove">
-                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}">
-                            <Grid.LayoutTransform>
-                                <ScaleTransform x:Name="tileMapScaleTransform" CenterX="0.5" CenterY="0.5"/>
-                            </Grid.LayoutTransform>
-                            <Image x:Name="tileGridDisplay" MouseDown="tileGridDisplay_MouseDown" MouseMove="tileGridDisplay_MouseMove" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseLeave="tileGridDisplay_MouseLeave"/>
-                            <Grid x:Name="gridOverlayXDisplay" IsHitTestVisible="False" Focusable="False"/>
-                            <Grid x:Name="gridOverlayYDisplay" IsHitTestVisible="False" Focusable="False"/>
-                            <!-- Center point marker -->
-                            <Rectangle HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Blue" Width="3" Height="16"/>
-                            <Rectangle HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Red" Width="16" Height="3"/>
-                            <!-- Origin marker -->
-                            <Rectangle HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Blue" Width="3" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}" Margin="-3,0,0,0"/>
-                            <Rectangle HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Red" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="3" Margin="0,-3,0,0"/>
-                            <!-- Limit marker -->
-                            <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Magenta" Width="3" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}" Margin="0,0,-3,0"/>
-                            <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Green" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="3" Margin="0,0,0,-3"/>
-                        </Grid>
-                    </ScrollViewer>
-                    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Background="#FFE0E0E0">
-                        <WrapPanel x:Name="textureSelectPanel" Width="152"/>
-                    </ScrollViewer>
-                </Grid>
+        <ScrollViewer x:Name="tileMapScroll" Grid.Row="1" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" PreviewMouseWheel="tileMapScroll_PreviewMouseWheel" MouseMove="tileMapScroll_MouseMove">
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}">
+                <Grid.LayoutTransform>
+                    <ScaleTransform x:Name="tileMapScaleTransform" CenterX="0.5" CenterY="0.5"/>
+                </Grid.LayoutTransform>
+                <Image x:Name="tileGridDisplay" MouseDown="tileGridDisplay_MouseDown" MouseMove="tileGridDisplay_MouseMove" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseLeave="tileGridDisplay_MouseLeave"/>
+                <Image x:Name="collisionGridDisplay" RenderOptions.BitmapScalingMode="NearestNeighbor" IsHitTestVisible="False" Focusable="False"/>
+                <Grid x:Name="gridOverlayXDisplay" IsHitTestVisible="False" Focusable="False"/>
+                <Grid x:Name="gridOverlayYDisplay" IsHitTestVisible="False" Focusable="False"/>
+                <!-- Center point marker -->
+                <Rectangle HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Blue" Width="3" Height="16"/>
+                <Rectangle HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Red" Width="16" Height="3"/>
+                <!-- Origin marker -->
+                <Rectangle HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Blue" Width="3" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}" Margin="-3,0,0,0"/>
+                <Rectangle HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Red" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="3" Margin="0,-3,0,0"/>
+                <!-- Limit marker -->
+                <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Magenta" Width="3" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}" Margin="0,0,-3,0"/>
+                <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Green" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="3" Margin="0,0,0,-3"/>
+            </Grid>
+        </ScrollViewer>
+        <TabControl Grid.Row="1" Grid.Column="1">
+            <TabItem Header="Tiles">
+                <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Background="#FFE0E0E0">
+                    <WrapPanel x:Name="textureSelectPanel" Width="152"/>
+                </ScrollViewer>
             </TabItem>
         </TabControl>
-        <StatusBar Grid.Row="2">
+        <StatusBar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
             <StatusBarItem>
                 <Label x:Name="mousePositionLabel" Content="Mouse: (0.00, 0.00)" Padding="0"/>
             </StatusBarItem>

@@ -20,7 +20,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\collision.png" />
     <None Remove="Resources\placeholder.png" />
+    <None Remove="Resources\transparent.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,7 +34,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Resources\collision.png" />
     <Resource Include="Resources\placeholder.png" />
+    <Resource Include="Resources\transparent.png" />
   </ItemGroup>
 
 </Project>
