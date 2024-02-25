@@ -608,6 +608,9 @@ namespace RPGLevelEditor
                         SystemSounds.Exclamation.Play();
                     }
                     break;
+                case Key.S when e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control):
+                    Save();
+                    break;
             }
         }
 

@@ -14,7 +14,7 @@
         </Grid.RowDefinitions>
         <Menu Grid.Row="0" Padding="0,0,0,3">
             <MenuItem Header="_File">
-                <MenuItem Header="_Save" Click="SaveItem_OnClick"/>
+                <MenuItem Header="_Save" InputGestureText="Ctrl+S" Click="SaveItem_OnClick"/>
             </MenuItem>
             <MenuItem Header="_Edit">
                 <MenuItem x:Name="undoItem" Header="_Undo" InputGestureText="Ctrl+Z" Click="undoItem_OnClick"/>
