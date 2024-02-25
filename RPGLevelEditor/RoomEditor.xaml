@@ -38,9 +38,9 @@
                             <Grid.LayoutTransform>
                                 <ScaleTransform x:Name="tileMapScaleTransform" CenterX="0.5" CenterY="0.5"/>
                             </Grid.LayoutTransform>
-                            <Grid x:Name="tileGridDisplay"/>
-                            <Grid x:Name="gridOverlayXDisplay"/>
-                            <Grid x:Name="gridOverlayYDisplay"/>
+                            <Image x:Name="tileGridDisplay" MouseDown="tileGridDisplay_MouseDown" MouseMove="tileGridDisplay_MouseMove" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseLeave="tileGridDisplay_MouseLeave"/>
+                            <Grid x:Name="gridOverlayXDisplay" IsHitTestVisible="False" Focusable="False"/>
+                            <Grid x:Name="gridOverlayYDisplay" IsHitTestVisible="False" Focusable="False"/>
                             <!-- Center point marker -->
                             <Rectangle HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Blue" Width="3" Height="16"/>
                             <Rectangle HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Red" Width="16" Height="3"/>

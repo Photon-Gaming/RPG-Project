@@ -46,9 +46,11 @@ namespace RPGLevelEditor
         private readonly Stack<StateStackFrame> undoStack = new();
         private readonly Stack<StateStackFrame> redoStack = new();
 
-        private readonly Dictionary<string, ImageSource> imageCache = new();
+        private readonly Dictionary<string, BitmapSource> imageCache = new();
 
-        private Point lastDrawnPoint = new();
+        private Point? lastDrawnPoint = new();
+
+        private WriteableBitmap? tileGridBitmap;
 
         public RoomEditor(string roomPath, MainWindow parent, bool forceCreateNew = false)
         {
@@ -187,10 +189,18 @@ namespace RPGLevelEditor
         {
             UpdateGridBackground();
 
-            tileGridDisplay.Children.Clear();
-
             int xSize = OpenRoom.TileMap.GetLength(0);
             int ySize = OpenRoom.TileMap.GetLength(1);
+
+            tileGridBitmap = new WriteableBitmap(
+                (int)TileSize.X * xSize,
+                (int)TileSize.Y * ySize,
+                96,
+                96,
+                PixelFormats.Bgra32,
+                null);
+            tileGridDisplay.Source = tileGridBitmap;
+
             tileGridDisplay.Width = xSize * TileSize.X;
             tileGridDisplay.Height = ySize * TileSize.Y;
 
@@ -198,10 +208,9 @@ namespace RPGLevelEditor
             {
                 for (int y = 0; y < ySize; y++)
                 {
-                    Point gridPos = new(x, y);
                     string textureName = OpenRoom.TileMap[x, y].Texture;
 
-                    if (!imageCache.TryGetValue(textureName, out ImageSource? imageSource))
+                    if (!imageCache.TryGetValue(textureName, out BitmapSource? imageSource))
                     {
                         string texturePath = Path.Join(TileTextureFolderPath, textureName);
                         texturePath = Path.ChangeExtension(texturePath, "png");
@@ -211,27 +220,17 @@ namespace RPGLevelEditor
                             texturePath = "pack://application:,,,/Resources/placeholder.png";
                         }
 
-                        imageSource = new BitmapImage(new Uri(texturePath));
+                        imageSource = new BitmapImage(new Uri(texturePath))
+                        {
+                            CacheOption = BitmapCacheOption.OnLoad,
+                            DecodePixelHeight = (int)TileSize.Y,
+                            DecodePixelWidth = (int)TileSize.X
+                        };
 
                         imageCache[textureName] = imageSource;
                     }
 
-                    Image newElement = new()
-                    {
-                        Margin = new Thickness(gridPos.X * TileSize.X, gridPos.Y * TileSize.Y, 0, 0),
-                        Source = imageSource,
-                        Width = TileSize.X,
-                        Height = TileSize.Y,
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                        VerticalAlignment = VerticalAlignment.Top,
-                        Stretch = Stretch.Fill,
-                        SnapsToDevicePixels = true,
-                        Tag = gridPos
-                    };
-                    RenderOptions.SetBitmapScalingMode(newElement, BitmapScalingMode.NearestNeighbor);
-                    newElement.MouseDown += GridSquare_MouseDown;
-                    newElement.MouseEnter += GridSquare_MouseEnter;
-                    _ = tileGridDisplay.Children.Add(newElement);
+                    tileGridBitmap.CopyImage(imageSource, x * (int)TileSize.X, y * (int)TileSize.Y);
                 }
             }
 
@@ -240,18 +239,15 @@ namespace RPGLevelEditor
 
         private void UpdateTileTexture(int x, int y)
         {
-            int ySize = OpenRoom.TileMap.GetLength(1);
-
-            if (!(tileGridDisplay.Children[x * ySize + y] is Image { Tag: Point existingGrid } imageElement && existingGrid == new Point(x, y)))
+            if (tileGridBitmap is null)
             {
-                // Child doesn't match expected values - recreate grid
                 CreateTileGrid();
                 return;
             }
 
             string textureName = OpenRoom.TileMap[x, y].Texture;
 
-            if (!imageCache.TryGetValue(textureName, out ImageSource? imageSource))
+            if (!imageCache.TryGetValue(textureName, out BitmapSource? imageSource))
             {
                 string texturePath = Path.Join(TileTextureFolderPath, textureName);
                 texturePath = Path.ChangeExtension(texturePath, "png");
@@ -266,7 +262,7 @@ namespace RPGLevelEditor
                 imageCache[textureName] = imageSource;
             }
 
-            imageElement.Source = imageSource;
+            tileGridBitmap.CopyImage(imageSource, x * (int)TileSize.X, y * (int)TileSize.Y);
         }
 
         private void UpdateGridBackground()
@@ -370,15 +366,17 @@ namespace RPGLevelEditor
             redoItem.IsEnabled = false;
         }
 
-        private void ReplaceTileAtPosition(Point position)
+        private void ReplaceTileAtPosition(int x, int y)
         {
             if (SelectedTextureName is null)
             {
                 return;
             }
 
-            int x = (int)position.X;
-            int y = (int)position.Y;
+            if (x < 0 || y < 0 || x >= OpenRoom.TileMap.GetLength(0) || y >= OpenRoom.TileMap.GetLength(1))
+            {
+                return;
+            }
 
             if (SelectedTextureName == OpenRoom.TileMap[x, y].Texture)
             {
@@ -416,26 +414,30 @@ namespace RPGLevelEditor
             }
         }
 
-        private void GridSquare_MouseDown(object sender, MouseButtonEventArgs e)
+        private void tileGridDisplay_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e is { ChangedButton: MouseButton.Left, ButtonState: MouseButtonState.Pressed }
-                && sender is FrameworkElement { Tag: Point position })
+            if (e is { ChangedButton: MouseButton.Left, ButtonState: MouseButtonState.Pressed })
             {
-                lastDrawnPoint = position;
-                ReplaceTileAtPosition(position);
+                Point relativeMousePos = e.GetPosition(tileGridDisplay);
+                relativeMousePos = new Point(relativeMousePos.X / TileSize.X, relativeMousePos.Y / TileSize.Y);
+
+                lastDrawnPoint = relativeMousePos;
+                ReplaceTileAtPosition((int)relativeMousePos.X, (int)relativeMousePos.Y);
             }
         }
 
-        private void GridSquare_MouseEnter(object sender, MouseEventArgs e)
+        private void tileGridDisplay_MouseMove(object sender, MouseEventArgs e)
         {
-            if (e is { LeftButton: MouseButtonState.Pressed }
-                && sender is FrameworkElement { Tag: Point position })
+            if (e.LeftButton == MouseButtonState.Pressed)
             {
+                Point relativeMousePos = e.GetPosition(tileGridDisplay);
+                relativeMousePos = new Point(relativeMousePos.X / TileSize.X, relativeMousePos.Y / TileSize.Y);
+
                 // Bresenham's line algorithm - removes gaps between drawn points when moving cursor quickly
-                int x1 = (int)lastDrawnPoint.X;
-                int y1 = (int)lastDrawnPoint.Y;
-                int x2 = (int)position.X;
-                int y2 = (int)position.Y;
+                int x1 = (int)(lastDrawnPoint?.X ?? relativeMousePos.X);
+                int y1 = (int)(lastDrawnPoint?.Y ?? relativeMousePos.Y);
+                int x2 = (int)relativeMousePos.X;
+                int y2 = (int)relativeMousePos.Y;
                 int dx = Math.Abs(x2 - x1);
                 int dy = Math.Abs(y2 - y1);
                 int sx = x1 < x2 ? 1 : -1;
@@ -443,7 +445,7 @@ namespace RPGLevelEditor
                 int err = dx - dy;
                 while (true)
                 {
-                    ReplaceTileAtPosition(position);
+                    ReplaceTileAtPosition(x1, y1);
                     if (x1 == x2 && y1 == y2)
                     {
                         // End reached
@@ -461,7 +463,13 @@ namespace RPGLevelEditor
                         y1 += sy;
                     }
                 }
+                lastDrawnPoint = relativeMousePos;
             }
+        }
+
+        private void tileGridDisplay_MouseLeave(object sender, MouseEventArgs e)
+        {
+            lastDrawnPoint = null;
         }
 
         private void tileMapScroll_MouseMove(object sender, MouseEventArgs e)
