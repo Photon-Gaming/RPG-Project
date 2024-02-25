@@ -525,7 +525,10 @@ namespace RPGLevelEditor
             int xLength = OpenRoom.TileMap.GetLength(0);
             int yLength = OpenRoom.TileMap.GetLength(1);
 
-            ToolWindows.DimensionsDialog dialog = new(xLength, yLength);
+            ToolWindows.DimensionsDialog dialog = new(xLength, yLength)
+            {
+                Owner = this
+            };
             if (dialog.ShowDialog() ?? false)
             {
                 if (dialog.X < xLength || dialog.Y < yLength)
@@ -580,6 +583,12 @@ namespace RPGLevelEditor
                     }
                     break;
             }
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            // Prevent main window from being hidden when this window closes
+            _ = ParentWindow.Activate();
         }
     }
 }
