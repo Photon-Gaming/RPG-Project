@@ -6,7 +6,7 @@ namespace RPGGame.GameObject
 {
     [Serializable]
     [JsonObject(MemberSerialization.OptIn)]
-    public class Entity(Vector2 position, Vector2 size)
+    public class Entity(Vector2 position, Vector2 size) : ICloneable
     {
         [JsonProperty]
         public Vector2 Position { get; protected set; } = position;
@@ -28,6 +28,11 @@ namespace RPGGame.GameObject
 
             Position = targetPos;
             return true;
+        }
+
+        public object Clone()
+        {
+            return new Entity(Position, Size);
         }
     }
 }
