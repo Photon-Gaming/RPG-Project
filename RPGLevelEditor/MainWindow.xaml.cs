@@ -56,7 +56,7 @@ namespace RPGLevelEditor
                 ValidateNames = true,
                 Title = @"Select the RPGGame\Content folder"
             };
-            if (dialog.ShowDialog() ?? false)
+            if (dialog.ShowDialog(this) ?? false)
             {
                 EditorConfig.ContentFolderPath = dialog.FolderName;
             }
@@ -68,11 +68,28 @@ namespace RPGLevelEditor
             {
                 CheckFileExists = true,
                 CheckPathExists = true,
+                Filter = "JSON files (*.json)|*.json",
                 Title = "Open Room"
             };
-            if (dialog.ShowDialog() ?? false)
+            if (dialog.ShowDialog(this) ?? false)
             {
                 new RoomEditor(dialog.FileName, this).Show();
+            }
+        }
+
+        private void NewRoomItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog dialog = new()
+            {
+                CheckFileExists = false,
+                CheckPathExists = true,
+                AddExtension = true,
+                Filter = "JSON file (*.json)|*.json",
+                Title = "Create Room"
+            };
+            if (dialog.ShowDialog(this) ?? false)
+            {
+                new RoomEditor(dialog.FileName, this, true).Show();
             }
         }
 

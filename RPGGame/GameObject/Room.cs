@@ -14,7 +14,7 @@ namespace RPGGame.GameObject
         [JsonProperty]
         public Entity[] Entities { get; protected set; } = entities;
         [JsonProperty]
-        public Color BackgroundColor { get; protected set; } = backgroundColor;
+        public Color BackgroundColor { get; set; } = backgroundColor;
 
         public object Clone()
         {
