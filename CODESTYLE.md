@@ -83,6 +83,11 @@
         - `public (int, int) MyVar { get; set; }`
 13. Methods that do not access instance data, and predictably won't need to in the future, should be marked as `static`.
 14. Public methods, unless *very* self explanatory with zero possible pitfalls, should include a documentation comment that explains: exactly what the method does; any side effects it has; what any even remotely ambiguous parameters are for and what they do; what value the method returns if not plainly obvious; and any remarks regarding possibly unexpected behaviour of the method.
+15. If a method returns a value that goes unused after a call to the method, explicitly write that you are ignoring the return value with a discard (`_`).
+    - e.g. Prefer this:
+        - <pre>public int SomeMethod()<br/>{<br/>    ...<br/>}<br/><br/>_ = SomeMethod();<br/></pre>
+    - Over this:
+        - <pre>public int SomeMethod()<br/>{<br/>    ...<br/>}<br/><br/>SomeMethod();<br/></pre>
 
 ## 3. Formatting and Layout
 
