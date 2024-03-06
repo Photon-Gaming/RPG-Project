@@ -17,6 +17,7 @@ namespace RPGGame
         private GameObject.World? currentWorld;
 
         private readonly ScreenDrawing.TileDrawing tileDraw;
+        private readonly ScreenDrawing.EntityDrawing entityDraw;
 
         public RPGGame()
         {
@@ -25,6 +26,7 @@ namespace RPGGame
             IsMouseVisible = true;
 
             tileDraw = new ScreenDrawing.TileDrawing(this);
+            entityDraw = new ScreenDrawing.EntityDrawing(this);
         }
 
         protected override void Initialize()
@@ -70,9 +72,20 @@ namespace RPGGame
                 return;
             }
 
-            spriteBatch.Begin();
+            // PointClamp = Use nearest neighbour scaling
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-            tileDraw.DrawTileGridCentered(currentWorld.CurrentRoom.TileMap);
+            Point tileGridOffset = tileDraw.DrawTileGridCentered(currentWorld.CurrentRoom.TileMap);
+
+            foreach (GameObject.Entity entity in currentWorld.CurrentRoom.Entities)
+            {
+                _ = entityDraw.DrawEntityOnGrid(entity, tileGridOffset, ScreenDrawing.TileDrawing.TileSize);
+            }
+
+            if (currentWorld.CurrentPlayer is not null)
+            {
+                Rectangle playerScreenArea = entityDraw.DrawEntityOnGrid(currentWorld.CurrentPlayer, tileGridOffset, ScreenDrawing.TileDrawing.TileSize);
+            }
 
             spriteBatch.End();
 
