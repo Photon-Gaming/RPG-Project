@@ -199,8 +199,10 @@ namespace RPGLevelEditor
             int ySize = OpenRoom.TileMap.GetLength(1);
 
             tileGridBitmap = new WriteableBitmap(
-                (int)TileSize.X * xSize,
-                (int)TileSize.Y * ySize,
+                // Having a pixel dimension be 0 is not possible,
+                // so use 1 pixel instead if room is 0 tiles in size
+                Math.Max(1, (int)TileSize.X * xSize),
+                Math.Max(1, (int)TileSize.Y * ySize),
                 96,
                 96,
                 PixelFormats.Bgra32,
@@ -211,8 +213,10 @@ namespace RPGLevelEditor
             tileGridDisplay.Height = ySize * TileSize.Y;
 
             collisionGridBitmap = new WriteableBitmap(
-                (int)TileSize.X * xSize,
-                (int)TileSize.Y * ySize,
+                // Having a pixel dimension be 0 is not possible,
+                // so use 1 pixel instead if room is 0 tiles in size
+                Math.Max(1, (int)TileSize.X * xSize),
+                Math.Max(1, (int)TileSize.Y * ySize),
                 96,
                 96,
                 PixelFormats.Bgra32,
