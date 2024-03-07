@@ -258,10 +258,11 @@ namespace RPGLevelEditor
                 imageCache[textureName] = imageSource;
             }
 
-            tileGridBitmap.CopyImage(imageSource, x * (int)TileSize.X, y * (int)TileSize.Y);
+            tileGridBitmap.CopyImage(
+                imageSource, x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
             collisionGridBitmap.CopyImage(
                 collisionEditItem.IsChecked && OpenRoom.TileMap[x, y].IsCollision ? collisionImage : transparentImage, 
-                x * (int)TileSize.X, y * (int)TileSize.Y);
+                x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
         }
 
         private void UpdateGridBackground()
