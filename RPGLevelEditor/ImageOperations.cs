@@ -8,8 +8,9 @@ namespace RPGLevelEditor
     {
         public static void CopyImage(this WriteableBitmap target, BitmapSource source, int x, int y, int width, int height)
         {
-            if (source.PixelWidth != width || source.PixelHeight != height)
+            if (source.PixelWidth != width || source.PixelHeight != height || source.Format != target.Format)
             {
+                source = new FormatConvertedBitmap(source, target.Format, target.Palette, 0);
                 source = new TransformedBitmap(source,
                     new ScaleTransform(width / (double)source.PixelWidth, height / (double)source.PixelHeight));
             }
