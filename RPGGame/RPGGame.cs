@@ -8,21 +8,25 @@ namespace RPGGame
     {
         public const string TextureFolder = "Textures";
 
-        internal GraphicsDeviceManager graphics;
-        internal SpriteBatch spriteBatch;
+        internal GraphicsDeviceManager? graphics;
+        internal SpriteBatch? spriteBatch;
 
         private const string defaultWorldName = "default";
 
-        private RPGContentLoader rpgContentLoader;
-        private GameObject.World currentWorld;
+        private RPGContentLoader? rpgContentLoader;
+        private GameObject.World? currentWorld;
 
-        private ScreenDrawing.TileDrawing tileDraw;
+        private readonly ScreenDrawing.TileDrawing tileDraw;
+        private readonly ScreenDrawing.EntityDrawing entityDraw;
 
         public RPGGame()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+
+            tileDraw = new ScreenDrawing.TileDrawing(this);
+            entityDraw = new ScreenDrawing.EntityDrawing(this);
         }
 
         protected override void Initialize()
@@ -39,8 +43,6 @@ namespace RPGGame
             currentWorld = rpgContentLoader.LoadWorld(defaultWorldName);
             currentWorld.ChangePlayer(new GameObject.Player());
             currentWorld.ChangeRoom(rpgContentLoader.LoadRoom(currentWorld.DefaultRoomName));
-
-            tileDraw = new ScreenDrawing.TileDrawing(this);
         }
 
         protected override void Update(GameTime gameTime)
@@ -57,11 +59,33 @@ namespace RPGGame
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(currentWorld.CurrentRoom.BackgroundColor);
+            if (spriteBatch is null)
+            {
+                return;
+            }
 
-            spriteBatch.Begin();
+            GraphicsDevice.Clear(currentWorld?.CurrentRoom?.BackgroundColor ?? Color.Purple);
 
-            tileDraw.DrawTileGridCentered(currentWorld.CurrentRoom.TileMap);
+            if (currentWorld?.CurrentRoom is null)
+            {
+                GraphicsDevice.Clear(currentWorld?.CurrentRoom?.BackgroundColor ?? Color.Magenta);
+                return;
+            }
+
+            // PointClamp = Use nearest neighbour scaling
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+
+            Point tileGridOffset = tileDraw.DrawTileGridCentered(currentWorld.CurrentRoom.TileMap);
+
+            foreach (GameObject.Entity entity in currentWorld.CurrentRoom.Entities)
+            {
+                _ = entityDraw.DrawEntityOnGrid(entity, tileGridOffset, ScreenDrawing.TileDrawing.TileSize);
+            }
+
+            if (currentWorld.CurrentPlayer is not null)
+            {
+                Rectangle playerScreenArea = entityDraw.DrawEntityOnGrid(currentWorld.CurrentPlayer, tileGridOffset, ScreenDrawing.TileDrawing.TileSize);
+            }
 
             spriteBatch.End();
 

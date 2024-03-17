@@ -20,7 +20,8 @@ namespace RPGGame
                 throw new FileNotFoundException();
             }
 
-            return JsonConvert.DeserializeObject<GameObject.World>(File.ReadAllText(worldFilePath));
+            return JsonConvert.DeserializeObject<GameObject.World>(File.ReadAllText(worldFilePath))
+                ?? throw new JsonException();
         }
 
         public GameObject.Room LoadRoom(string roomName)
@@ -33,7 +34,8 @@ namespace RPGGame
                 throw new FileNotFoundException();
             }
 
-            return JsonConvert.DeserializeObject<GameObject.Room>(File.ReadAllText(roomFilePath));
+            return JsonConvert.DeserializeObject<GameObject.Room>(File.ReadAllText(roomFilePath))
+                ?? throw new JsonException();
         }
     }
 }
