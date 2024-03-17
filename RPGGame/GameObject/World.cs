@@ -10,9 +10,9 @@ namespace RPGGame.GameObject
         [JsonProperty]
         public string DefaultRoomName { get; } = defaultRoomName;
 
-        public Player CurrentPlayer { get; protected set; }
+        public Player? CurrentPlayer { get; protected set; }
 
-        public Room CurrentRoom { get; protected set; }
+        public Room? CurrentRoom { get; protected set; }
 
         public void ChangePlayer(Player player)
         {
