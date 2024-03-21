@@ -7,6 +7,7 @@ namespace RPGGame.ScreenDrawing
     public class TileDrawing(RPGGame game)
     {
         public static readonly Point TileSize = new(32, 32);
+        public Matrix transform = Matrix.CreateScale(new Vector3(1, 1, 0));
         public static readonly string TileTextureFolder = Path.Join(RPGGame.TextureFolder, "Tiles");
 
         /// <summary>
@@ -50,6 +51,15 @@ namespace RPGGame.ScreenDrawing
                 (game.GraphicsDevice.Viewport.Height / 2) - (gridScreenSize.Y / 2));
             DrawTileGrid(screenOffset, tileMap);
             return screenOffset;
+        }
+
+        /// <summary>
+        /// Sets the position and zoom-scale of the camera 
+        /// </summary>
+        public void Camera(Vector2 position, float scale)
+        {
+            transform = Matrix.CreateTranslation(new Vector3(-position.X, -position.Y, 0)) * 
+                        Matrix.CreateScale(new Vector3(scale, scale, 0));
         }
     }
 }

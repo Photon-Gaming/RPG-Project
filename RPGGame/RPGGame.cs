@@ -73,7 +73,7 @@ namespace RPGGame
             }
 
             // PointClamp = Use nearest neighbour scaling
-            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: tileDraw.transform);
 
             Point tileGridOffset = tileDraw.DrawTileGridCentered(currentWorld.CurrentRoom.TileMap);
 
