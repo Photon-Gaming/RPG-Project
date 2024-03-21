@@ -265,7 +265,7 @@ namespace RPGLevelEditor
             tileGridBitmap.CopyImage(
                 imageSource, x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
             collisionGridBitmap.CopyImage(
-                collisionEditItem.IsChecked && OpenRoom.TileMap[x, y].IsCollision ? collisionImage : transparentImage, 
+                collisionEditItem.IsChecked && OpenRoom.TileMap[x, y].IsCollision ? collisionImage : transparentImage,
                 x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
         }
 
@@ -561,7 +561,7 @@ namespace RPGLevelEditor
             {
                 if (dialog.X < xLength || dialog.Y < yLength)
                 {
-                    MessageBoxResult result = MessageBox.Show(this, 
+                    MessageBoxResult result = MessageBox.Show(this,
                         "The entered dimensions are smaller than the current dimensions. " +
                         "Shrinking the room will cause tiles and entities outside the new boundaries to be lost.\n\n" +
                         "Are you sure you want to continue?",

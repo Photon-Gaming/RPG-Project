@@ -8,7 +8,7 @@ namespace RPGLevelEditor.ToolWindows
     public unsafe class ColorDialog
     {
         [Flags]
-        private enum CC
+        protected enum CC
         {
             CC_ANYCOLOR = 0x00000100,
             CC_ENABLEHOOK = 0x00000010,
@@ -22,7 +22,7 @@ namespace RPGLevelEditor.ToolWindows
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private ref struct CHOOSECOLORW
+        protected ref struct CHOOSECOLORW
         {
             public int lStructSize;
             public IntPtr hwndOwner;
@@ -36,7 +36,7 @@ namespace RPGLevelEditor.ToolWindows
         }
 
         [DllImport("comdlg32.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode)]
-        private static extern bool ChooseColorW(CHOOSECOLORW* lpcc);
+        protected static extern bool ChooseColorW(CHOOSECOLORW* lpcc);
 
         public Color SelectedColor { get; set; }
         public bool PreventFullOpen { get; set; }
