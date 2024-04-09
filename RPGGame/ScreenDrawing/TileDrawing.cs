@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -6,8 +7,11 @@ namespace RPGGame.ScreenDrawing
 {
     public class TileDrawing(RPGGame game)
     {
-        public static readonly Point TileSize = new(32, 32);
+        public static readonly Point MinTileSize = new(1, 1);
+        public static readonly Point MaxTileSize = new(100, 100);
         public static readonly string TileTextureFolder = Path.Join(RPGGame.TextureFolder, "Tiles");
+
+        public Point TileSize { get; private set; } = new(32, 32);
 
         /// <summary>
         /// Draw a texture with a given name to the screen, with its top left corner at the specified position.
@@ -50,6 +54,28 @@ namespace RPGGame.ScreenDrawing
                 (game.GraphicsDevice.Viewport.Height / 2) - (gridScreenSize.Y / 2));
             DrawTileGrid(screenOffset, tileMap);
             return screenOffset;
+        }
+
+        /// <summary>
+        /// Set the pixel dimensions of drawn background tiles.
+        /// </summary>
+        /// <param name="relative">
+        /// Whether <paramref name="desiredSize"/> should be treated as an absolute value or added to the existing tile size.
+        /// </param>
+        /// <returns>
+        /// The new tile size. Will be different from <paramref name="desiredSize"/> if it was invalid.
+        /// </returns>
+        public Point SetTileSize(Point desiredSize, bool relative)
+        {
+            if (relative)
+            {
+                desiredSize += TileSize;
+            }
+            desiredSize = new Point(
+                Math.Clamp(desiredSize.X, MinTileSize.X, MaxTileSize.X),
+                Math.Clamp(desiredSize.Y, MinTileSize.Y, MaxTileSize.Y));
+            TileSize = desiredSize;
+            return desiredSize;
         }
     }
 }
