@@ -167,7 +167,7 @@ namespace RPGLevelEditor
             undoStack.Clear();
             redoStack.Clear();
             undoItem.IsEnabled = false;
-            redoItem.IsChecked = false;
+            redoItem.IsEnabled = false;
 
             int oldXSize = OpenRoom.TileMap.GetLength(0);
             int oldYSize = OpenRoom.TileMap.GetLength(1);
