@@ -93,9 +93,7 @@ namespace RPGGame.ScreenDrawing
             // Get whichever of the dimensions is closest to 0 (the least "extreme" value will be the one that doesn't exceed any limits).
             desiredScale = Math.Abs(clampedXScale) < Math.Abs(clampedYScale) ? clampedXScale : clampedYScale;
 
-            TileSize = new Point(
-                (int)Math.Clamp(DefaultTileSize.X * desiredScale, MinTileSize.X, MaxTileSize.X),
-                (int)Math.Clamp(DefaultTileSize.Y * desiredScale, MinTileSize.Y, MaxTileSize.Y));
+            TileSize = new Point((int)(DefaultTileSize.X * desiredScale), (int)(DefaultTileSize.Y * desiredScale));
             return desiredScale;
         }
     }
