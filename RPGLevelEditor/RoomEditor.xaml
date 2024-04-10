@@ -21,8 +21,8 @@
                 <MenuItem Header="_Save" InputGestureText="Ctrl+S" Click="SaveItem_OnClick"/>
             </MenuItem>
             <MenuItem Header="_Edit">
-                <MenuItem x:Name="undoItem" Header="_Undo" InputGestureText="Ctrl+Z" Click="undoItem_OnClick"/>
-                <MenuItem x:Name="redoItem" Header="_Redo" InputGestureText="Ctrl+Y" Click="redoItem_OnClick"/>
+                <MenuItem x:Name="undoItem" Header="_Undo" InputGestureText="Ctrl+Z" IsEnabled="False" Click="undoItem_OnClick"/>
+                <MenuItem x:Name="redoItem" Header="_Redo" InputGestureText="Ctrl+Y" IsEnabled="False" Click="redoItem_OnClick"/>
                 <Separator/>
                 <MenuItem x:Name="collisionEditItem" Header="Edit _Collision" IsCheckable="True" Click="collisionEditItem_OnClick"/>
                 <Separator/>
