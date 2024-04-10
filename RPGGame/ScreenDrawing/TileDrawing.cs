@@ -8,10 +8,11 @@ namespace RPGGame.ScreenDrawing
     public class TileDrawing(RPGGame game)
     {
         public static readonly Point MinTileSize = new(1, 1);
-        public static readonly Point MaxTileSize = new(100, 100);
+        public static readonly Point DefaultTileSize = new(32, 32);
+        public static readonly Point MaxTileSize = new(500, 500);
         public static readonly string TileTextureFolder = Path.Join(RPGGame.TextureFolder, "Tiles");
 
-        public Point TileSize { get; private set; } = new(32, 32);
+        public Point TileSize { get; private set; } = DefaultTileSize;
 
         /// <summary>
         /// Draw a texture with a given name to the screen, with its top left corner at the specified position.
@@ -76,6 +77,26 @@ namespace RPGGame.ScreenDrawing
                 Math.Clamp(desiredSize.Y, MinTileSize.Y, MaxTileSize.Y));
             TileSize = desiredSize;
             return desiredSize;
+        }
+
+        /// <summary>
+        /// Set the pixel dimensions of drawn background tiles by using a multiplier relative to <see cref="DefaultTileSize"/>.
+        /// </summary>
+        /// <returns>
+        /// The new tile scale. Will be different from <paramref name="desiredScale"/> if it was invalid.
+        /// </returns>
+        public float SetTileScale(float desiredScale)
+        {
+            // Ensure the scale does not cause maximum or minimum values to be exceeded in either dimension.
+            float clampedXScale = Math.Clamp(desiredScale, (float)MinTileSize.X / DefaultTileSize.X, (float)MaxTileSize.X / DefaultTileSize.X);
+            float clampedYScale = Math.Clamp(desiredScale, (float)MinTileSize.Y / DefaultTileSize.Y, (float)MaxTileSize.Y / DefaultTileSize.Y);
+            // Get whichever of the dimensions is closest to 0 (the least "extreme" value will be the one that doesn't exceed any limits).
+            desiredScale = Math.Abs(clampedXScale) < Math.Abs(clampedYScale) ? clampedXScale : clampedYScale;
+
+            TileSize = new Point(
+                (int)Math.Clamp(DefaultTileSize.X * desiredScale, MinTileSize.X, MaxTileSize.X),
+                (int)Math.Clamp(DefaultTileSize.Y * desiredScale, MinTileSize.Y, MaxTileSize.Y));
+            return desiredScale;
         }
     }
 }
