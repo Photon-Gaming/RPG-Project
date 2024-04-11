@@ -28,10 +28,9 @@ namespace RPGGame.ScreenDrawing
         public Rectangle DrawEntityOnGrid(GameObject.Entity entity, Point tileGridOffset, Point tileSize)
         {
             Point entityScreenSize = new((int)(entity.Size.X * tileSize.X), (int)(entity.Size.Y * tileSize.Y));
-            // Entity origin is the bottom center, tile origin is the top left
             Point screenPosition = new(
-                (int)((entity.Position.X - (entity.Size.X / 2)) * tileSize.X + tileGridOffset.X),
-                (int)((entity.Position.Y - entity.Size.Y) * tileSize.Y) + tileGridOffset.Y);
+                (int)(entity.TopLeft.X * tileSize.X + tileGridOffset.X),
+                (int)(entity.TopLeft.Y * tileSize.Y + tileGridOffset.Y));
             Rectangle screenArea = new(screenPosition, entityScreenSize);
 
             if (entity.Texture is not null)

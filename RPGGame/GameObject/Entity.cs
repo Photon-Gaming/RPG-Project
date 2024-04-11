@@ -17,6 +17,10 @@ namespace RPGGame.GameObject
         [JsonProperty]
         public string? Texture { get; protected set; } = texture;
 
+        // Entity origin is the bottom middle, tile origin is the top left
+        public Vector2 TopLeft => new(Position.X - (Size.X / 2), Position.Y - Size.Y);
+        public Vector2 BottomRight => new(TopLeft.X + Size.X, TopLeft.Y + Size.Y);
+
         public virtual bool Move(Vector2 targetPos, bool relative)
         {
             if (relative)
