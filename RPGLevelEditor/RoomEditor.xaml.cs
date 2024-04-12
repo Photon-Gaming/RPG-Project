@@ -21,8 +21,17 @@ namespace RPGLevelEditor
             public readonly RPGGame.GameObject.Tile Tile = tile;
         }
 
+        private enum ToolType
+        {
+            Tile,
+            Collision,
+            Entity
+        }
+
         public const string TileTextureFolderName = "Tiles";
+        public const string EntityTextureFolderName = "Entities";
         public readonly string TileTextureFolderPath;
+        public readonly string EntityTextureFolderPath;
 
         public static readonly Point TileSize = new(32, 32);
 
@@ -43,13 +52,17 @@ namespace RPGLevelEditor
             }
         }
 
+        private static readonly BitmapImage placeholderImage = new(new Uri("pack://application:,,,/Resources/placeholder.png"));
         private static readonly BitmapImage collisionImage = new(new Uri("pack://application:,,,/Resources/collision.png"));
         private static readonly BitmapImage transparentImage = new(new Uri("pack://application:,,,/Resources/transparent.png"));
 
         private readonly Stack<StateStackFrame> undoStack = new();
         private readonly Stack<StateStackFrame> redoStack = new();
 
-        private readonly Dictionary<string, BitmapSource> imageCache = new();
+        private readonly Dictionary<string, BitmapSource> tileImageCache = new();
+        private readonly Dictionary<string, BitmapSource> entityImageCache = new();
+
+        private ToolType currentToolType = ToolType.Tile;
 
         private Point? lastDrawnPoint = new();
         // When editing collision, whether or not moving the mouse removes or adds collision is based on the initially clicked tile
@@ -57,6 +70,7 @@ namespace RPGLevelEditor
 
         private WriteableBitmap? tileGridBitmap;
         private WriteableBitmap? collisionGridBitmap;
+        private WriteableBitmap? entityBitmap;
 
         public RoomEditor(string roomPath, MainWindow parent, bool forceCreateNew = false)
         {
@@ -68,6 +82,8 @@ namespace RPGLevelEditor
 
             TileTextureFolderPath = Path.Join(ParentWindow.EditorConfig.ContentFolderPath,
                 MainWindow.TextureFolderName, TileTextureFolderName);
+            EntityTextureFolderPath = Path.Join(ParentWindow.EditorConfig.ContentFolderPath,
+                MainWindow.TextureFolderName, EntityTextureFolderName);
             if (!Directory.Exists(TileTextureFolderPath))
             {
                 _ = MessageBox.Show(this,
@@ -208,23 +224,18 @@ namespace RPGLevelEditor
                 PixelFormats.Bgra32,
                 null);
             tileGridDisplay.Source = tileGridBitmap;
-
             tileGridDisplay.Width = xSize * TileSize.X;
             tileGridDisplay.Height = ySize * TileSize.Y;
 
-            collisionGridBitmap = new WriteableBitmap(
-                // Having a pixel dimension be 0 is not possible,
-                // so use 1 pixel instead if room is 0 tiles in size
-                Math.Max(1, (int)TileSize.X * xSize),
-                Math.Max(1, (int)TileSize.Y * ySize),
-                96,
-                96,
-                PixelFormats.Bgra32,
-                null);
+            collisionGridBitmap = tileGridBitmap.Clone();
             collisionGridDisplay.Source = collisionGridBitmap;
-
             collisionGridDisplay.Width = xSize * TileSize.X;
             collisionGridDisplay.Height = ySize * TileSize.Y;
+
+            entityBitmap = tileGridBitmap.Clone();
+            entityDisplay.Source = entityBitmap;
+            entityDisplay.Width = xSize * TileSize.X;
+            entityDisplay.Height = ySize * TileSize.Y;
 
             for (int x = 0; x < xSize; x++)
             {
@@ -234,7 +245,19 @@ namespace RPGLevelEditor
                 }
             }
 
+            foreach (RPGGame.GameObject.Entity entity in OpenRoom.Entities)
+            {
+                DrawEntity(entity, false, false);
+            }
+
             CreateGridOverlay();
+            UpdateBitmapVisibility();
+        }
+
+        private void UpdateBitmapVisibility()
+        {
+            collisionGridDisplay.Visibility = currentToolType == ToolType.Collision ? Visibility.Visible : Visibility.Collapsed;
+            entityDisplay.Visibility = currentToolType == ToolType.Entity ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void UpdateTileTexture(int x, int y)
@@ -247,26 +270,74 @@ namespace RPGLevelEditor
 
             string textureName = OpenRoom.TileMap[x, y].Texture;
 
-            if (!imageCache.TryGetValue(textureName, out BitmapSource? imageSource))
+            if (!tileImageCache.TryGetValue(textureName, out BitmapSource? imageSource))
             {
                 string texturePath = Path.Join(TileTextureFolderPath, textureName);
                 texturePath = Path.ChangeExtension(texturePath, "png");
 
                 if (!File.Exists(texturePath))
                 {
-                    texturePath = "pack://application:,,,/Resources/placeholder.png";
+                    imageSource = placeholderImage;
                 }
-
-                imageSource = new BitmapImage(new Uri(texturePath));
-
-                imageCache[textureName] = imageSource;
+                else
+                {
+                    imageSource = new BitmapImage(new Uri(texturePath));
+                    tileImageCache[textureName] = imageSource;
+                }
             }
 
             tileGridBitmap.CopyImage(
                 imageSource, x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
             collisionGridBitmap.CopyImage(
-                collisionEditItem.IsChecked && OpenRoom.TileMap[x, y].IsCollision ? collisionImage : transparentImage,
+                OpenRoom.TileMap[x, y].IsCollision ? collisionImage : transparentImage,
                 x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
+        }
+
+        private void DrawEntity(RPGGame.GameObject.Entity entity, bool erase, bool redrawOverlapped)
+        {
+            if (entityBitmap is null)
+            {
+                CreateTileGrid();
+                return;
+            }
+
+            if (redrawOverlapped)
+            {
+                // Redraw any overlapped entities
+                foreach (RPGGame.GameObject.Entity overlappedEntity in OpenRoom.Entities.Where(e => e.Collides(entity)))
+                {
+                    DrawEntity(overlappedEntity, false, false);
+                }
+            }
+
+            string? textureName = entity.Texture;
+            if (textureName is not null)
+            {
+                BitmapSource? imageSource;
+                if (erase)
+                {
+                    imageSource = transparentImage;
+                }
+                else if (!entityImageCache.TryGetValue(textureName, out imageSource))
+                {
+                    string texturePath = Path.Join(EntityTextureFolderPath, textureName);
+                    texturePath = Path.ChangeExtension(texturePath, "png");
+
+                    if (!File.Exists(texturePath))
+                    {
+                        imageSource = placeholderImage;
+                    }
+                    else
+                    {
+                        imageSource = new BitmapImage(new Uri(texturePath));
+                        entityImageCache[textureName] = imageSource;
+                    }
+                }
+
+                entityBitmap.CopyImage(imageSource,
+                    (int)(entity.TopLeft.X * TileSize.X), (int)(entity.TopLeft.Y * TileSize.Y),
+                    (int)(entity.Size.X * TileSize.X), (int)(entity.Size.Y * TileSize.Y));
+            }
         }
 
         private void UpdateGridBackground()
@@ -326,7 +397,7 @@ namespace RPGLevelEditor
 
         private void UpdateTextureSelectionPanel()
         {
-            textureSelectPanel.Children.Clear();
+            tileTextureSelectPanel.Children.Clear();
 
             if (!Directory.Exists(TileTextureFolderPath))
             {
@@ -355,7 +426,7 @@ namespace RPGLevelEditor
                     Tag = textureName
                 };
                 newElement.MouseUp += TextureSelect_MouseUp;
-                _ = textureSelectPanel.Children.Add(newElement);
+                _ = tileTextureSelectPanel.Children.Add(newElement);
             }
         }
 
@@ -377,7 +448,7 @@ namespace RPGLevelEditor
                 return;
             }
 
-            if (collisionEditItem.IsChecked)
+            if (currentToolType == ToolType.Collision)
             {
                 if (collisionDrawType == OpenRoom.TileMap[x, y].IsCollision)
                 {
@@ -389,7 +460,7 @@ namespace RPGLevelEditor
 
                 OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { IsCollision = collisionDrawType };
             }
-            else
+            else if (currentToolType == ToolType.Tile)
             {
                 if (SelectedTextureName is null)
                 {
@@ -405,6 +476,10 @@ namespace RPGLevelEditor
                 PushUndoStack(x, y);
 
                 OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { Texture = SelectedTextureName };
+            }
+            else
+            {
+                return;
             }
 
             UpdateTileTexture(x, y);
@@ -441,7 +516,7 @@ namespace RPGLevelEditor
                 relativeMousePos = new Point(relativeMousePos.X / TileSize.X, relativeMousePos.Y / TileSize.Y);
 
                 lastDrawnPoint = relativeMousePos;
-                if (collisionEditItem.IsChecked)
+                if (currentToolType == ToolType.Collision)
                 {
                     collisionDrawType = !OpenRoom.TileMap[(int)relativeMousePos.X, (int)relativeMousePos.Y].IsCollision;
                 }
@@ -534,11 +609,6 @@ namespace RPGLevelEditor
         private void gridOverlayItem_OnClick(object sender, RoutedEventArgs e)
         {
             CreateGridOverlay();
-        }
-
-        private void collisionEditItem_OnClick(object sender, RoutedEventArgs e)
-        {
-            CreateTileGrid();
         }
 
         private void DimensionsItem_OnClick(object sender, RoutedEventArgs e)
@@ -647,6 +717,24 @@ namespace RPGLevelEditor
         {
             // Prevent main window from being hidden when this window closes
             _ = ParentWindow.Activate();
+        }
+
+        private void toolPanel_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ReferenceEquals(toolPanel.SelectedContent, tileTextureScroll))
+            {
+                currentToolType = ToolType.Tile;
+            }
+            else if (ReferenceEquals(toolPanel.SelectedContent, collisionOptionsPanel))
+            {
+                currentToolType = ToolType.Collision;
+            }
+            else if (ReferenceEquals(toolPanel.SelectedContent, entityPropertiesPanel))
+            {
+                currentToolType = ToolType.Entity;
+            }
+
+            UpdateBitmapVisibility();
         }
     }
 }

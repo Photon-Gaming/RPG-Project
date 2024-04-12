@@ -13,8 +13,8 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="4*"/>
             <ColumnDefinition Width="1*"/>
-            <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Padding="0,0,0,3">
             <MenuItem Header="_File">
@@ -23,8 +23,6 @@
             <MenuItem Header="_Edit">
                 <MenuItem x:Name="undoItem" Header="_Undo" InputGestureText="Ctrl+Z" IsEnabled="False" Click="undoItem_OnClick"/>
                 <MenuItem x:Name="redoItem" Header="_Redo" InputGestureText="Ctrl+Y" IsEnabled="False" Click="redoItem_OnClick"/>
-                <Separator/>
-                <MenuItem x:Name="collisionEditItem" Header="Edit _Collision" IsCheckable="True" Click="collisionEditItem_OnClick"/>
                 <Separator/>
                 <MenuItem Header="Change Room _Dimensions..." Click="DimensionsItem_OnClick"/>
                 <MenuItem Header="Change Room _Background Colour..." Click="BackgroundColourItem_OnClick"/>
@@ -40,6 +38,7 @@
                 </Grid.LayoutTransform>
                 <Image x:Name="tileGridDisplay" MouseDown="tileGridDisplay_MouseDown" MouseMove="tileGridDisplay_MouseMove" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseLeave="tileGridDisplay_MouseLeave"/>
                 <Image x:Name="collisionGridDisplay" RenderOptions.BitmapScalingMode="NearestNeighbor" IsHitTestVisible="False" Focusable="False"/>
+                <Image x:Name="entityDisplay" RenderOptions.BitmapScalingMode="NearestNeighbor" IsHitTestVisible="False" Focusable="False"/>
                 <Grid x:Name="gridOverlayXDisplay" IsHitTestVisible="False" Focusable="False"/>
                 <Grid x:Name="gridOverlayYDisplay" IsHitTestVisible="False" Focusable="False"/>
                 <!-- Center point marker -->
@@ -53,11 +52,17 @@
                 <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Green" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="3" Margin="0,0,0,-3"/>
             </Grid>
         </ScrollViewer>
-        <TabControl Grid.Row="1" Grid.Column="1">
+        <TabControl x:Name="toolPanel" Grid.Row="1" Grid.Column="1" SelectionChanged="toolPanel_SelectionChanged" Background="#FFE0E0E0">
             <TabItem Header="Tiles">
-                <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Background="#FFE0E0E0">
-                    <WrapPanel x:Name="textureSelectPanel" Width="152"/>
+                <ScrollViewer x:Name="tileTextureScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
+                    <WrapPanel x:Name="tileTextureSelectPanel"/>
                 </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Collision">
+                <UIElement x:Name="collisionOptionsPanel"/>
+            </TabItem>
+            <TabItem Header="Entities">
+                <StackPanel x:Name="entityPropertiesPanel" Orientation="Vertical"/>
             </TabItem>
         </TabControl>
         <StatusBar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
