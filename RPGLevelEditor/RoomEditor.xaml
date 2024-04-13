@@ -50,6 +50,12 @@
                 <!-- Limit marker -->
                 <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Magenta" Width="3" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}" Margin="0,0,-3,0"/>
                 <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Green" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="3" Margin="0,0,0,-3"/>
+                <!-- Selected entity -->
+                <Grid x:Name="selectedEntityContainer">
+                    <Image x:Name="selectedEntityImage" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                    <Rectangle x:Name="selectedEntityBorder" HorizontalAlignment="Left" VerticalAlignment="Top" Stroke="Blue" StrokeThickness="2"/>
+                    <Ellipse x:Name="selectedEntityOrigin" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Red" Width="8" Height="8"/>
+                </Grid>
             </Grid>
         </ScrollViewer>
         <TabControl x:Name="toolPanel" Grid.Row="1" Grid.Column="1" SelectionChanged="toolPanel_SelectionChanged" Background="#FFE0E0E0">

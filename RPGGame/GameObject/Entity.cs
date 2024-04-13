@@ -45,6 +45,22 @@ namespace RPGGame.GameObject
                 && BottomRight.Y > other.TopLeft.Y;
         }
 
+        public bool Collides(Vector2 position)
+        {
+            return position.X > TopLeft.X
+                && position.Y > TopLeft.Y
+                && position.X < BottomRight.X
+                && position.Y < BottomRight.Y;
+        }
+
+        public bool IsOutOfBounds(Room room)
+        {
+            return TopLeft.X < 0
+                || TopLeft.Y < 0
+                || BottomRight.X >= room.TileMap.GetLength(0)
+                || BottomRight.Y >= room.TileMap.GetLength(1);
+        }
+
         public object Clone()
         {
             return new Entity(Position, Size, Texture);
