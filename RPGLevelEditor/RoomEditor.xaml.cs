@@ -14,13 +14,6 @@ namespace RPGLevelEditor
     /// </summary>
     public partial class RoomEditor : Window
     {
-        public readonly struct StateStackFrame(int x, int y, RPGGame.GameObject.Tile tile)
-        {
-            public readonly int X = x;
-            public readonly int Y = y;
-            public readonly RPGGame.GameObject.Tile Tile = tile;
-        }
-
         private enum ToolType
         {
             Tile,
@@ -146,15 +139,12 @@ namespace RPGLevelEditor
 
         public bool Undo()
         {
-            if (undoStack.TryPop(out StateStackFrame state))
+            if (undoStack.TryPop(out StateStackFrame? state))
             {
-                redoStack.Push(new StateStackFrame(state.X, state.Y, OpenRoom.TileMap[state.X, state.Y]));
-                OpenRoom.TileMap[state.X, state.Y] = state.Tile;
-
-                UpdateTileTexture(state.X, state.Y);
+                state.RestoreState(true);
 
                 undoItem.IsEnabled = undoStack.Count > 0;
-                redoItem.IsEnabled = true;
+                redoItem.IsEnabled = redoStack.Count > 0;
 
                 return true;
             }
@@ -163,15 +153,12 @@ namespace RPGLevelEditor
 
         public bool Redo()
         {
-            if (redoStack.TryPop(out StateStackFrame state))
+            if (redoStack.TryPop(out StateStackFrame? state))
             {
-                undoStack.Push(new StateStackFrame(state.X, state.Y, OpenRoom.TileMap[state.X, state.Y]));
-                OpenRoom.TileMap[state.X, state.Y] = state.Tile;
-
-                UpdateTileTexture(state.X, state.Y);
+                state.RestoreState(false);
 
                 redoItem.IsEnabled = redoStack.Count > 0;
-                undoItem.IsEnabled = true;
+                undoItem.IsEnabled = redoStack.Count > 0;
 
                 return true;
             }
@@ -470,15 +457,30 @@ namespace RPGLevelEditor
             }
         }
 
-        private void PushUndoStack(int x, int y)
+        private void PushUndoStack(StateStackFrame stackFrame)
         {
             UnsavedChanges = true;
 
             redoStack.Clear();
-            undoStack.Push(new StateStackFrame(x, y, OpenRoom.TileMap[x, y]));
+            undoStack.Push(stackFrame);
 
             undoItem.IsEnabled = true;
             redoItem.IsEnabled = false;
+        }
+
+        private void PushTileUndoStack(int x, int y)
+        {
+            PushUndoStack(new TileEditStackFrame(this, x, y, OpenRoom.TileMap[x, y]));
+        }
+
+        private void PushEntityMoveUndoStack(RPGGame.GameObject.Entity entity)
+        {
+            PushUndoStack(new EntityMoveStackFrame(this, entity, entity.Position.X, entity.Position.Y));
+        }
+
+        private void PushEntityCreateUndoStack(float x, float y)
+        {
+            PushUndoStack(new EntityCreateStackFrame(this, x, y));
         }
 
         private void EditTileAtPosition(int x, int y)
@@ -496,7 +498,7 @@ namespace RPGLevelEditor
                     return;
                 }
 
-                PushUndoStack(x, y);
+                PushTileUndoStack(x, y);
 
                 OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { IsCollision = collisionDrawType };
             }
@@ -513,7 +515,7 @@ namespace RPGLevelEditor
                     return;
                 }
 
-                PushUndoStack(x, y);
+                PushTileUndoStack(x, y);
 
                 OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { Texture = SelectedTextureName };
             }
@@ -537,6 +539,8 @@ namespace RPGLevelEditor
             {
                 // Remove the newly selected entity from the entity canvas and put it into the separate selection elements
                 DrawEntity(entity, true);
+                // If an entity is being selected, switch to entity tool mode
+                toolPanel.SelectedIndex = 2;
             }
 
             selectedEntity = entity;
@@ -550,7 +554,7 @@ namespace RPGLevelEditor
                 e.Collides(new Microsoft.Xna.Framework.Vector2(x, y))));
         }
 
-        private void CreateEntityAtPosition(float x, float y)
+        private void CreateEntityAtPosition(float x, float y, bool pushToUndoStack)
         {
             RPGGame.GameObject.Entity newEntity = new(
                 new Microsoft.Xna.Framework.Vector2(x, y),
@@ -560,6 +564,11 @@ namespace RPGLevelEditor
             if (newEntity.IsOutOfBounds(OpenRoom) || OpenRoom.Entities.Any(e => e.Collides(newEntity)))
             {
                 return;
+            }
+
+            if (pushToUndoStack)
+            {
+                PushEntityCreateUndoStack(x, y);
             }
 
             OpenRoom.Entities.Add(newEntity);
@@ -633,7 +642,7 @@ namespace RPGLevelEditor
                         EditTileAtPosition((int)relativeMousePos.X, (int)relativeMousePos.Y);
                         break;
                     case ToolType.Entity when Keyboard.Modifiers == ModifierKeys.Control:
-                        CreateEntityAtPosition((float)relativeMousePos.X, (float)relativeMousePos.Y);
+                        CreateEntityAtPosition((float)relativeMousePos.X, (float)relativeMousePos.Y, true);
                         break;
                     case ToolType.Entity:
                         SelectEntityAtPosition((float)relativeMousePos.X, (float)relativeMousePos.Y);
@@ -648,6 +657,7 @@ namespace RPGLevelEditor
             {
                 Point relativeMousePos = e.GetPosition(tileGridDisplay);
                 relativeMousePos = new Point(relativeMousePos.X / TileSize.X, relativeMousePos.Y / TileSize.Y);
+
                 // Bresenham's line algorithm - removes gaps between drawn points when moving cursor quickly
                 int x1 = (int)(lastDrawnPoint?.X ?? relativeMousePos.X);
                 int y1 = (int)(lastDrawnPoint?.Y ?? relativeMousePos.Y);
@@ -843,22 +853,30 @@ namespace RPGLevelEditor
             if (ReferenceEquals(toolPanel.SelectedContent, tileTextureScroll))
             {
                 currentToolType = ToolType.Tile;
+                SelectEntity(null);
             }
             else if (ReferenceEquals(toolPanel.SelectedContent, collisionOptionsPanel))
             {
                 currentToolType = ToolType.Collision;
+                SelectEntity(null);
             }
             else if (ReferenceEquals(toolPanel.SelectedContent, entityPropertiesPanel))
             {
                 currentToolType = ToolType.Entity;
             }
 
-            SelectEntity(null);
             UpdateBitmapVisibility();
         }
 
         private void selectedEntityContainer_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (selectedEntity is null)
+            {
+                return;
+            }
+
+            PushEntityMoveUndoStack(selectedEntity);
+
             movingEntity = true;
             moveStartOffset = Mouse.GetPosition(selectedEntityOrigin);
             moveStartOffset.X -= selectedEntityOrigin.Width / 2;
