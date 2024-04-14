@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Media;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -265,6 +266,17 @@ namespace RPGLevelEditor
                 return;
             }
 
+            BitmapSource imageSource = LoadTileTexture(x, y);
+
+            tileGridBitmap.CopyImage(
+                imageSource, x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
+            collisionGridBitmap.CopyImage(
+                OpenRoom.TileMap[x, y].IsCollision ? collisionImage : transparentImage,
+                x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
+        }
+
+        private BitmapSource LoadTileTexture(int x, int y)
+        {
             string textureName = OpenRoom.TileMap[x, y].Texture;
 
             if (!tileImageCache.TryGetValue(textureName, out BitmapSource? imageSource))
@@ -283,11 +295,7 @@ namespace RPGLevelEditor
                 }
             }
 
-            tileGridBitmap.CopyImage(
-                imageSource, x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
-            collisionGridBitmap.CopyImage(
-                OpenRoom.TileMap[x, y].IsCollision ? collisionImage : transparentImage,
-                x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
+            return imageSource;
         }
 
         private BitmapSource LoadEntityTexture(RPGGame.GameObject.Entity entity)
@@ -639,6 +647,56 @@ namespace RPGLevelEditor
             UpdateSelectedEntity();
         }
 
+        private void ShowProblems()
+        {
+            StringBuilder problems = new();
+
+            // Missing tile textures
+            for (int x = 0; x < OpenRoom.TileMap.GetLength(0); x++)
+            {
+                for (int y = 0; y < OpenRoom.TileMap.GetLength(1); y++)
+                {
+                    if (ReferenceEquals(LoadTileTexture(x, y), placeholderImage))
+                    {
+                        _ = problems.AppendLine(
+                            $"Tile at ({x}, {y}) uses texture \"{OpenRoom.TileMap[x, y].Texture}\", which doesn't exist.");
+                    }
+                }
+            }
+
+            // Missing entity textures
+            foreach (RPGGame.GameObject.Entity entity in OpenRoom.Entities.Where(e => ReferenceEquals(LoadEntityTexture(e), placeholderImage)))
+            {
+                // TODO: Reference entity by name also, if present
+                _ = problems.AppendLine(
+                    $"Entity of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) " +
+                    $"uses texture \"{entity.Texture}\", which doesn't exist.");
+            }
+
+            // Out of bounds entities
+            foreach (RPGGame.GameObject.Entity entity in OpenRoom.Entities.Where(e => e.IsOutOfBounds(OpenRoom)))
+            {
+                // TODO: Reference entity by name also, if present
+                _ = problems.AppendLine(
+                    $"Entity of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) is out of bounds.");
+            }
+
+            // Overlapping entities
+            foreach (RPGGame.GameObject.Entity entity in OpenRoom.Entities.Where(e => OpenRoom.Entities.Any(o => o.Collides(e))))
+            {
+                // TODO: Reference entity by name also, if present
+                _ = problems.AppendLine(
+                    $"Entity of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) collides with another entity.");
+            }
+
+            if (problems.Length == 0)
+            {
+                _ = problems.AppendLine("There are no issues with the current room");
+            }
+
+            new ToolWindows.ScrollableMessageBox(this, "Detected problems", problems.ToString()).Show();
+        }
+
         private void TextureSelect_MouseUp(object sender, MouseButtonEventArgs e)
         {
             SelectedTextureName = (sender as Border)?.Tag as string;
@@ -886,9 +944,12 @@ namespace RPGLevelEditor
                         SystemSounds.Exclamation.Play();
                     }
                     break;
-                // Save
+                // File options
                 case Key.S when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     Save();
+                    break;
+                case Key.P when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+                    ShowProblems();
                     break;
                 // Grid
                 case Key.G when e.KeyboardDevice.Modifiers == ModifierKeys.None:
@@ -994,6 +1055,11 @@ namespace RPGLevelEditor
         private void alwaysShowCollisionItem_OnClick(object sender, RoutedEventArgs e)
         {
             UpdateBitmapVisibility();
+        }
+
+        private void ProblemsItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            ShowProblems();
         }
     }
 }

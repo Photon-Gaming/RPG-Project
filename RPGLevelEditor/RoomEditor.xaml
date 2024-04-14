@@ -19,6 +19,8 @@
         <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Padding="0,0,0,3">
             <MenuItem Header="_File">
                 <MenuItem Header="_Save" InputGestureText="Ctrl+S" Click="SaveItem_OnClick"/>
+                <Separator/>
+                <MenuItem Header="Check for _Problems..." InputGestureText="Ctrl+P" Click="ProblemsItem_OnClick"/>
             </MenuItem>
             <MenuItem Header="_Edit">
                 <MenuItem x:Name="undoItem" Header="_Undo" InputGestureText="Ctrl+Z" IsEnabled="False" Click="undoItem_OnClick"/>
