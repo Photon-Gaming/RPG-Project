@@ -66,6 +66,8 @@ namespace RPGLevelEditor
         private ToolType currentToolType = ToolType.Tile;
 
         private RPGGame.GameObject.Entity? selectedEntity = null;
+        private bool movingEntity = false;
+        private Point moveStartOffset = new();
 
         private Point? lastDrawnPoint = new();
         // When editing collision, whether or not moving the mouse removes or adds collision is based on the initially clicked tile
@@ -351,6 +353,33 @@ namespace RPGLevelEditor
                 (int)(entity.Size.X * TileSize.X), (int)(entity.Size.Y * TileSize.Y));
         }
 
+        private void UpdateSelectedEntity()
+        {
+            if (selectedEntity is null)
+            {
+                selectedEntityContainer.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            selectedEntityContainer.Visibility = Visibility.Visible;
+
+            selectedEntityBorder.Width = selectedEntity.Size.X * TileSize.X + selectedEntityBorder.StrokeThickness;
+            selectedEntityBorder.Height = selectedEntity.Size.Y * TileSize.Y + selectedEntityBorder.StrokeThickness;
+            selectedEntityBorder.Margin = new Thickness(
+                selectedEntity.TopLeft.X * TileSize.X - (selectedEntityBorder.StrokeThickness / 2),
+                selectedEntity.TopLeft.Y * TileSize.Y - (selectedEntityBorder.StrokeThickness / 2), 0, 0);
+
+            selectedEntityOrigin.Margin = new Thickness(
+                selectedEntity.Position.X * TileSize.X - (selectedEntityOrigin.Width / 2),
+                selectedEntity.Position.Y * TileSize.Y - (selectedEntityOrigin.Height / 2), 0, 0);
+
+            selectedEntityImage.Width = selectedEntity.Size.X * TileSize.X;
+            selectedEntityImage.Height = selectedEntity.Size.Y * TileSize.Y;
+            selectedEntityImage.Margin = new Thickness(
+                selectedEntity.TopLeft.X * TileSize.X, selectedEntity.TopLeft.Y * TileSize.Y, 0, 0);
+            selectedEntityImage.Source = LoadEntityTexture(selectedEntity);
+        }
+
         private void UpdateGridBackground()
         {
             tileMapScroll.Background = new SolidColorBrush(new Color()
@@ -508,31 +537,11 @@ namespace RPGLevelEditor
             {
                 // Remove the newly selected entity from the entity canvas and put it into the separate selection elements
                 DrawEntity(entity, true);
-
-                selectedEntityContainer.Visibility = Visibility.Visible;
-
-                selectedEntityBorder.Width = entity.Size.X * TileSize.X + selectedEntityBorder.StrokeThickness;
-                selectedEntityBorder.Height = entity.Size.Y * TileSize.Y + selectedEntityBorder.StrokeThickness;
-                selectedEntityBorder.Margin = new Thickness(
-                    entity.TopLeft.X * TileSize.X - (selectedEntityBorder.StrokeThickness / 2),
-                    entity.TopLeft.Y * TileSize.Y - (selectedEntityBorder.StrokeThickness / 2), 0, 0);
-
-                selectedEntityOrigin.Margin = new Thickness(
-                    entity.Position.X * TileSize.X - (selectedEntityOrigin.Width / 2),
-                    entity.Position.Y * TileSize.Y - (selectedEntityOrigin.Height / 2), 0, 0);
-
-                selectedEntityImage.Width = entity.Size.X * TileSize.X;
-                selectedEntityImage.Height = entity.Size.Y * TileSize.Y;
-                selectedEntityImage.Margin = new Thickness(
-                    entity.TopLeft.X * TileSize.X, entity.TopLeft.Y * TileSize.Y, 0, 0);
-                selectedEntityImage.Source = LoadEntityTexture(entity);
-            }
-            else
-            {
-                selectedEntityContainer.Visibility = Visibility.Collapsed;
             }
 
             selectedEntity = entity;
+
+            UpdateSelectedEntity();
         }
 
         private void SelectEntityAtPosition(float x, float y)
@@ -555,6 +564,31 @@ namespace RPGLevelEditor
 
             OpenRoom.Entities.Add(newEntity);
             SelectEntity(newEntity);
+        }
+
+        private void ProcessEntityMove()
+        {
+            if (!movingEntity)
+            {
+                return;
+            }
+
+            if (selectedEntity is null)
+            {
+                movingEntity = false;
+                return;
+            }
+
+            Point relativeMousePos = Mouse.GetPosition(tileGridDisplay);
+            relativeMousePos = new Point((relativeMousePos.X - moveStartOffset.X) / TileSize.X, (relativeMousePos.Y - moveStartOffset.Y) / TileSize.Y);
+
+            Microsoft.Xna.Framework.Vector2 oldPos = selectedEntity.Position;
+            _ = selectedEntity.Move(new Microsoft.Xna.Framework.Vector2((float)relativeMousePos.X, (float)relativeMousePos.Y), false);
+            if (selectedEntity.IsOutOfBounds(OpenRoom) || OpenRoom.Entities.Any(ent => ent.Collides(selectedEntity)))
+            {
+                _ = selectedEntity.Move(oldPos, false);
+            }
+            UpdateSelectedEntity();
         }
 
         private void TextureSelect_MouseUp(object sender, MouseButtonEventArgs e)
@@ -614,7 +648,6 @@ namespace RPGLevelEditor
             {
                 Point relativeMousePos = e.GetPosition(tileGridDisplay);
                 relativeMousePos = new Point(relativeMousePos.X / TileSize.X, relativeMousePos.Y / TileSize.Y);
-
                 // Bresenham's line algorithm - removes gaps between drawn points when moving cursor quickly
                 int x1 = (int)(lastDrawnPoint?.X ?? relativeMousePos.X);
                 int y1 = (int)(lastDrawnPoint?.Y ?? relativeMousePos.Y);
@@ -647,6 +680,8 @@ namespace RPGLevelEditor
                 }
                 lastDrawnPoint = relativeMousePos;
             }
+
+            ProcessEntityMove();
         }
 
         private void tileGridDisplay_MouseLeave(object sender, MouseEventArgs e)
@@ -820,6 +855,29 @@ namespace RPGLevelEditor
 
             SelectEntity(null);
             UpdateBitmapVisibility();
+        }
+
+        private void selectedEntityContainer_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            movingEntity = true;
+            moveStartOffset = Mouse.GetPosition(selectedEntityOrigin);
+            moveStartOffset.X -= selectedEntityOrigin.Width / 2;
+            moveStartOffset.Y -= selectedEntityOrigin.Width / 2;
+        }
+
+        private void selectedEntityContainer_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            movingEntity = false;
+        }
+
+        private void selectedEntityContainer_MouseMove(object sender, MouseEventArgs e)
+        {
+            ProcessEntityMove();
+        }
+
+        private void tileGridDisplay_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            movingEntity = false;
         }
     }
 }

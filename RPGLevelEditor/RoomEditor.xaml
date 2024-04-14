@@ -36,7 +36,7 @@
                 <Grid.LayoutTransform>
                     <ScaleTransform x:Name="tileMapScaleTransform" CenterX="0.5" CenterY="0.5"/>
                 </Grid.LayoutTransform>
-                <Image x:Name="tileGridDisplay" MouseDown="tileGridDisplay_MouseDown" MouseMove="tileGridDisplay_MouseMove" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseLeave="tileGridDisplay_MouseLeave"/>
+                <Image x:Name="tileGridDisplay" MouseDown="tileGridDisplay_MouseDown" MouseMove="tileGridDisplay_MouseMove" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseLeave="tileGridDisplay_MouseLeave" MouseUp="tileGridDisplay_MouseUp"/>
                 <Image x:Name="collisionGridDisplay" RenderOptions.BitmapScalingMode="NearestNeighbor" IsHitTestVisible="False" Focusable="False"/>
                 <Image x:Name="entityDisplay" RenderOptions.BitmapScalingMode="NearestNeighbor" IsHitTestVisible="False" Focusable="False"/>
                 <Grid x:Name="gridOverlayXDisplay" IsHitTestVisible="False" Focusable="False"/>
@@ -51,7 +51,7 @@
                 <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Magenta" Width="3" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}" Margin="0,0,-3,0"/>
                 <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Green" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="3" Margin="0,0,0,-3"/>
                 <!-- Selected entity -->
-                <Grid x:Name="selectedEntityContainer">
+                <Grid x:Name="selectedEntityContainer" Cursor="SizeAll" MouseDown="selectedEntityContainer_MouseDown" MouseUp="selectedEntityContainer_MouseUp" MouseMove="selectedEntityContainer_MouseMove">
                     <Image x:Name="selectedEntityImage" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
                     <Rectangle x:Name="selectedEntityBorder" HorizontalAlignment="Left" VerticalAlignment="Top" Stroke="Blue" StrokeThickness="2"/>
                     <Ellipse x:Name="selectedEntityOrigin" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Red" Width="8" Height="8"/>

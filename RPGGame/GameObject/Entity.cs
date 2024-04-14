@@ -39,7 +39,8 @@ namespace RPGGame.GameObject
 
         public bool Collides(Entity other)
         {
-            return TopLeft.X < other.BottomRight.X
+            return !ReferenceEquals(this, other)  // Entity should not collide with itself
+                && TopLeft.X < other.BottomRight.X
                 && TopLeft.Y < other.BottomRight.Y
                 && BottomRight.X > other.TopLeft.X
                 && BottomRight.Y > other.TopLeft.Y;
