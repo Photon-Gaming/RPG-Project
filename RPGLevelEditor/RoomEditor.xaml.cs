@@ -622,7 +622,16 @@ namespace RPGLevelEditor
             relativeMousePos = new Point((relativeMousePos.X - moveStartOffset.X) / TileSize.X, (relativeMousePos.Y - moveStartOffset.Y) / TileSize.Y);
 
             Microsoft.Xna.Framework.Vector2 oldPos = selectedEntity.Position;
-            _ = selectedEntity.Move(new Microsoft.Xna.Framework.Vector2((float)relativeMousePos.X, (float)relativeMousePos.Y), false);
+
+            Microsoft.Xna.Framework.Vector2 newPos = new((float)relativeMousePos.X, (float)relativeMousePos.Y);
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+            {
+                // Snap to nearest grid intersection based on current grid size
+                newPos.X = MathF.Round(newPos.X / currentGridInterval) * currentGridInterval;
+                newPos.Y = MathF.Round(newPos.Y / currentGridInterval) * currentGridInterval;
+            }
+
+            _ = selectedEntity.Move(newPos, false);
             if (selectedEntity.IsOutOfBounds(OpenRoom) || OpenRoom.Entities.Any(ent => ent.Collides(selectedEntity)))
             {
                 _ = selectedEntity.Move(oldPos, false);
@@ -864,6 +873,7 @@ namespace RPGLevelEditor
         {
             switch (e.Key)
             {
+                // Undo/redo
                 case Key.Z when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     if (!Undo())
                     {
@@ -876,9 +886,11 @@ namespace RPGLevelEditor
                         SystemSounds.Exclamation.Play();
                     }
                     break;
+                // Save
                 case Key.S when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     Save();
                     break;
+                // Grid
                 case Key.G when e.KeyboardDevice.Modifiers == ModifierKeys.None:
                     gridOverlayItem.IsChecked = !gridOverlayItem.IsChecked;
                     CreateGridOverlay();
@@ -889,6 +901,7 @@ namespace RPGLevelEditor
                 case Key.OemCloseBrackets when e.KeyboardDevice.Modifiers == ModifierKeys.None:
                     GridOverlayEnlarge();
                     break;
+                // Additional view options
                 case Key.E when e.KeyboardDevice.Modifiers == ModifierKeys.None:
                     alwaysShowEntitiesItem.IsChecked = !alwaysShowEntitiesItem.IsChecked;
                     UpdateBitmapVisibility();
