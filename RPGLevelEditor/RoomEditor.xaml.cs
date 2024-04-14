@@ -251,8 +251,10 @@ namespace RPGLevelEditor
 
         private void UpdateBitmapVisibility()
         {
-            collisionGridDisplay.Visibility = currentToolType == ToolType.Collision ? Visibility.Visible : Visibility.Collapsed;
-            entityDisplay.Visibility = currentToolType == ToolType.Entity ? Visibility.Visible : Visibility.Collapsed;
+            collisionGridDisplay.Visibility = currentToolType == ToolType.Collision || alwaysShowCollisionItem.IsChecked
+                ? Visibility.Visible : Visibility.Collapsed;
+            entityDisplay.Visibility = currentToolType == ToolType.Entity || alwaysShowEntitiesItem.IsChecked
+                ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void UpdateTileTexture(int x, int y)
@@ -311,7 +313,9 @@ namespace RPGLevelEditor
                 return imageSource;
             }
 
-            return new BitmapImage(new Uri(ToolEntityTextureFolderPath + entity.GetType().Name + ".png"));
+            return hideInvisibleEntitiesItem.IsChecked
+                ? transparentImage
+                : new BitmapImage(new Uri(ToolEntityTextureFolderPath + entity.GetType().Name + ".png"));
         }
 
         private void DrawEntity(RPGGame.GameObject.Entity entity, bool erase)
@@ -885,6 +889,22 @@ namespace RPGLevelEditor
                 case Key.OemCloseBrackets when e.KeyboardDevice.Modifiers == ModifierKeys.None:
                     GridOverlayEnlarge();
                     break;
+                case Key.E when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                    alwaysShowEntitiesItem.IsChecked = !alwaysShowEntitiesItem.IsChecked;
+                    UpdateBitmapVisibility();
+                    break;
+                case Key.C when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                    alwaysShowCollisionItem.IsChecked = !alwaysShowCollisionItem.IsChecked;
+                    UpdateBitmapVisibility();
+                    break;
+                case Key.H when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                    hideInvisibleEntitiesItem.IsChecked = !hideInvisibleEntitiesItem.IsChecked;
+                    SelectEntity(null);
+                    foreach (RPGGame.GameObject.Entity entity in OpenRoom.Entities)
+                    {
+                        DrawEntity(entity, false);
+                    }
+                    break;
             }
         }
 
@@ -942,6 +962,25 @@ namespace RPGLevelEditor
         private void tileGridDisplay_MouseUp(object sender, MouseButtonEventArgs e)
         {
             movingEntity = false;
+        }
+
+        private void hideInvisibleEntitiesItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            SelectEntity(null);
+            foreach (RPGGame.GameObject.Entity entity in OpenRoom.Entities)
+            {
+                DrawEntity(entity, false);
+            }
+        }
+
+        private void alwaysShowEntitiesItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            UpdateBitmapVisibility();
+        }
+
+        private void alwaysShowCollisionItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            UpdateBitmapVisibility();
         }
     }
 }

@@ -31,6 +31,10 @@
                 <MenuItem x:Name="gridOverlayItem" Header="_Show Grid Overlay" InputGestureText="G" IsCheckable="True" Click="gridOverlayItem_OnClick"/>
                 <MenuItem Header="_Decrease Grid Size" InputGestureText="[" Click="gridOverlaySmaller_OnClick"/>
                 <MenuItem Header="_Increase Grid Size" InputGestureText="]" Click="gridOverlayLarger_OnClick"/>
+                <Separator/>
+                <MenuItem x:Name="hideInvisibleEntitiesItem" Header="_Hide Invisible Entities" InputGestureText="H" IsCheckable="True" Click="hideInvisibleEntitiesItem_OnClick"/>
+                <MenuItem x:Name="alwaysShowEntitiesItem" Header="Always Show _Entities" InputGestureText="E" IsCheckable="True" Click="alwaysShowEntitiesItem_OnClick"/>
+                <MenuItem x:Name="alwaysShowCollisionItem" Header="Always Show _Collision" InputGestureText="C" IsCheckable="True" Click="alwaysShowCollisionItem_OnClick"/>
             </MenuItem>
         </Menu>
         <ScrollViewer x:Name="tileMapScroll" Grid.Row="1" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" PreviewMouseWheel="tileMapScroll_PreviewMouseWheel" MouseMove="tileMapScroll_MouseMove">
