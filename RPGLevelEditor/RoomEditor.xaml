@@ -28,7 +28,9 @@
                 <MenuItem Header="Change Room _Background Colour..." Click="BackgroundColourItem_OnClick"/>
             </MenuItem>
             <MenuItem Header="_View">
-                <MenuItem x:Name="gridOverlayItem" Header="_Show Grid Overlay" IsCheckable="True" Click="gridOverlayItem_OnClick"/>
+                <MenuItem x:Name="gridOverlayItem" Header="_Show Grid Overlay" InputGestureText="G" IsCheckable="True" Click="gridOverlayItem_OnClick"/>
+                <MenuItem Header="_Decrease Grid Size" InputGestureText="[" Click="gridOverlaySmaller_OnClick"/>
+                <MenuItem Header="_Increase Grid Size" InputGestureText="]" Click="gridOverlayLarger_OnClick"/>
             </MenuItem>
         </Menu>
         <ScrollViewer x:Name="tileMapScroll" Grid.Row="1" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" PreviewMouseWheel="tileMapScroll_PreviewMouseWheel" MouseMove="tileMapScroll_MouseMove">

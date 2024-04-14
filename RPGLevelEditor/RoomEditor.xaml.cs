@@ -66,6 +66,8 @@ namespace RPGLevelEditor
         // When editing collision, whether or not moving the mouse removes or adds collision is based on the initially clicked tile
         private bool collisionDrawType = false;
 
+        private float currentGridInterval = 1;
+
         private WriteableBitmap? tileGridBitmap;
         private WriteableBitmap? collisionGridBitmap;
         private WriteableBitmap? entityBitmap;
@@ -392,13 +394,13 @@ namespace RPGLevelEditor
 
             if (gridOverlayItem.IsChecked)
             {
-                for (int x = 1; x < xSize; x++)
+                for (float x = currentGridInterval; x < xSize; x += currentGridInterval)
                 {
                     _ = gridOverlayXDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
                     {
                         Height = gridOverlayXDisplay.Height,
-                        Width = 3,
-                        Margin = new Thickness(x * TileSize.X - 1, 0, 0, 0),
+                        Width = currentGridInterval,
+                        Margin = new Thickness(x * TileSize.X - (currentGridInterval / 2), 0, 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Center,
                         IsHitTestVisible = false,
@@ -406,13 +408,13 @@ namespace RPGLevelEditor
                     });
                 }
 
-                for (int y = 1; y < ySize; y++)
+                for (float y = currentGridInterval; y < ySize; y += currentGridInterval)
                 {
                     _ = gridOverlayYDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
                     {
-                        Height = 3,
+                        Height = currentGridInterval,
                         Width = gridOverlayYDisplay.Width,
-                        Margin = new Thickness(0, y * TileSize.Y - 1, 0, 0),
+                        Margin = new Thickness(0, y * TileSize.Y - (currentGridInterval / 2), 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Center,
                         VerticalAlignment = VerticalAlignment.Top,
                         IsHitTestVisible = false,
@@ -420,6 +422,30 @@ namespace RPGLevelEditor
                     });
                 }
             }
+        }
+
+        private void GridOverlayEnlarge()
+        {
+            if (currentGridInterval >= 128)
+            {
+                return;
+            }
+
+            currentGridInterval *= 2;
+
+            CreateGridOverlay();
+        }
+
+        private void GridOverlayShrink()
+        {
+            if (currentGridInterval <= 0.03125)
+            {
+                return;
+            }
+
+            currentGridInterval /= 2;
+
+            CreateGridOverlay();
         }
 
         private void UpdateTextureSelectionPanel()
@@ -740,11 +766,21 @@ namespace RPGLevelEditor
             CreateGridOverlay();
         }
 
+        private void gridOverlayLarger_OnClick(object sender, RoutedEventArgs e)
+        {
+            GridOverlayEnlarge();
+        }
+
+        private void gridOverlaySmaller_OnClick(object sender, RoutedEventArgs e)
+        {
+            GridOverlayShrink();
+        }
+
         private void DimensionsItem_OnClick(object sender, RoutedEventArgs e)
         {
             if (SelectedTextureName is null)
             {
-                _ = MessageBox.Show(this, "Please select a texture before changing room dimensions",
+                _ = MessageBox.Show(this, "Please select a tile texture before changing room dimensions",
                     "No texture", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -824,20 +860,30 @@ namespace RPGLevelEditor
         {
             switch (e.Key)
             {
-                case Key.Z when e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control):
+                case Key.Z when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     if (!Undo())
                     {
                         SystemSounds.Exclamation.Play();
                     }
                     break;
-                case Key.Y when e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control):
+                case Key.Y when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     if (!Redo())
                     {
                         SystemSounds.Exclamation.Play();
                     }
                     break;
-                case Key.S when e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control):
+                case Key.S when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     Save();
+                    break;
+                case Key.G when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                    gridOverlayItem.IsChecked = !gridOverlayItem.IsChecked;
+                    CreateGridOverlay();
+                    break;
+                case Key.OemOpenBrackets when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                    GridOverlayShrink();
+                    break;
+                case Key.OemCloseBrackets when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                    GridOverlayEnlarge();
                     break;
             }
         }
