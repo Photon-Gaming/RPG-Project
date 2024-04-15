@@ -196,10 +196,10 @@ namespace RPGLevelEditor
             }
 
             OpenRoom = new RPGGame.GameObject.Room(newTileMap,
-                OpenRoom.Entities.Where(e => e.Position.X < xSize && e.Position.Y < ySize)
-                    .Select(e => (RPGGame.GameObject.Entity.Entity)e.Clone()).ToList(),
+                OpenRoom.Entities.Where(e => e.Position.X < xSize && e.Position.Y < ySize).ToList(),
                 OpenRoom.BackgroundColor);
 
+            SelectEntity(null);
             CreateTileGrid();
         }
 
