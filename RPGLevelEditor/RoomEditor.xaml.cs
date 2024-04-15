@@ -47,6 +47,17 @@ namespace RPGLevelEditor
             }
         }
 
+        private float _currentGridInterval = 1;
+        public float CurrentGridInterval
+        {
+            get => _currentGridInterval;
+            set
+            {
+                _currentGridInterval = value;
+                gridSizeLabel.Content = value < 1 ? $"Grid Size: 1/{1 / value}" : $"Grid Size: {value}";
+            }
+        }
+
         private static readonly BitmapImage placeholderImage = new(new Uri("pack://application:,,,/Resources/placeholder.png"));
         private static readonly BitmapImage collisionImage = new(new Uri("pack://application:,,,/Resources/collision.png"));
         private static readonly BitmapImage transparentImage = new(new Uri("pack://application:,,,/Resources/transparent.png"));
@@ -66,8 +77,6 @@ namespace RPGLevelEditor
         private Point? lastDrawnPoint = new();
         // When editing collision, whether or not moving the mouse removes or adds collision is based on the initially clicked tile
         private bool collisionDrawType = false;
-
-        private float currentGridInterval = 1;
 
         private WriteableBitmap? tileGridBitmap;
         private WriteableBitmap? collisionGridBitmap;
@@ -467,13 +476,13 @@ namespace RPGLevelEditor
 
             if (gridOverlayItem.IsChecked)
             {
-                for (float x = currentGridInterval; x < xSize; x += currentGridInterval)
+                for (float x = CurrentGridInterval; x < xSize; x += CurrentGridInterval)
                 {
                     _ = gridOverlayXDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
                     {
                         Height = gridOverlayXDisplay.Height,
-                        Width = currentGridInterval,
-                        Margin = new Thickness(x * TileSize.X - (currentGridInterval / 2), 0, 0, 0),
+                        Width = CurrentGridInterval,
+                        Margin = new Thickness(x * TileSize.X - (CurrentGridInterval / 2), 0, 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Center,
                         IsHitTestVisible = false,
@@ -481,13 +490,13 @@ namespace RPGLevelEditor
                     });
                 }
 
-                for (float y = currentGridInterval; y < ySize; y += currentGridInterval)
+                for (float y = CurrentGridInterval; y < ySize; y += CurrentGridInterval)
                 {
                     _ = gridOverlayYDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
                     {
-                        Height = currentGridInterval,
+                        Height = CurrentGridInterval,
                         Width = gridOverlayYDisplay.Width,
-                        Margin = new Thickness(0, y * TileSize.Y - (currentGridInterval / 2), 0, 0),
+                        Margin = new Thickness(0, y * TileSize.Y - (CurrentGridInterval / 2), 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Center,
                         VerticalAlignment = VerticalAlignment.Top,
                         IsHitTestVisible = false,
@@ -499,24 +508,24 @@ namespace RPGLevelEditor
 
         private void GridOverlayEnlarge()
         {
-            if (currentGridInterval >= 128)
+            if (CurrentGridInterval >= 128)
             {
                 return;
             }
 
-            currentGridInterval *= 2;
+            CurrentGridInterval *= 2;
 
             CreateGridOverlay();
         }
 
         private void GridOverlayShrink()
         {
-            if (currentGridInterval <= 0.03125)
+            if (CurrentGridInterval <= 0.03125)
             {
                 return;
             }
 
-            currentGridInterval /= 2;
+            CurrentGridInterval /= 2;
 
             CreateGridOverlay();
         }
@@ -696,8 +705,8 @@ namespace RPGLevelEditor
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
             {
                 // Snap to nearest grid intersection based on current grid size
-                newPos.X = MathF.Round(newPos.X / currentGridInterval) * currentGridInterval;
-                newPos.Y = MathF.Round(newPos.Y / currentGridInterval) * currentGridInterval;
+                newPos.X = MathF.Round(newPos.X / CurrentGridInterval) * CurrentGridInterval;
+                newPos.Y = MathF.Round(newPos.Y / CurrentGridInterval) * CurrentGridInterval;
             }
 
             _ = selectedEntity.Move(newPos, false);
