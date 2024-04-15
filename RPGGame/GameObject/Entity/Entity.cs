@@ -9,12 +9,15 @@ namespace RPGGame.GameObject.Entity
     public class Entity(Vector2 position, Vector2 size, string? texture) : ICloneable
     {
         [JsonProperty]
+        [EditorModifiable("Position", "The location of the entity within the room.", EditType.RoomCoordinate)]
         public Vector2 Position { get; protected set; } = position;
 
         [JsonProperty]
+        [EditorModifiable("Size", "The size of the entity relative to the tile grid.")]
         public Vector2 Size { get; protected set; } = size;
 
         [JsonProperty]
+        [EditorModifiable("Render Texture", "The optional name of the texture that the game will draw for this entity.", EditType.EntityTexture)]
         public string? Texture { get; protected set; } = texture;
 
         // Entity origin is the bottom middle, tile origin is the top left
