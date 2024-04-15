@@ -203,6 +203,67 @@ namespace RPGLevelEditor
             CreateTileGrid();
         }
 
+        private void PromptDimensionChange()
+        {
+            if (SelectedTextureName is null)
+            {
+                _ = MessageBox.Show(this, "Please select a tile texture before changing room dimensions",
+                    "No texture", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            int xLength = OpenRoom.TileMap.GetLength(0);
+            int yLength = OpenRoom.TileMap.GetLength(1);
+
+            ToolWindows.DimensionsDialog dialog = new(xLength, yLength)
+            {
+                Owner = this
+            };
+            if (dialog.ShowDialog() ?? false)
+            {
+                if (dialog.X < xLength || dialog.Y < yLength)
+                {
+                    MessageBoxResult result = MessageBox.Show(this,
+                        "The entered dimensions are smaller than the current dimensions. " +
+                        "Shrinking the room will cause tiles and entities outside the new boundaries to be lost.\n\n" +
+                        "Are you sure you want to continue?",
+                        "Potential loss", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+                    if (result != MessageBoxResult.Yes)
+                    {
+                        return;
+                    }
+                }
+                ChangeDimensions(dialog.X, dialog.Y);
+            }
+        }
+
+        private void PromptBackgroundColourChange()
+        {
+            ToolWindows.ColorDialog dialog = new()
+            {
+                SelectedColor = new Color()
+                {
+                    R = OpenRoom.BackgroundColor.R,
+                    G = OpenRoom.BackgroundColor.G,
+                    B = OpenRoom.BackgroundColor.B,
+                    A = byte.MaxValue
+                },
+                StartFullOpen = true
+            };
+            if (dialog.ShowDialog(this))
+            {
+                OpenRoom.BackgroundColor = new Microsoft.Xna.Framework.Color()
+                {
+                    R = dialog.SelectedColor.R,
+                    G = dialog.SelectedColor.G,
+                    B = dialog.SelectedColor.B,
+                    A = byte.MaxValue
+                };
+                UnsavedChanges = true;
+                UpdateGridBackground();
+            }
+        }
+
         private void CreateTileGrid()
         {
             UpdateGridBackground();
@@ -852,63 +913,12 @@ namespace RPGLevelEditor
 
         private void DimensionsItem_OnClick(object sender, RoutedEventArgs e)
         {
-            if (SelectedTextureName is null)
-            {
-                _ = MessageBox.Show(this, "Please select a tile texture before changing room dimensions",
-                    "No texture", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            int xLength = OpenRoom.TileMap.GetLength(0);
-            int yLength = OpenRoom.TileMap.GetLength(1);
-
-            ToolWindows.DimensionsDialog dialog = new(xLength, yLength)
-            {
-                Owner = this
-            };
-            if (dialog.ShowDialog() ?? false)
-            {
-                if (dialog.X < xLength || dialog.Y < yLength)
-                {
-                    MessageBoxResult result = MessageBox.Show(this,
-                        "The entered dimensions are smaller than the current dimensions. " +
-                        "Shrinking the room will cause tiles and entities outside the new boundaries to be lost.\n\n" +
-                        "Are you sure you want to continue?",
-                        "Potential loss", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
-                    if (result != MessageBoxResult.Yes)
-                    {
-                        return;
-                    }
-                }
-                ChangeDimensions(dialog.X, dialog.Y);
-            }
+            PromptDimensionChange();
         }
 
         private void BackgroundColourItem_OnClick(object sender, RoutedEventArgs e)
         {
-            ToolWindows.ColorDialog dialog = new()
-            {
-                SelectedColor = new Color()
-                {
-                    R = OpenRoom.BackgroundColor.R,
-                    G = OpenRoom.BackgroundColor.G,
-                    B = OpenRoom.BackgroundColor.B,
-                    A = byte.MaxValue
-                },
-                StartFullOpen = true
-            };
-            if (dialog.ShowDialog(this))
-            {
-                OpenRoom.BackgroundColor = new Microsoft.Xna.Framework.Color()
-                {
-                    R = dialog.SelectedColor.R,
-                    G = dialog.SelectedColor.G,
-                    B = dialog.SelectedColor.B,
-                    A = byte.MaxValue
-                };
-                UnsavedChanges = true;
-                UpdateGridBackground();
-            }
+            PromptBackgroundColourChange();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -946,6 +956,13 @@ namespace RPGLevelEditor
                     {
                         SystemSounds.Exclamation.Play();
                     }
+                    break;
+                // Other edit options
+                case Key.D when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                    PromptDimensionChange();
+                    break;
+                case Key.B when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                    PromptBackgroundColourChange();
                     break;
                 // File options
                 case Key.S when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
