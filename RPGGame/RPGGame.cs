@@ -41,7 +41,7 @@ namespace RPGGame
             rpgContentLoader = new RPGContentLoader(Content.RootDirectory);
 
             currentWorld = rpgContentLoader.LoadWorld(defaultWorldName);
-            currentWorld.ChangePlayer(new GameObject.Player());
+            currentWorld.ChangePlayer(new GameObject.Entity.Player());
             currentWorld.ChangeRoom(rpgContentLoader.LoadRoom(currentWorld.DefaultRoomName));
         }
 
@@ -77,7 +77,7 @@ namespace RPGGame
 
             Point tileGridOffset = tileDraw.DrawTileGridCentered(currentWorld.CurrentRoom.TileMap);
 
-            foreach (GameObject.Entity entity in currentWorld.CurrentRoom.Entities)
+            foreach (GameObject.Entity.Entity entity in currentWorld.CurrentRoom.Entities)
             {
                 _ = entityDraw.DrawEntityOnGrid(entity, tileGridOffset, ScreenDrawing.TileDrawing.TileSize);
             }

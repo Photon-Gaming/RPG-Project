@@ -28,9 +28,10 @@
             }
         }
 
-        private class EntityMoveStackFrame(RoomEditor editorWindow, RPGGame.GameObject.Entity entity, float x, float y) : StateStackFrame(editorWindow)
+        private class EntityMoveStackFrame(RoomEditor editorWindow,
+            RPGGame.GameObject.Entity.Entity entity, float x, float y) : StateStackFrame(editorWindow)
         {
-            public RPGGame.GameObject.Entity Entity { get; } = entity;
+            public RPGGame.GameObject.Entity.Entity Entity { get; } = entity;
             public float X { get; } = x;
             public float Y { get; } = y;
 

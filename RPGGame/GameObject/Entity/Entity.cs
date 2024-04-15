@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 
-namespace RPGGame.GameObject
+namespace RPGGame.GameObject.Entity
 {
     [Serializable]
     [JsonObject(MemberSerialization.OptIn)]

@@ -25,7 +25,7 @@ namespace RPGGame.ScreenDrawing
         /// <param name="tileGridOffset">The pixel position on the screen of (0, 0). May be outside the screen boundaries.</param>
         /// <param name="tileSize">The pixel dimensions of a single tile on the screen</param>
         /// <returns></returns>
-        public Rectangle DrawEntityOnGrid(GameObject.Entity entity, Point tileGridOffset, Point tileSize)
+        public Rectangle DrawEntityOnGrid(GameObject.Entity.Entity entity, Point tileGridOffset, Point tileSize)
         {
             Point entityScreenSize = new((int)(entity.Size.X * tileSize.X), (int)(entity.Size.Y * tileSize.Y));
             Point screenPosition = new(
