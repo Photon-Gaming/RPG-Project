@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Media;
+using System.Reflection;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -426,6 +427,8 @@ namespace RPGLevelEditor
 
         private void UpdateSelectedEntity()
         {
+            UpdateEntityPropertiesPanel();
+
             if (selectedEntity is null)
             {
                 selectedEntityContainer.Visibility = Visibility.Collapsed;
@@ -449,6 +452,36 @@ namespace RPGLevelEditor
             selectedEntityImage.Margin = new Thickness(
                 selectedEntity.TopLeft.X * TileSize.X, selectedEntity.TopLeft.Y * TileSize.Y, 0, 0);
             selectedEntityImage.Source = LoadEntityTexture(selectedEntity);
+        }
+
+        private void UpdateEntityPropertiesPanel()
+        {
+            entityPropertiesPanel.Children.Clear();
+
+            if (selectedEntity is null)
+            {
+                return;
+            }
+
+            foreach (PropertyInfo property in selectedEntity.GetType().GetProperties())
+            {
+                List<RPGGame.GameObject.Entity.EditorModifiableAttribute> attributes = property
+                    .GetCustomAttributes(typeof(RPGGame.GameObject.Entity.EditorModifiableAttribute))
+                    .Cast<RPGGame.GameObject.Entity.EditorModifiableAttribute>().ToList();
+                if (attributes.Count == 0)
+                {
+                    // Only properties with the EditorModifiable attribute should be shown
+                    continue;
+                }
+
+                RPGGame.GameObject.Entity.EditorModifiableAttribute editorAttribute = attributes[0];
+
+                entityPropertiesPanel.Children.Add(new Label()
+                {
+                    Content = $"{editorAttribute.Name} ({property.Name}): {property.GetValue(selectedEntity)}",
+                    ToolTip = editorAttribute.Description
+                });
+            }
         }
 
         private void UpdateGridBackground()

@@ -9,7 +9,7 @@ namespace RPGGame.GameObject.Entity
         EntityTexture,
     }
 
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property)]
     public class EditorModifiableAttribute(string name, string description, EditType editorEditType = EditType.Default) : Attribute
     {
         public string Name = name;
@@ -17,14 +17,14 @@ namespace RPGGame.GameObject.Entity
         public EditType EditorEditType = editorEditType;
     }
 
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property)]
     public class EditorFloatConstraintAttribute(float? min, float? max) : Attribute
     {
         public float? Minimum = min;
         public float? Maximum = max;
     }
 
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property)]
     public class EditorIntConstraintAttribute(int? min, int? max) : Attribute
     {
         public int? Minimum = min;
