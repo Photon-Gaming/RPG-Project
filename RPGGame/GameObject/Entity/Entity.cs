@@ -59,6 +59,8 @@ namespace RPGGame.GameObject.Entity
 
         public bool IsOutOfBounds(Room room)
         {
+            // Room.IsOutOfBounds could be used for this, but we can reduce the number of comparisons needed
+            // by only checking TopLeft against the lower bound and BottomRight against the upper bound.
             return TopLeft.X < 0
                 || TopLeft.Y < 0
                 || BottomRight.X >= room.TileMap.GetLength(0)

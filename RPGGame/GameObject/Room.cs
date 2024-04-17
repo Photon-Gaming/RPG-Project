@@ -17,6 +17,14 @@ namespace RPGGame.GameObject
         [JsonProperty]
         public Color BackgroundColor { get; set; } = backgroundColor;
 
+        public bool IsOutOfBounds(Vector2 position)
+        {
+            return position.X < 0
+                || position.Y < 0
+                || position.X >= TileMap.GetLength(0)
+                || position.Y >= TileMap.GetLength(1);
+        }
+
         public object Clone()
         {
             return new Room((Tile[,])TileMap.Clone(), Entities.Select(e => (Entity.Entity)e.Clone()).ToList(), BackgroundColor);

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RPGLevelEditor"
         mc:Ignorable="d"
-        Title="Room Editor" Height="450" Width="800" Closing="Window_Closing" KeyDown="Window_KeyDown" Closed="Window_Closed">
+        Title="Room Editor" Height="900" Width="1620" Closing="Window_Closing" KeyDown="Window_KeyDown" Closed="Window_Closed" WindowState="Maximized">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -76,7 +76,12 @@
                 <UIElement x:Name="collisionOptionsPanel"/>
             </TabItem>
             <TabItem Header="Entities">
-                <StackPanel x:Name="entityPropertiesPanel" Orientation="Vertical"/>
+                <Grid x:Name="entityPropertiesGrid">
+                    <ScrollViewer Margin="0,0,0,25" HorizontalScrollBarVisibility="Auto">
+                        <StackPanel x:Name="entityPropertiesPanel" Orientation="Vertical" MinWidth="290"/>
+                    </ScrollViewer>
+                    <Button x:Name="entityApplyButton" VerticalAlignment="Bottom" Content="Apply" Padding="10,0" Height="20" Click="entityApplyButton_Click"/>
+                </Grid>
             </TabItem>
         </TabControl>
         <StatusBar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">

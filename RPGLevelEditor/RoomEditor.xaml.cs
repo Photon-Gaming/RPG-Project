@@ -460,8 +460,11 @@ namespace RPGLevelEditor
 
             if (selectedEntity is null)
             {
+                entityApplyButton.IsEnabled = false;
                 return;
             }
+
+            entityApplyButton.IsEnabled = true;
 
             foreach (PropertyInfo property in selectedEntity.GetType().GetProperties())
             {
@@ -476,11 +479,8 @@ namespace RPGLevelEditor
 
                 RPGGame.GameObject.Entity.EditorModifiableAttribute editorAttribute = attributes[0];
 
-                entityPropertiesPanel.Children.Add(new Label()
-                {
-                    Content = $"{editorAttribute.Name} ({property.Name}): {property.GetValue(selectedEntity)}",
-                    ToolTip = editorAttribute.Description
-                });
+                _ = entityPropertiesPanel.Children.Add(CreatePropertyEditBox(property, editorAttribute, selectedEntity));
+                _ = entityPropertiesPanel.Children.Add(new Separator());
             }
         }
 
@@ -626,7 +626,7 @@ namespace RPGLevelEditor
 
         private void EditTileAtPosition(int x, int y)
         {
-            if (x < 0 || y < 0 || x >= OpenRoom.TileMap.GetLength(0) || y >= OpenRoom.TileMap.GetLength(1))
+            if (OpenRoom.IsOutOfBounds(new Microsoft.Xna.Framework.Vector2(x, y)))
             {
                 return;
             }
@@ -910,8 +910,7 @@ namespace RPGLevelEditor
             mousePositionLabel.Content = $"Mouse: ({relativeMousePos.X:N2}, {relativeMousePos.Y:N2})";
             gridPositionLabel.Content = $"Grid: ({(int)relativeMousePos.X:N0}, {(int)relativeMousePos.Y:N0})";
 
-            if (relativeMousePos.X >= 0 && relativeMousePos.X < OpenRoom.TileMap.GetLength(0)
-                && relativeMousePos.Y >= 0 && relativeMousePos.Y < OpenRoom.TileMap.GetLength(1))
+            if (!OpenRoom.IsOutOfBounds(new Microsoft.Xna.Framework.Vector2((int)relativeMousePos.X, (int)relativeMousePos.Y)))
             {
                 mouseTextureLabel.Content = $"Texture: {OpenRoom.TileMap[(int)relativeMousePos.X, (int)relativeMousePos.Y].Texture}";
                 mouseCollisionLabel.Content = $"Collision: {OpenRoom.TileMap[(int)relativeMousePos.X, (int)relativeMousePos.Y].IsCollision}";
@@ -1062,7 +1061,7 @@ namespace RPGLevelEditor
                 currentToolType = ToolType.Collision;
                 SelectEntity(null);
             }
-            else if (ReferenceEquals(toolPanel.SelectedContent, entityPropertiesPanel))
+            else if (ReferenceEquals(toolPanel.SelectedContent, entityPropertiesGrid))
             {
                 currentToolType = ToolType.Entity;
             }
@@ -1122,6 +1121,21 @@ namespace RPGLevelEditor
         private void ProblemsItem_OnClick(object sender, RoutedEventArgs e)
         {
             ShowProblems();
+        }
+
+        private void entityApplyButton_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (PropertyEditBox.PropertyEditBox editBox in
+                entityPropertiesPanel.Children.OfType<PropertyEditBox.PropertyEditBox>())
+            {
+                if (!editBox.IsValueValid)
+                {
+                    continue;
+                }
+                editBox.Property.SetValue(selectedEntity, editBox.ObjectValue);
+            }
+
+            UpdateSelectedEntity();
         }
     }
 }

@@ -1,0 +1,15 @@
+﻿<local:ConstrainedNumericPropertyEditBox x:TypeArguments="system:Int32" x:Class="RPGLevelEditor.PropertyEditBox.ConstrainedIntEdit"
+                                         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                                         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+                                         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+                                         xmlns:local="clr-namespace:RPGLevelEditor.PropertyEditBox"
+                                         xmlns:system="clr-namespace:System;assembly=System.Runtime"
+                                         mc:Ignorable="d" 
+                                         d:DesignHeight="80" d:DesignWidth="400" d:Background="#F0F0F0">
+    <Grid>
+        <TextBlock x:Name="propertyName" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,10,10,40" d:Text="Property Name (PropertyName):"/>
+        <TextBox x:Name="propertyValue" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,10,10,40" Width="100" TextChanged="propertyValue_TextChanged"/>
+        <Slider x:Name="propertySlider" VerticalAlignment="Center" Margin="10,40,10,10" ValueChanged="propertySlider_ValueChanged" SmallChange="1" LargeChange="1" IsSnapToTickEnabled="True"/>
+    </Grid>
+</local:ConstrainedNumericPropertyEditBox>
