@@ -26,17 +26,17 @@
                 <MenuItem x:Name="undoItem" Header="_Undo" InputGestureText="Ctrl+Z" IsEnabled="False" Click="undoItem_OnClick"/>
                 <MenuItem x:Name="redoItem" Header="_Redo" InputGestureText="Ctrl+Y" IsEnabled="False" Click="redoItem_OnClick"/>
                 <Separator/>
-                <MenuItem Header="Change Room _Dimensions..." InputGestureText="D" Click="DimensionsItem_OnClick"/>
-                <MenuItem Header="Change Room _Background Colour..." InputGestureText="B" Click="BackgroundColourItem_OnClick"/>
+                <MenuItem Header="Change Room _Dimensions..." InputGestureText="Ctrl+D" Click="DimensionsItem_OnClick"/>
+                <MenuItem Header="Change Room _Background Colour..." InputGestureText="Ctrl+B" Click="BackgroundColourItem_OnClick"/>
             </MenuItem>
             <MenuItem Header="_View">
-                <MenuItem x:Name="gridOverlayItem" Header="_Show Grid Overlay" InputGestureText="G" IsCheckable="True" Click="gridOverlayItem_OnClick"/>
-                <MenuItem Header="_Decrease Grid Size" InputGestureText="[" Click="gridOverlaySmaller_OnClick"/>
-                <MenuItem Header="_Increase Grid Size" InputGestureText="]" Click="gridOverlayLarger_OnClick"/>
+                <MenuItem x:Name="gridOverlayItem" Header="_Show Grid Overlay" InputGestureText="Ctrl+G" IsCheckable="True" Click="gridOverlayItem_OnClick"/>
+                <MenuItem Header="_Decrease Grid Size" InputGestureText="Ctrl+[" Click="gridOverlaySmaller_OnClick"/>
+                <MenuItem Header="_Increase Grid Size" InputGestureText="Ctrl+]" Click="gridOverlayLarger_OnClick"/>
                 <Separator/>
-                <MenuItem x:Name="hideInvisibleEntitiesItem" Header="_Hide Invisible Entities" InputGestureText="H" IsCheckable="True" Click="hideInvisibleEntitiesItem_OnClick"/>
-                <MenuItem x:Name="alwaysShowEntitiesItem" Header="Always Show _Entities" InputGestureText="E" IsCheckable="True" Click="alwaysShowEntitiesItem_OnClick"/>
-                <MenuItem x:Name="alwaysShowCollisionItem" Header="Always Show _Collision" InputGestureText="C" IsCheckable="True" Click="alwaysShowCollisionItem_OnClick"/>
+                <MenuItem x:Name="hideInvisibleEntitiesItem" Header="_Hide Invisible Entities" InputGestureText="Ctrl+H" IsCheckable="True" Click="hideInvisibleEntitiesItem_OnClick"/>
+                <MenuItem x:Name="alwaysShowEntitiesItem" Header="Always Show _Entities" InputGestureText="Ctrl+E" IsCheckable="True" Click="alwaysShowEntitiesItem_OnClick"/>
+                <MenuItem x:Name="alwaysShowCollisionItem" Header="Always Show _Collision" InputGestureText="Ctrl+C" IsCheckable="True" Click="alwaysShowCollisionItem_OnClick"/>
             </MenuItem>
         </Menu>
         <ScrollViewer x:Name="tileMapScroll" Grid.Row="1" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" PreviewMouseWheel="tileMapScroll_PreviewMouseWheel" MouseMove="tileMapScroll_MouseMove">

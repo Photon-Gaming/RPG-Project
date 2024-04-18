@@ -1019,10 +1019,10 @@ namespace RPGLevelEditor
                     }
                     break;
                 // Other edit options
-                case Key.D when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                case Key.D when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     PromptDimensionChange();
                     break;
-                case Key.B when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                case Key.B when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     PromptBackgroundColourChange();
                     break;
                 // File options
@@ -1033,26 +1033,26 @@ namespace RPGLevelEditor
                     ShowProblems();
                     break;
                 // Grid
-                case Key.G when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                case Key.G when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     gridOverlayItem.IsChecked = !gridOverlayItem.IsChecked;
                     CreateGridOverlay();
                     break;
-                case Key.OemOpenBrackets when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                case Key.OemOpenBrackets when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     GridOverlayShrink();
                     break;
-                case Key.OemCloseBrackets when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                case Key.OemCloseBrackets when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     GridOverlayEnlarge();
                     break;
                 // Additional view options
-                case Key.E when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                case Key.E when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     alwaysShowEntitiesItem.IsChecked = !alwaysShowEntitiesItem.IsChecked;
                     UpdateBitmapVisibility();
                     break;
-                case Key.C when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                case Key.C when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     alwaysShowCollisionItem.IsChecked = !alwaysShowCollisionItem.IsChecked;
                     UpdateBitmapVisibility();
                     break;
-                case Key.H when e.KeyboardDevice.Modifiers == ModifierKeys.None:
+                case Key.H when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     hideInvisibleEntitiesItem.IsChecked = !hideInvisibleEntitiesItem.IsChecked;
                     SelectEntity(null);
                     foreach (Entity entity in OpenRoom.Entities)
