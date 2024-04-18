@@ -91,11 +91,21 @@ namespace RPGLevelEditor
                 case EditType.EntityTexture:
                     if (property.PropertyType == typeof(string))
                     {
-                        // TODO: Subscribe to texture browser button event
-
-                        return new PropertyEditBox.EntityTextureEdit(
+                        PropertyEditBox.EntityTextureEdit editBox = new(
                             labelText, editorAttribute.Description, property,
                             (string?)property.GetValue(entity), _ => true);
+
+                        editBox.TextureSelectButtonClick += (_, _) =>
+                        {
+                            ToolWindows.TextureSelector selector = new(EntityTextureFolderPath);
+                            if ((selector.ShowDialog() ?? false) && selector.SelectedTextureName is not null)
+                            {
+                                property.SetValue(entity, selector.SelectedTextureName);
+                                UpdateSelectedEntity();
+                            }
+                        };
+
+                        return editBox;
                     }
                     break;
             }

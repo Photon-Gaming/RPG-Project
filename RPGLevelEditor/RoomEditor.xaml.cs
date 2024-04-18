@@ -696,6 +696,10 @@ namespace RPGLevelEditor
                 return;
             }
 
+            selectingPosition = false;
+            selectedPositionTarget = null;
+            tileGridDisplay.Cursor = null;
+
             if (selectedEntity is not null)
             {
                 // Draw any previously selected entity back onto the entity canvas
