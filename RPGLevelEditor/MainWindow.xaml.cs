@@ -43,10 +43,6 @@ namespace RPGLevelEditor
                 _ = MessageBox.Show(this, "New config file created. Please configure the path to the game Content folder.",
                     "First run", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            if (EditorConfig.ContentFolderPath == "")
-            {
-                PromptSetContentPath();
-            }
         }
 
         private void PromptSetContentPath()
@@ -101,6 +97,14 @@ namespace RPGLevelEditor
         private void Window_Closed(object sender, EventArgs e)
         {
             File.WriteAllText(ConfigFileName, JsonConvert.SerializeObject(EditorConfig, Formatting.Indented));
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (EditorConfig.ContentFolderPath == "")
+            {
+                PromptSetContentPath();
+            }
         }
     }
 }
