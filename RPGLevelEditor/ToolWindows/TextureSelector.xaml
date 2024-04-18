@@ -16,7 +16,7 @@
             <WrapPanel x:Name="texturesPanel"/>
         </ScrollViewer>
         <StackPanel x:Name="previewPanel" Grid.Row="1" Margin="5" Orientation="Horizontal">
-            <Image x:Name="selectedImagePreview" HorizontalAlignment="Left" Height="{Binding ActualHeight, ElementName=previewPanel, Mode=OneWay}" Width="{Binding Height, ElementName=selectedImagePreview, Mode=OneWay}"/>
+            <Image x:Name="selectedImagePreview" HorizontalAlignment="Left" Height="{Binding ActualHeight, ElementName=previewPanel, Mode=OneWay}" Width="{Binding Height, ElementName=selectedImagePreview, Mode=OneWay}" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
             <TextBlock x:Name="selectedImageInfo" VerticalAlignment="Center" Margin="5"/>
         </StackPanel>
         <Button Grid.Row="2" VerticalAlignment="Bottom" HorizontalAlignment="Right" Content="OK" Width="50" Margin="0,0,5,5" Click="OkButton_Click"/>

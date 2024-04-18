@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace RPGLevelEditor.ToolWindows
@@ -31,6 +32,7 @@ namespace RPGLevelEditor.ToolWindows
                     Width = 50,
                     Height = 50
                 };
+                RenderOptions.SetBitmapScalingMode(textureImage, BitmapScalingMode.NearestNeighbor);
 
                 textureImage.MouseUp += (_, _) => SelectTexture(filepath, filename);
 
