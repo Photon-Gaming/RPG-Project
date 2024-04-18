@@ -459,6 +459,8 @@ namespace RPGLevelEditor
             selectedEntityImage.Margin = new Thickness(
                 selectedEntity.TopLeft.X * TileSize.X, selectedEntity.TopLeft.Y * TileSize.Y, 0, 0);
             selectedEntityImage.Source = LoadEntityTexture(selectedEntity);
+
+            selectedEntityImage.BringIntoView();
         }
 
         private static IEnumerable<(PropertyInfo Property, EditorModifiableAttribute EditorAttribute)> GetEditableEntityProperties(Entity entity)
