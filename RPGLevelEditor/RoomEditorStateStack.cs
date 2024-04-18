@@ -1,4 +1,5 @@
-﻿using RPGGame.GameObject.Entity;
+﻿using System.Reflection;
+using RPGGame.GameObject.Entity;
 
 namespace RPGLevelEditor
 {
@@ -67,6 +68,27 @@ namespace RPGLevelEditor
                 {
                     EditorWindow.CreateEntityAtPosition(X, Y, false);
                 }
+            }
+        }
+
+        private class EntityPropertyEditStackFrame(RoomEditor editorWindow, Entity editedEntity) : StateStackFrame(editorWindow)
+        {
+            public Entity EditedEntity { get; } = editedEntity;
+            public Entity EntityClone { get; } = (Entity)editedEntity.Clone();
+
+            public override void RestoreState(bool isUndo)
+            {
+                Stack<StateStackFrame> stack = isUndo ? EditorWindow.redoStack : EditorWindow.undoStack;
+                stack.Push(new EntityPropertyEditStackFrame(EditorWindow, EditedEntity));
+
+                EditorWindow.SelectEntity(EditedEntity);
+
+                foreach ((PropertyInfo property, _) in GetEditableEntityProperties(EditedEntity))
+                {
+                    property.SetValue(EditedEntity, property.GetValue(EntityClone));
+                }
+
+                EditorWindow.UpdateSelectedEntity();
             }
         }
     }

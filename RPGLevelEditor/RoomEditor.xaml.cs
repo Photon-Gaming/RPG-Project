@@ -411,6 +411,11 @@ namespace RPGLevelEditor
                 return;
             }
 
+            BitmapSource imageSource = erase ? transparentImage : LoadEntityTexture(entity);
+            entityBitmap.CopyImage(imageSource,
+                (int)(entity.TopLeft.X * TileSize.X), (int)(entity.TopLeft.Y * TileSize.Y),
+                (int)(entity.Size.X * TileSize.X), (int)(entity.Size.Y * TileSize.Y));
+
             if (erase)
             {
                 // Redraw any overlapped entities
@@ -419,11 +424,6 @@ namespace RPGLevelEditor
                     DrawEntity(overlappedEntity, false);
                 }
             }
-
-            BitmapSource imageSource = erase ? transparentImage : LoadEntityTexture(entity);
-            entityBitmap.CopyImage(imageSource,
-                (int)(entity.TopLeft.X * TileSize.X), (int)(entity.TopLeft.Y * TileSize.Y),
-                (int)(entity.Size.X * TileSize.X), (int)(entity.Size.Y * TileSize.Y));
         }
 
         private void UpdateSelectedEntity()
@@ -455,6 +455,23 @@ namespace RPGLevelEditor
             selectedEntityImage.Source = LoadEntityTexture(selectedEntity);
         }
 
+        private static IEnumerable<(PropertyInfo Property, EditorModifiableAttribute EditorAttribute)> GetEditableEntityProperties(Entity entity)
+        {
+            foreach (PropertyInfo property in entity.GetType().GetProperties())
+            {
+                List<EditorModifiableAttribute> attributes = property
+                    .GetCustomAttributes(typeof(EditorModifiableAttribute))
+                    .Cast<EditorModifiableAttribute>().ToList();
+                if (attributes.Count == 0)
+                {
+                    // Only properties with the EditorModifiable attribute should be shown
+                    continue;
+                }
+
+                yield return (property, attributes[0]);
+            }
+        }
+
         private void UpdateEntityPropertiesPanel()
         {
             entityPropertiesPanel.Children.Clear();
@@ -467,19 +484,8 @@ namespace RPGLevelEditor
 
             entityApplyButton.IsEnabled = true;
 
-            foreach (PropertyInfo property in selectedEntity.GetType().GetProperties())
+            foreach ((PropertyInfo property, EditorModifiableAttribute editorAttribute) in GetEditableEntityProperties(selectedEntity))
             {
-                List<EditorModifiableAttribute> attributes = property
-                    .GetCustomAttributes(typeof(EditorModifiableAttribute))
-                    .Cast<EditorModifiableAttribute>().ToList();
-                if (attributes.Count == 0)
-                {
-                    // Only properties with the EditorModifiable attribute should be shown
-                    continue;
-                }
-
-                EditorModifiableAttribute editorAttribute = attributes[0];
-
                 _ = entityPropertiesPanel.Children.Add(CreatePropertyEditBox(property, editorAttribute, selectedEntity));
                 _ = entityPropertiesPanel.Children.Add(new Separator());
             }
@@ -625,6 +631,11 @@ namespace RPGLevelEditor
             PushUndoStack(new EntityCreateStackFrame(this, x, y));
         }
 
+        private void PushEntityPropertyEditUndoStack(Entity entity)
+        {
+            PushUndoStack(new EntityPropertyEditStackFrame(this, entity));
+        }
+
         private void EditTileAtPosition(int x, int y)
         {
             if (OpenRoom.IsOutOfBounds(new Microsoft.Xna.Framework.Vector2(x, y)))
@@ -671,6 +682,14 @@ namespace RPGLevelEditor
 
         private void SelectEntity(Entity? entity)
         {
+            if (ReferenceEquals(entity, selectedEntity))
+            {
+                // Entity is already selected
+                // - update the selected entity elements but skip everything else
+                UpdateSelectedEntity();
+                return;
+            }
+
             if (selectedEntity is not null)
             {
                 // Draw any previously selected entity back onto the entity canvas
@@ -1123,6 +1142,13 @@ namespace RPGLevelEditor
 
         private void entityApplyButton_Click(object sender, RoutedEventArgs e)
         {
+            if (selectedEntity is null)
+            {
+                return;
+            }
+
+            PushEntityPropertyEditUndoStack(selectedEntity);
+
             foreach (PropertyEditBox.PropertyEditBox editBox in
                 entityPropertiesPanel.Children.OfType<PropertyEditBox.PropertyEditBox>())
             {
