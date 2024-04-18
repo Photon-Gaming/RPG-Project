@@ -1,4 +1,6 @@
-﻿namespace RPGLevelEditor
+﻿using RPGGame.GameObject.Entity;
+
+namespace RPGLevelEditor
 {
     public partial class RoomEditor
     {
@@ -28,10 +30,9 @@
             }
         }
 
-        private class EntityMoveStackFrame(RoomEditor editorWindow,
-            RPGGame.GameObject.Entity.Entity entity, float x, float y) : StateStackFrame(editorWindow)
+        private class EntityMoveStackFrame(RoomEditor editorWindow, Entity entity, float x, float y) : StateStackFrame(editorWindow)
         {
-            public RPGGame.GameObject.Entity.Entity Entity { get; } = entity;
+            public Entity Entity { get; } = entity;
             public float X { get; } = x;
             public float Y { get; } = y;
 

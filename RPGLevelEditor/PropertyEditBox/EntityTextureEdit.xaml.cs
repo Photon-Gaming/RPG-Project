@@ -36,7 +36,7 @@ namespace RPGLevelEditor.PropertyEditBox
 
         public override event EventHandler<RoutedEventArgs>? TextureSelectButtonClick;
 
-        public EntityTextureEdit(string labelText, string labelTooltip, PropertyInfo property, string initialValue,
+        public EntityTextureEdit(string labelText, string labelTooltip, PropertyInfo property, string? initialValue,
             Predicate<string?> extraValidityCheck)
         {
             ExtraValidityCheck = extraValidityCheck;

@@ -6,8 +6,7 @@ namespace RPGLevelEditor
     public partial class RoomEditor
     {
         public PropertyEditBox.PropertyEditBox CreatePropertyEditBox(PropertyInfo property,
-            EditorModifiableAttribute editorAttribute,
-            Entity entity)
+            EditorModifiableAttribute editorAttribute, Entity entity)
         {
             string labelText = $"{editorAttribute.Name} ({property.Name})";
 
@@ -94,7 +93,7 @@ namespace RPGLevelEditor
 
                         return new PropertyEditBox.EntityTextureEdit(
                             labelText, editorAttribute.Description, property,
-                            (string)property.GetValue(entity)!, _ => true);
+                            (string?)property.GetValue(entity), _ => true);
                     }
                     break;
             }

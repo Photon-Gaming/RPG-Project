@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Newtonsoft.Json;
+using RPGGame.GameObject.Entity;
 
 namespace RPGLevelEditor
 {
@@ -71,7 +72,7 @@ namespace RPGLevelEditor
 
         private ToolType currentToolType = ToolType.Tile;
 
-        private RPGGame.GameObject.Entity.Entity? selectedEntity = null;
+        private Entity? selectedEntity = null;
         private bool movingEntity = false;
         private Point moveStartOffset = new();
 
@@ -122,7 +123,7 @@ namespace RPGLevelEditor
                 }
             }
             OpenRoom ??= new RPGGame.GameObject.Room(new RPGGame.GameObject.Tile[0, 0],
-                new List<RPGGame.GameObject.Entity.Entity>(),
+                new List<Entity>(),
                 Microsoft.Xna.Framework.Color.CornflowerBlue);
 
             UnsavedChanges = forceCreateNew;
@@ -312,7 +313,7 @@ namespace RPGLevelEditor
                 }
             }
 
-            foreach (RPGGame.GameObject.Entity.Entity entity in OpenRoom.Entities)
+            foreach (Entity entity in OpenRoom.Entities)
             {
                 DrawEntity(entity, false);
             }
@@ -369,7 +370,7 @@ namespace RPGLevelEditor
             return imageSource;
         }
 
-        private BitmapSource LoadEntityTexture(RPGGame.GameObject.Entity.Entity entity)
+        private BitmapSource LoadEntityTexture(Entity entity)
         {
             if (entity.Texture is not null)
             {
@@ -397,7 +398,7 @@ namespace RPGLevelEditor
                 : new BitmapImage(new Uri(ToolEntityTextureFolderPath + entity.GetType().Name + ".png"));
         }
 
-        private void DrawEntity(RPGGame.GameObject.Entity.Entity entity, bool erase)
+        private void DrawEntity(Entity entity, bool erase)
         {
             if (entityBitmap is null)
             {
@@ -413,7 +414,7 @@ namespace RPGLevelEditor
             if (erase)
             {
                 // Redraw any overlapped entities
-                foreach (RPGGame.GameObject.Entity.Entity overlappedEntity in OpenRoom.Entities.Where(e => e.Collides(entity)))
+                foreach (Entity overlappedEntity in OpenRoom.Entities.Where(e => e.Collides(entity)))
                 {
                     DrawEntity(overlappedEntity, false);
                 }
@@ -468,16 +469,16 @@ namespace RPGLevelEditor
 
             foreach (PropertyInfo property in selectedEntity.GetType().GetProperties())
             {
-                List<RPGGame.GameObject.Entity.EditorModifiableAttribute> attributes = property
-                    .GetCustomAttributes(typeof(RPGGame.GameObject.Entity.EditorModifiableAttribute))
-                    .Cast<RPGGame.GameObject.Entity.EditorModifiableAttribute>().ToList();
+                List<EditorModifiableAttribute> attributes = property
+                    .GetCustomAttributes(typeof(EditorModifiableAttribute))
+                    .Cast<EditorModifiableAttribute>().ToList();
                 if (attributes.Count == 0)
                 {
                     // Only properties with the EditorModifiable attribute should be shown
                     continue;
                 }
 
-                RPGGame.GameObject.Entity.EditorModifiableAttribute editorAttribute = attributes[0];
+                EditorModifiableAttribute editorAttribute = attributes[0];
 
                 _ = entityPropertiesPanel.Children.Add(CreatePropertyEditBox(property, editorAttribute, selectedEntity));
                 _ = entityPropertiesPanel.Children.Add(new Separator());
@@ -614,7 +615,7 @@ namespace RPGLevelEditor
             PushUndoStack(new TileEditStackFrame(this, x, y, OpenRoom.TileMap[x, y]));
         }
 
-        private void PushEntityMoveUndoStack(RPGGame.GameObject.Entity.Entity entity)
+        private void PushEntityMoveUndoStack(Entity entity)
         {
             PushUndoStack(new EntityMoveStackFrame(this, entity, entity.Position.X, entity.Position.Y));
         }
@@ -668,7 +669,7 @@ namespace RPGLevelEditor
             UpdateTileTexture(x, y);
         }
 
-        private void SelectEntity(RPGGame.GameObject.Entity.Entity? entity)
+        private void SelectEntity(Entity? entity)
         {
             if (selectedEntity is not null)
             {
@@ -697,7 +698,7 @@ namespace RPGLevelEditor
 
         private void CreateEntityAtPosition(float x, float y, bool pushToUndoStack)
         {
-            RPGGame.GameObject.Entity.Entity newEntity = new(
+            Entity newEntity = new(
                 new Microsoft.Xna.Framework.Vector2(x, y),
                 Microsoft.Xna.Framework.Vector2.One,
                 null);
@@ -768,8 +769,7 @@ namespace RPGLevelEditor
             }
 
             // Missing entity textures
-            foreach (RPGGame.GameObject.Entity.Entity entity in
-                OpenRoom.Entities.Where(e => ReferenceEquals(LoadEntityTexture(e), placeholderImage)))
+            foreach (Entity entity in OpenRoom.Entities.Where(e => ReferenceEquals(LoadEntityTexture(e), placeholderImage)))
             {
                 // TODO: Reference entity by name also, if present
                 _ = problems.AppendLine(
@@ -778,8 +778,7 @@ namespace RPGLevelEditor
             }
 
             // Out of bounds entities
-            foreach (RPGGame.GameObject.Entity.Entity entity in
-                OpenRoom.Entities.Where(e => e.IsOutOfBounds(OpenRoom)))
+            foreach (Entity entity in OpenRoom.Entities.Where(e => e.IsOutOfBounds(OpenRoom)))
             {
                 // TODO: Reference entity by name also, if present
                 _ = problems.AppendLine(
@@ -787,8 +786,7 @@ namespace RPGLevelEditor
             }
 
             // Overlapping entities
-            foreach (RPGGame.GameObject.Entity.Entity entity in
-                OpenRoom.Entities.Where(e => OpenRoom.Entities.Any(o => o.Collides(e))))
+            foreach (Entity entity in OpenRoom.Entities.Where(e => OpenRoom.Entities.Any(o => o.Collides(e))))
             {
                 // TODO: Reference entity by name also, if present
                 _ = problems.AppendLine(
@@ -1035,7 +1033,7 @@ namespace RPGLevelEditor
                 case Key.H when e.KeyboardDevice.Modifiers == ModifierKeys.None:
                     hideInvisibleEntitiesItem.IsChecked = !hideInvisibleEntitiesItem.IsChecked;
                     SelectEntity(null);
-                    foreach (RPGGame.GameObject.Entity.Entity entity in OpenRoom.Entities)
+                    foreach (Entity entity in OpenRoom.Entities)
                     {
                         DrawEntity(entity, false);
                     }
@@ -1102,7 +1100,7 @@ namespace RPGLevelEditor
         private void hideInvisibleEntitiesItem_OnClick(object sender, RoutedEventArgs e)
         {
             SelectEntity(null);
-            foreach (RPGGame.GameObject.Entity.Entity entity in OpenRoom.Entities)
+            foreach (Entity entity in OpenRoom.Entities)
             {
                 DrawEntity(entity, false);
             }
