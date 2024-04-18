@@ -79,12 +79,12 @@ namespace RPGGame
 
             foreach (GameObject.Entity.Entity entity in currentWorld.CurrentRoom.Entities)
             {
-                _ = entityDraw.DrawEntityOnGrid(entity, tileGridOffset, ScreenDrawing.TileDrawing.TileSize);
+                _ = entityDraw.DrawEntityOnGrid(entity, tileGridOffset, tileDraw.TileSize);
             }
 
             if (currentWorld.CurrentPlayer is not null)
             {
-                Rectangle playerScreenArea = entityDraw.DrawEntityOnGrid(currentWorld.CurrentPlayer, tileGridOffset, ScreenDrawing.TileDrawing.TileSize);
+                Rectangle playerScreenArea = entityDraw.DrawEntityOnGrid(currentWorld.CurrentPlayer, tileGridOffset, tileDraw.TileSize);
             }
 
             spriteBatch.End();
