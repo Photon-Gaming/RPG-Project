@@ -426,9 +426,12 @@ namespace RPGLevelEditor
             }
         }
 
-        private void UpdateSelectedEntity()
+        private void UpdateSelectedEntity(bool updatePropertiesPanel = true)
         {
-            UpdateEntityPropertiesPanel();
+            if (updatePropertiesPanel)
+            {
+                UpdateEntityPropertiesPanel();
+            }
 
             if (selectedEntity is null)
             {
@@ -767,7 +770,7 @@ namespace RPGLevelEditor
             {
                 _ = selectedEntity.Move(oldPos, false);
             }
-            UpdateSelectedEntity();
+            UpdateSelectedEntity(false);
         }
 
         private void ShowProblems()
@@ -1104,6 +1107,7 @@ namespace RPGLevelEditor
         private void selectedEntityContainer_MouseUp(object sender, MouseButtonEventArgs e)
         {
             movingEntity = false;
+            UpdateEntityPropertiesPanel();
         }
 
         private void selectedEntityContainer_MouseMove(object sender, MouseEventArgs e)
@@ -1114,6 +1118,7 @@ namespace RPGLevelEditor
         private void tileGridDisplay_MouseUp(object sender, MouseButtonEventArgs e)
         {
             movingEntity = false;
+            UpdateEntityPropertiesPanel();
         }
 
         private void hideInvisibleEntitiesItem_OnClick(object sender, RoutedEventArgs e)
