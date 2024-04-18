@@ -76,6 +76,9 @@ namespace RPGLevelEditor
         private bool movingEntity = false;
         private Point moveStartOffset = new();
 
+        private bool selectingPosition = false;
+        private PropertyInfo? selectedPositionTarget = null;
+
         private Point? lastDrawnPoint = new();
         // When editing collision, whether or not moving the mouse removes or adds collision is based on the initially clicked tile
         private bool collisionDrawType = false;
@@ -823,6 +826,13 @@ namespace RPGLevelEditor
             new ToolWindows.ScrollableMessageBox(this, "Detected problems", problems.ToString()).Show();
         }
 
+        private void StartPositionSelection(PropertyInfo targetProperty)
+        {
+            tileGridDisplay.Cursor = Cursors.Cross;
+            selectingPosition = true;
+            selectedPositionTarget = targetProperty;
+        }
+
         private void TextureSelect_MouseUp(object sender, MouseButtonEventArgs e)
         {
             SelectedTextureName = (sender as Border)?.Tag as string;
@@ -852,6 +862,22 @@ namespace RPGLevelEditor
             {
                 Point relativeMousePos = e.GetPosition(tileGridDisplay);
                 relativeMousePos = new Point(relativeMousePos.X / TileSize.X, relativeMousePos.Y / TileSize.Y);
+
+                if (selectingPosition && selectedPositionTarget is not null && selectedEntity is not null)
+                {
+                    selectingPosition = false;
+                    tileGridDisplay.Cursor = null;
+
+                    PushEntityPropertyEditUndoStack(selectedEntity);
+
+                    selectedPositionTarget.SetValue(selectedEntity,
+                        new Microsoft.Xna.Framework.Vector2((float)relativeMousePos.X, (float)relativeMousePos.Y));
+
+                    selectedPositionTarget = null;
+
+                    UpdateSelectedEntity();
+                    return;
+                }
 
                 lastDrawnPoint = relativeMousePos;
                 if (currentToolType == ToolType.Collision)

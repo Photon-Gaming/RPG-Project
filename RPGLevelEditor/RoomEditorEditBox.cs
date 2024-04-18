@@ -78,12 +78,14 @@ namespace RPGLevelEditor
                 case EditType.RoomCoordinate:
                     if (property.PropertyType == typeof(Microsoft.Xna.Framework.Vector2))
                     {
-                        // TODO: Subscribe to coordinate picker button event
-
-                        return new PropertyEditBox.RoomCoordinateEdit(
+                        PropertyEditBox.RoomCoordinateEdit editBox = new(
                             labelText, editorAttribute.Description, property,
                             (Microsoft.Xna.Framework.Vector2)property.GetValue(entity)!, _ => true,
                             OpenRoom);
+
+                        editBox.CoordinateSelectButtonClick += (_, _) => StartPositionSelection(property);
+
+                        return editBox;
                     }
                     break;
                 case EditType.EntityTexture:
