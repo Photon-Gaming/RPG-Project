@@ -642,6 +642,11 @@ namespace RPGLevelEditor
             PushUndoStack(new EntityPropertyEditStackFrame(this, entity));
         }
 
+        private void PushEntityDeleteUndoStack(Entity entity)
+        {
+            PushUndoStack(new EntityDeleteStackFrame(this, entity));
+        }
+
         private void EditTileAtPosition(int x, int y)
         {
             if (OpenRoom.IsOutOfBounds(new Microsoft.Xna.Framework.Vector2(x, y)))
@@ -744,6 +749,14 @@ namespace RPGLevelEditor
 
             OpenRoom.Entities.Add(newEntity);
             SelectEntity(newEntity);
+        }
+
+        private void DeleteEntity(Entity entity)
+        {
+            PushEntityDeleteUndoStack(entity);
+            SelectEntity(null);
+            DrawEntity(entity, true);
+            _ = OpenRoom.Entities.Remove(entity);
         }
 
         private void ProcessEntityMove()
@@ -1088,6 +1101,13 @@ namespace RPGLevelEditor
                     foreach (Entity entity in OpenRoom.Entities)
                     {
                         DrawEntity(entity, false);
+                    }
+                    break;
+                // Entity edit shortcuts
+                case Key.Delete when e.KeyboardDevice.Modifiers == ModifierKeys.Shift:
+                    if (selectedEntity is not null)
+                    {
+                        DeleteEntity(selectedEntity);
                     }
                     break;
             }

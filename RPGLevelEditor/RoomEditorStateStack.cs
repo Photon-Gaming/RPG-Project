@@ -91,5 +91,28 @@ namespace RPGLevelEditor
                 EditorWindow.UpdateSelectedEntity();
             }
         }
+
+        private class EntityDeleteStackFrame(RoomEditor editorWindow, Entity deletedEntity) : StateStackFrame(editorWindow)
+        {
+            public Entity DeletedEntity { get; } = deletedEntity;
+
+            public override void RestoreState(bool isUndo)
+            {
+                Stack<StateStackFrame> stack = isUndo ? EditorWindow.redoStack : EditorWindow.undoStack;
+                stack.Push(this);
+
+                if (isUndo)
+                {
+                    EditorWindow.OpenRoom.Entities.Add(DeletedEntity);
+                    EditorWindow.SelectEntity(DeletedEntity);
+                }
+                else
+                {
+                    EditorWindow.SelectEntity(null);
+                    EditorWindow.DrawEntity(DeletedEntity, true);
+                    _ = EditorWindow.OpenRoom.Entities.Remove(DeletedEntity);
+                }
+            }
+        }
     }
 }
