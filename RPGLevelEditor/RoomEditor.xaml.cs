@@ -871,6 +871,13 @@ namespace RPGLevelEditor
                     tileMapScaleTransform.ScaleY = newScale;
                 }
             }
+            else if (Keyboard.Modifiers == ModifierKeys.Shift)
+            {
+                // Prevent horizontal scroll from also scrolling vertically
+                e.Handled = true;
+
+                tileMapScroll.ScrollToHorizontalOffset(tileMapScroll.HorizontalOffset - (e.Delta / 2f));
+            }
         }
 
         private void tileGridDisplay_MouseDown(object sender, MouseButtonEventArgs e)
