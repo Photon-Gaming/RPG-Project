@@ -53,7 +53,7 @@ namespace RPGLevelEditor.ToolWindows
 
             if (int.TryParse(xTextBox.Text, out int value))
             {
-                xTextBox.Background = null;
+                xTextBox.Background = Brushes.White;
                 xSlider.Value = value;
             }
             else
@@ -71,7 +71,7 @@ namespace RPGLevelEditor.ToolWindows
 
             if (int.TryParse(yTextBox.Text, out int value))
             {
-                yTextBox.Background = null;
+                yTextBox.Background = Brushes.White;
                 ySlider.Value = value;
             }
             else

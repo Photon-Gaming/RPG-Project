@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RPGLevelEditor"
         mc:Ignorable="d"
-        Title="Room Editor" Height="450" Width="800" Closing="Window_Closing" KeyDown="Window_KeyDown" Closed="Window_Closed">
+        Title="Room Editor" Height="900" Width="1620" Closing="Window_Closing" KeyDown="Window_KeyDown" Closed="Window_Closed" WindowState="Maximized">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -13,24 +13,30 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="4*"/>
             <ColumnDefinition Width="1*"/>
-            <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Padding="0,0,0,3">
             <MenuItem Header="_File">
                 <MenuItem Header="_Save" InputGestureText="Ctrl+S" Click="SaveItem_OnClick"/>
+                <Separator/>
+                <MenuItem Header="Check for _Problems..." InputGestureText="Ctrl+P" Click="ProblemsItem_OnClick"/>
             </MenuItem>
             <MenuItem Header="_Edit">
-                <MenuItem x:Name="undoItem" Header="_Undo" InputGestureText="Ctrl+Z" Click="undoItem_OnClick"/>
-                <MenuItem x:Name="redoItem" Header="_Redo" InputGestureText="Ctrl+Y" Click="redoItem_OnClick"/>
+                <MenuItem x:Name="undoItem" Header="_Undo" InputGestureText="Ctrl+Z" IsEnabled="False" Click="undoItem_OnClick"/>
+                <MenuItem x:Name="redoItem" Header="_Redo" InputGestureText="Ctrl+Y" IsEnabled="False" Click="redoItem_OnClick"/>
                 <Separator/>
-                <MenuItem x:Name="collisionEditItem" Header="Edit _Collision" IsCheckable="True" Click="collisionEditItem_OnClick"/>
-                <Separator/>
-                <MenuItem Header="Change Room _Dimensions..." Click="DimensionsItem_OnClick"/>
-                <MenuItem Header="Change Room _Background Colour..." Click="BackgroundColourItem_OnClick"/>
+                <MenuItem Header="Change Room _Dimensions..." InputGestureText="Ctrl+D" Click="DimensionsItem_OnClick"/>
+                <MenuItem Header="Change Room _Background Colour..." InputGestureText="Ctrl+B" Click="BackgroundColourItem_OnClick"/>
             </MenuItem>
             <MenuItem Header="_View">
-                <MenuItem x:Name="gridOverlayItem" Header="_Show Grid Overlay" IsCheckable="True" Click="gridOverlayItem_OnClick"/>
+                <MenuItem x:Name="gridOverlayItem" Header="_Show Grid Overlay" InputGestureText="Ctrl+G" IsCheckable="True" Click="gridOverlayItem_OnClick"/>
+                <MenuItem Header="_Decrease Grid Size" InputGestureText="Ctrl+[" Click="gridOverlaySmaller_OnClick"/>
+                <MenuItem Header="_Increase Grid Size" InputGestureText="Ctrl+]" Click="gridOverlayLarger_OnClick"/>
+                <Separator/>
+                <MenuItem x:Name="hideInvisibleEntitiesItem" Header="_Hide Invisible Entities" InputGestureText="Ctrl+H" IsCheckable="True" Click="hideInvisibleEntitiesItem_OnClick"/>
+                <MenuItem x:Name="alwaysShowEntitiesItem" Header="Always Show _Entities" InputGestureText="Ctrl+E" IsCheckable="True" Click="alwaysShowEntitiesItem_OnClick"/>
+                <MenuItem x:Name="alwaysShowCollisionItem" Header="Always Show _Collision" InputGestureText="Ctrl+C" IsCheckable="True" Click="alwaysShowCollisionItem_OnClick"/>
             </MenuItem>
         </Menu>
         <ScrollViewer x:Name="tileMapScroll" Grid.Row="1" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" PreviewMouseWheel="tileMapScroll_PreviewMouseWheel" MouseMove="tileMapScroll_MouseMove">
@@ -38,8 +44,9 @@
                 <Grid.LayoutTransform>
                     <ScaleTransform x:Name="tileMapScaleTransform" CenterX="0.5" CenterY="0.5"/>
                 </Grid.LayoutTransform>
-                <Image x:Name="tileGridDisplay" MouseDown="tileGridDisplay_MouseDown" MouseMove="tileGridDisplay_MouseMove" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseLeave="tileGridDisplay_MouseLeave"/>
+                <Image x:Name="tileGridDisplay" MouseDown="tileGridDisplay_MouseDown" MouseMove="tileGridDisplay_MouseMove" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseLeave="tileGridDisplay_MouseLeave" MouseUp="tileGridDisplay_MouseUp"/>
                 <Image x:Name="collisionGridDisplay" RenderOptions.BitmapScalingMode="NearestNeighbor" IsHitTestVisible="False" Focusable="False"/>
+                <Image x:Name="entityDisplay" RenderOptions.BitmapScalingMode="NearestNeighbor" IsHitTestVisible="False" Focusable="False"/>
                 <Grid x:Name="gridOverlayXDisplay" IsHitTestVisible="False" Focusable="False"/>
                 <Grid x:Name="gridOverlayYDisplay" IsHitTestVisible="False" Focusable="False"/>
                 <!-- Center point marker -->
@@ -51,13 +58,30 @@
                 <!-- Limit marker -->
                 <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Magenta" Width="3" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}" Margin="0,0,-3,0"/>
                 <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Green" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="3" Margin="0,0,0,-3"/>
+                <!-- Selected entity -->
+                <Grid x:Name="selectedEntityContainer" Cursor="SizeAll" MouseDown="selectedEntityContainer_MouseDown" MouseUp="selectedEntityContainer_MouseUp" MouseMove="selectedEntityContainer_MouseMove">
+                    <Image x:Name="selectedEntityImage" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                    <Rectangle x:Name="selectedEntityBorder" HorizontalAlignment="Left" VerticalAlignment="Top" Stroke="Blue" StrokeThickness="2"/>
+                    <Ellipse x:Name="selectedEntityOrigin" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Red" Width="8" Height="8"/>
+                </Grid>
             </Grid>
         </ScrollViewer>
-        <TabControl Grid.Row="1" Grid.Column="1">
+        <TabControl x:Name="toolPanel" Grid.Row="1" Grid.Column="1" SelectionChanged="toolPanel_SelectionChanged" Background="#FFE0E0E0">
             <TabItem Header="Tiles">
-                <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Background="#FFE0E0E0">
-                    <WrapPanel x:Name="textureSelectPanel" Width="152"/>
+                <ScrollViewer x:Name="tileTextureScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
+                    <WrapPanel x:Name="tileTextureSelectPanel"/>
                 </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Collision">
+                <UIElement x:Name="collisionOptionsPanel"/>
+            </TabItem>
+            <TabItem Header="Entities">
+                <Grid x:Name="entityPropertiesGrid">
+                    <ScrollViewer Margin="0,0,0,25" HorizontalScrollBarVisibility="Auto">
+                        <StackPanel x:Name="entityPropertiesPanel" Orientation="Vertical" MinWidth="290"/>
+                    </ScrollViewer>
+                    <Button x:Name="entityApplyButton" VerticalAlignment="Bottom" Content="Apply" Padding="10,0" Height="20" Click="entityApplyButton_Click"/>
+                </Grid>
             </TabItem>
         </TabControl>
         <StatusBar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
@@ -75,6 +99,10 @@
             <Separator/>
             <StatusBarItem>
                 <Label x:Name="mouseCollisionLabel" Content="Collision: N/A" Padding="0"/>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <Label x:Name="gridSizeLabel" Content="Grid Size: 1" Padding="0"/>
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
                 <Label x:Name="unsavedChangesLabel" Content="" Padding="0"/>

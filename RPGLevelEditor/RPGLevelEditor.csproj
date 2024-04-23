@@ -22,11 +22,13 @@
   <ItemGroup>
     <None Remove="Resources\collision.png" />
     <None Remove="Resources\placeholder.png" />
+    <None Remove="Resources\ToolEntity\Entity.png" />
     <None Remove="Resources\transparent.png" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="WriteableBitmapEx" Version="1.6.8" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,6 +38,7 @@
   <ItemGroup>
     <Resource Include="Resources\collision.png" />
     <Resource Include="Resources\placeholder.png" />
+    <Resource Include="Resources\ToolEntity\Entity.png" />
     <Resource Include="Resources\transparent.png" />
   </ItemGroup>
 

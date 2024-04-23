@@ -1,11 +1,14 @@
 ﻿using System.IO;
 using System.Media;
+using System.Reflection;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Newtonsoft.Json;
+using RPGGame.GameObject.Entity;
 
 namespace RPGLevelEditor
 {
@@ -14,15 +17,18 @@ namespace RPGLevelEditor
     /// </summary>
     public partial class RoomEditor : Window
     {
-        public readonly struct StateStackFrame(int x, int y, RPGGame.GameObject.Tile tile)
+        private enum ToolType
         {
-            public readonly int X = x;
-            public readonly int Y = y;
-            public readonly RPGGame.GameObject.Tile Tile = tile;
+            Tile,
+            Collision,
+            Entity
         }
 
         public const string TileTextureFolderName = "Tiles";
+        public const string EntityTextureFolderName = "Entities";
+        public const string ToolEntityTextureFolderPath = "pack://application:,,,/Resources/ToolEntity/";
         public readonly string TileTextureFolderPath;
+        public readonly string EntityTextureFolderPath;
 
         public static readonly Point TileSize = new(32, 32);
 
@@ -43,13 +49,35 @@ namespace RPGLevelEditor
             }
         }
 
+        private float _currentGridInterval = 1;
+        public float CurrentGridInterval
+        {
+            get => _currentGridInterval;
+            set
+            {
+                _currentGridInterval = value;
+                gridSizeLabel.Content = value < 1 ? $"Grid Size: 1/{1 / value}" : $"Grid Size: {value}";
+            }
+        }
+
+        private static readonly BitmapImage placeholderImage = new(new Uri("pack://application:,,,/Resources/placeholder.png"));
         private static readonly BitmapImage collisionImage = new(new Uri("pack://application:,,,/Resources/collision.png"));
         private static readonly BitmapImage transparentImage = new(new Uri("pack://application:,,,/Resources/transparent.png"));
 
         private readonly Stack<StateStackFrame> undoStack = new();
         private readonly Stack<StateStackFrame> redoStack = new();
 
-        private readonly Dictionary<string, BitmapSource> imageCache = new();
+        private readonly Dictionary<string, BitmapSource> tileImageCache = new();
+        private readonly Dictionary<string, BitmapSource> entityImageCache = new();
+
+        private ToolType currentToolType = ToolType.Tile;
+
+        private Entity? selectedEntity = null;
+        private bool movingEntity = false;
+        private Point moveStartOffset = new();
+
+        private bool selectingPosition = false;
+        private PropertyInfo? selectedPositionTarget = null;
 
         private Point? lastDrawnPoint = new();
         // When editing collision, whether or not moving the mouse removes or adds collision is based on the initially clicked tile
@@ -57,6 +85,7 @@ namespace RPGLevelEditor
 
         private WriteableBitmap? tileGridBitmap;
         private WriteableBitmap? collisionGridBitmap;
+        private WriteableBitmap? entityBitmap;
 
         public RoomEditor(string roomPath, MainWindow parent, bool forceCreateNew = false)
         {
@@ -68,6 +97,8 @@ namespace RPGLevelEditor
 
             TileTextureFolderPath = Path.Join(ParentWindow.EditorConfig.ContentFolderPath,
                 MainWindow.TextureFolderName, TileTextureFolderName);
+            EntityTextureFolderPath = Path.Join(ParentWindow.EditorConfig.ContentFolderPath,
+                MainWindow.TextureFolderName, EntityTextureFolderName);
             if (!Directory.Exists(TileTextureFolderPath))
             {
                 _ = MessageBox.Show(this,
@@ -95,7 +126,7 @@ namespace RPGLevelEditor
                 }
             }
             OpenRoom ??= new RPGGame.GameObject.Room(new RPGGame.GameObject.Tile[0, 0],
-                Array.Empty<RPGGame.GameObject.Entity>(),
+                new List<Entity>(),
                 Microsoft.Xna.Framework.Color.CornflowerBlue);
 
             UnsavedChanges = forceCreateNew;
@@ -103,6 +134,7 @@ namespace RPGLevelEditor
             Title += " - " + RoomPath;
 
             UpdateTextureSelectionPanel();
+            SelectEntity(null);
             CreateTileGrid();
         }
 
@@ -124,15 +156,12 @@ namespace RPGLevelEditor
 
         public bool Undo()
         {
-            if (undoStack.TryPop(out StateStackFrame state))
+            if (undoStack.TryPop(out StateStackFrame? state))
             {
-                redoStack.Push(new StateStackFrame(state.X, state.Y, OpenRoom.TileMap[state.X, state.Y]));
-                OpenRoom.TileMap[state.X, state.Y] = state.Tile;
-
-                UpdateTileTexture(state.X, state.Y);
+                state.RestoreState(true);
 
                 undoItem.IsEnabled = undoStack.Count > 0;
-                redoItem.IsEnabled = true;
+                redoItem.IsEnabled = redoStack.Count > 0;
 
                 return true;
             }
@@ -141,15 +170,12 @@ namespace RPGLevelEditor
 
         public bool Redo()
         {
-            if (redoStack.TryPop(out StateStackFrame state))
+            if (redoStack.TryPop(out StateStackFrame? state))
             {
-                undoStack.Push(new StateStackFrame(state.X, state.Y, OpenRoom.TileMap[state.X, state.Y]));
-                OpenRoom.TileMap[state.X, state.Y] = state.Tile;
-
-                UpdateTileTexture(state.X, state.Y);
+                state.RestoreState(false);
 
                 redoItem.IsEnabled = redoStack.Count > 0;
-                undoItem.IsEnabled = true;
+                undoItem.IsEnabled = redoStack.Count > 0;
 
                 return true;
             }
@@ -167,7 +193,7 @@ namespace RPGLevelEditor
             undoStack.Clear();
             redoStack.Clear();
             undoItem.IsEnabled = false;
-            redoItem.IsChecked = false;
+            redoItem.IsEnabled = false;
 
             int oldXSize = OpenRoom.TileMap.GetLength(0);
             int oldYSize = OpenRoom.TileMap.GetLength(1);
@@ -184,11 +210,72 @@ namespace RPGLevelEditor
             }
 
             OpenRoom = new RPGGame.GameObject.Room(newTileMap,
-                OpenRoom.Entities.Where(e => e.Position.X < xSize && e.Position.Y < ySize)
-                    .Select(e => (RPGGame.GameObject.Entity)e.Clone()).ToArray(),
+                OpenRoom.Entities.Where(e => e.Position.X < xSize && e.Position.Y < ySize).ToList(),
                 OpenRoom.BackgroundColor);
 
+            SelectEntity(null);
             CreateTileGrid();
+        }
+
+        private void PromptDimensionChange()
+        {
+            if (SelectedTextureName is null)
+            {
+                _ = MessageBox.Show(this, "Please select a tile texture before changing room dimensions",
+                    "No texture", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            int xLength = OpenRoom.TileMap.GetLength(0);
+            int yLength = OpenRoom.TileMap.GetLength(1);
+
+            ToolWindows.DimensionsDialog dialog = new(xLength, yLength)
+            {
+                Owner = this
+            };
+            if (dialog.ShowDialog() ?? false)
+            {
+                if (dialog.X < xLength || dialog.Y < yLength)
+                {
+                    MessageBoxResult result = MessageBox.Show(this,
+                        "The entered dimensions are smaller than the current dimensions. " +
+                        "Shrinking the room will cause tiles and entities outside the new boundaries to be lost.\n\n" +
+                        "Are you sure you want to continue?",
+                        "Potential loss", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+                    if (result != MessageBoxResult.Yes)
+                    {
+                        return;
+                    }
+                }
+                ChangeDimensions(dialog.X, dialog.Y);
+            }
+        }
+
+        private void PromptBackgroundColourChange()
+        {
+            ToolWindows.ColorDialog dialog = new()
+            {
+                SelectedColor = new Color()
+                {
+                    R = OpenRoom.BackgroundColor.R,
+                    G = OpenRoom.BackgroundColor.G,
+                    B = OpenRoom.BackgroundColor.B,
+                    A = byte.MaxValue
+                },
+                StartFullOpen = true
+            };
+            if (dialog.ShowDialog(this))
+            {
+                OpenRoom.BackgroundColor = new Microsoft.Xna.Framework.Color()
+                {
+                    R = dialog.SelectedColor.R,
+                    G = dialog.SelectedColor.G,
+                    B = dialog.SelectedColor.B,
+                    A = byte.MaxValue
+                };
+                UnsavedChanges = true;
+                UpdateGridBackground();
+            }
         }
 
         private void CreateTileGrid()
@@ -208,23 +295,18 @@ namespace RPGLevelEditor
                 PixelFormats.Bgra32,
                 null);
             tileGridDisplay.Source = tileGridBitmap;
-
             tileGridDisplay.Width = xSize * TileSize.X;
             tileGridDisplay.Height = ySize * TileSize.Y;
 
-            collisionGridBitmap = new WriteableBitmap(
-                // Having a pixel dimension be 0 is not possible,
-                // so use 1 pixel instead if room is 0 tiles in size
-                Math.Max(1, (int)TileSize.X * xSize),
-                Math.Max(1, (int)TileSize.Y * ySize),
-                96,
-                96,
-                PixelFormats.Bgra32,
-                null);
+            collisionGridBitmap = tileGridBitmap.Clone();
             collisionGridDisplay.Source = collisionGridBitmap;
-
             collisionGridDisplay.Width = xSize * TileSize.X;
             collisionGridDisplay.Height = ySize * TileSize.Y;
+
+            entityBitmap = tileGridBitmap.Clone();
+            entityDisplay.Source = entityBitmap;
+            entityDisplay.Width = xSize * TileSize.X;
+            entityDisplay.Height = ySize * TileSize.Y;
 
             for (int x = 0; x < xSize; x++)
             {
@@ -234,7 +316,21 @@ namespace RPGLevelEditor
                 }
             }
 
+            foreach (Entity entity in OpenRoom.Entities)
+            {
+                DrawEntity(entity, false);
+            }
+
             CreateGridOverlay();
+            UpdateBitmapVisibility();
+        }
+
+        private void UpdateBitmapVisibility()
+        {
+            collisionGridDisplay.Visibility = currentToolType == ToolType.Collision || alwaysShowCollisionItem.IsChecked
+                ? Visibility.Visible : Visibility.Collapsed;
+            entityDisplay.Visibility = currentToolType == ToolType.Entity || alwaysShowEntitiesItem.IsChecked
+                ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void UpdateTileTexture(int x, int y)
@@ -245,28 +341,162 @@ namespace RPGLevelEditor
                 return;
             }
 
+            BitmapSource imageSource = LoadTileTexture(x, y);
+
+            tileGridBitmap.CopyImage(
+                imageSource, x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
+            collisionGridBitmap.CopyImage(
+                OpenRoom.TileMap[x, y].IsCollision ? collisionImage : transparentImage,
+                x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
+        }
+
+        private BitmapSource LoadTileTexture(int x, int y)
+        {
             string textureName = OpenRoom.TileMap[x, y].Texture;
 
-            if (!imageCache.TryGetValue(textureName, out BitmapSource? imageSource))
+            if (!tileImageCache.TryGetValue(textureName, out BitmapSource? imageSource))
             {
                 string texturePath = Path.Join(TileTextureFolderPath, textureName);
                 texturePath = Path.ChangeExtension(texturePath, "png");
 
                 if (!File.Exists(texturePath))
                 {
-                    texturePath = "pack://application:,,,/Resources/placeholder.png";
+                    imageSource = placeholderImage;
                 }
-
-                imageSource = new BitmapImage(new Uri(texturePath));
-
-                imageCache[textureName] = imageSource;
+                else
+                {
+                    imageSource = new BitmapImage(new Uri(texturePath));
+                    tileImageCache[textureName] = imageSource;
+                }
             }
 
-            tileGridBitmap.CopyImage(
-                imageSource, x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
-            collisionGridBitmap.CopyImage(
-                collisionEditItem.IsChecked && OpenRoom.TileMap[x, y].IsCollision ? collisionImage : transparentImage,
-                x * (int)TileSize.X, y * (int)TileSize.Y, (int)TileSize.X, (int)TileSize.Y);
+            return imageSource;
+        }
+
+        private BitmapSource LoadEntityTexture(Entity entity)
+        {
+            if (entity.Texture is not null)
+            {
+                if (!entityImageCache.TryGetValue(entity.Texture, out BitmapSource? imageSource))
+                {
+                    string texturePath = Path.Join(EntityTextureFolderPath, entity.Texture);
+                    texturePath = Path.ChangeExtension(texturePath, "png");
+
+                    if (!File.Exists(texturePath))
+                    {
+                        imageSource = placeholderImage;
+                    }
+                    else
+                    {
+                        imageSource = new BitmapImage(new Uri(texturePath));
+                        entityImageCache[entity.Texture] = imageSource;
+                    }
+                }
+
+                return imageSource;
+            }
+
+            return hideInvisibleEntitiesItem.IsChecked
+                ? transparentImage
+                : new BitmapImage(new Uri(ToolEntityTextureFolderPath + entity.GetType().Name + ".png"));
+        }
+
+        private void DrawEntity(Entity entity, bool erase)
+        {
+            if (entityBitmap is null)
+            {
+                CreateTileGrid();
+                return;
+            }
+
+            if (entity.IsOutOfBounds(OpenRoom))
+            {
+                return;
+            }
+
+            BitmapSource imageSource = erase ? transparentImage : LoadEntityTexture(entity);
+            entityBitmap.CopyImage(imageSource,
+                (int)(entity.TopLeft.X * TileSize.X), (int)(entity.TopLeft.Y * TileSize.Y),
+                (int)(entity.Size.X * TileSize.X), (int)(entity.Size.Y * TileSize.Y));
+
+            if (erase)
+            {
+                // Redraw any overlapped entities
+                foreach (Entity overlappedEntity in OpenRoom.Entities.Where(e => e.Collides(entity)))
+                {
+                    DrawEntity(overlappedEntity, false);
+                }
+            }
+        }
+
+        private void UpdateSelectedEntity(bool updatePropertiesPanel = true)
+        {
+            if (updatePropertiesPanel)
+            {
+                UpdateEntityPropertiesPanel();
+            }
+
+            if (selectedEntity is null)
+            {
+                selectedEntityContainer.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            selectedEntityContainer.Visibility = Visibility.Visible;
+
+            selectedEntityBorder.Width = selectedEntity.Size.X * TileSize.X + selectedEntityBorder.StrokeThickness;
+            selectedEntityBorder.Height = selectedEntity.Size.Y * TileSize.Y + selectedEntityBorder.StrokeThickness;
+            selectedEntityBorder.Margin = new Thickness(
+                selectedEntity.TopLeft.X * TileSize.X - (selectedEntityBorder.StrokeThickness / 2),
+                selectedEntity.TopLeft.Y * TileSize.Y - (selectedEntityBorder.StrokeThickness / 2), 0, 0);
+
+            selectedEntityOrigin.Margin = new Thickness(
+                selectedEntity.Position.X * TileSize.X - (selectedEntityOrigin.Width / 2),
+                selectedEntity.Position.Y * TileSize.Y - (selectedEntityOrigin.Height / 2), 0, 0);
+
+            selectedEntityImage.Width = selectedEntity.Size.X * TileSize.X;
+            selectedEntityImage.Height = selectedEntity.Size.Y * TileSize.Y;
+            selectedEntityImage.Margin = new Thickness(
+                selectedEntity.TopLeft.X * TileSize.X, selectedEntity.TopLeft.Y * TileSize.Y, 0, 0);
+            selectedEntityImage.Source = LoadEntityTexture(selectedEntity);
+
+            selectedEntityImage.BringIntoView();
+        }
+
+        private static IEnumerable<(PropertyInfo Property, EditorModifiableAttribute EditorAttribute)> GetEditableEntityProperties(Entity entity)
+        {
+            foreach (PropertyInfo property in entity.GetType().GetProperties())
+            {
+                List<EditorModifiableAttribute> attributes = property
+                    .GetCustomAttributes(typeof(EditorModifiableAttribute))
+                    .Cast<EditorModifiableAttribute>().ToList();
+                if (attributes.Count == 0)
+                {
+                    // Only properties with the EditorModifiable attribute should be shown
+                    continue;
+                }
+
+                yield return (property, attributes[0]);
+            }
+        }
+
+        private void UpdateEntityPropertiesPanel()
+        {
+            entityPropertiesPanel.Children.Clear();
+
+            if (selectedEntity is null)
+            {
+                entityApplyButton.IsEnabled = false;
+                return;
+            }
+
+            entityApplyButton.IsEnabled = true;
+
+            foreach ((PropertyInfo property, EditorModifiableAttribute editorAttribute) in GetEditableEntityProperties(selectedEntity))
+            {
+                _ = entityPropertiesPanel.Children.Add(CreatePropertyEditBox(property, editorAttribute, selectedEntity));
+                _ = entityPropertiesPanel.Children.Add(new Separator());
+            }
         }
 
         private void UpdateGridBackground()
@@ -294,13 +524,13 @@ namespace RPGLevelEditor
 
             if (gridOverlayItem.IsChecked)
             {
-                for (int x = 1; x < xSize; x++)
+                for (float x = CurrentGridInterval; x < xSize; x += CurrentGridInterval)
                 {
                     _ = gridOverlayXDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
                     {
                         Height = gridOverlayXDisplay.Height,
-                        Width = 3,
-                        Margin = new Thickness(x * TileSize.X - 1, 0, 0, 0),
+                        Width = CurrentGridInterval,
+                        Margin = new Thickness(x * TileSize.X - (CurrentGridInterval / 2), 0, 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Center,
                         IsHitTestVisible = false,
@@ -308,13 +538,13 @@ namespace RPGLevelEditor
                     });
                 }
 
-                for (int y = 1; y < ySize; y++)
+                for (float y = CurrentGridInterval; y < ySize; y += CurrentGridInterval)
                 {
                     _ = gridOverlayYDisplay.Children.Add(new System.Windows.Shapes.Rectangle()
                     {
-                        Height = 3,
+                        Height = CurrentGridInterval,
                         Width = gridOverlayYDisplay.Width,
-                        Margin = new Thickness(0, y * TileSize.Y - 1, 0, 0),
+                        Margin = new Thickness(0, y * TileSize.Y - (CurrentGridInterval / 2), 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Center,
                         VerticalAlignment = VerticalAlignment.Top,
                         IsHitTestVisible = false,
@@ -324,9 +554,33 @@ namespace RPGLevelEditor
             }
         }
 
+        private void GridOverlayEnlarge()
+        {
+            if (CurrentGridInterval >= 128)
+            {
+                return;
+            }
+
+            CurrentGridInterval *= 2;
+
+            CreateGridOverlay();
+        }
+
+        private void GridOverlayShrink()
+        {
+            if (CurrentGridInterval <= 0.03125)
+            {
+                return;
+            }
+
+            CurrentGridInterval /= 2;
+
+            CreateGridOverlay();
+        }
+
         private void UpdateTextureSelectionPanel()
         {
-            textureSelectPanel.Children.Clear();
+            tileTextureSelectPanel.Children.Clear();
 
             if (!Directory.Exists(TileTextureFolderPath))
             {
@@ -355,29 +609,54 @@ namespace RPGLevelEditor
                     Tag = textureName
                 };
                 newElement.MouseUp += TextureSelect_MouseUp;
-                _ = textureSelectPanel.Children.Add(newElement);
+                _ = tileTextureSelectPanel.Children.Add(newElement);
             }
         }
 
-        private void PushUndoStack(int x, int y)
+        private void PushUndoStack(StateStackFrame stackFrame)
         {
             UnsavedChanges = true;
 
             redoStack.Clear();
-            undoStack.Push(new StateStackFrame(x, y, OpenRoom.TileMap[x, y]));
+            undoStack.Push(stackFrame);
 
             undoItem.IsEnabled = true;
             redoItem.IsEnabled = false;
         }
 
+        private void PushTileUndoStack(int x, int y)
+        {
+            PushUndoStack(new TileEditStackFrame(this, x, y, OpenRoom.TileMap[x, y]));
+        }
+
+        private void PushEntityMoveUndoStack(Entity entity)
+        {
+            PushUndoStack(new EntityMoveStackFrame(this, entity, entity.Position.X, entity.Position.Y));
+        }
+
+        private void PushEntityCreateUndoStack(float x, float y)
+        {
+            PushUndoStack(new EntityCreateStackFrame(this, x, y));
+        }
+
+        private void PushEntityPropertyEditUndoStack(Entity entity)
+        {
+            PushUndoStack(new EntityPropertyEditStackFrame(this, entity));
+        }
+
+        private void PushEntityDeleteUndoStack(Entity entity)
+        {
+            PushUndoStack(new EntityDeleteStackFrame(this, entity));
+        }
+
         private void EditTileAtPosition(int x, int y)
         {
-            if (x < 0 || y < 0 || x >= OpenRoom.TileMap.GetLength(0) || y >= OpenRoom.TileMap.GetLength(1))
+            if (OpenRoom.IsOutOfBounds(new Microsoft.Xna.Framework.Vector2(x, y)))
             {
                 return;
             }
 
-            if (collisionEditItem.IsChecked)
+            if (currentToolType == ToolType.Collision)
             {
                 if (collisionDrawType == OpenRoom.TileMap[x, y].IsCollision)
                 {
@@ -385,11 +664,11 @@ namespace RPGLevelEditor
                     return;
                 }
 
-                PushUndoStack(x, y);
+                PushTileUndoStack(x, y);
 
                 OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { IsCollision = collisionDrawType };
             }
-            else
+            else if (currentToolType == ToolType.Tile)
             {
                 if (SelectedTextureName is null)
                 {
@@ -402,12 +681,175 @@ namespace RPGLevelEditor
                     return;
                 }
 
-                PushUndoStack(x, y);
+                PushTileUndoStack(x, y);
 
                 OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { Texture = SelectedTextureName };
             }
+            else
+            {
+                return;
+            }
 
             UpdateTileTexture(x, y);
+        }
+
+        private void SelectEntity(Entity? entity)
+        {
+            if (ReferenceEquals(entity, selectedEntity))
+            {
+                // Entity is already selected
+                // - update the selected entity elements but skip everything else
+                UpdateSelectedEntity();
+                return;
+            }
+
+            selectingPosition = false;
+            selectedPositionTarget = null;
+            tileGridDisplay.Cursor = null;
+
+            if (selectedEntity is not null)
+            {
+                // Draw any previously selected entity back onto the entity canvas
+                DrawEntity(selectedEntity, false);
+            }
+
+            if (entity is not null)
+            {
+                // Remove the newly selected entity from the entity canvas and put it into the separate selection elements
+                DrawEntity(entity, true);
+                // If an entity is being selected, switch to entity tool mode
+                toolPanel.SelectedIndex = 2;
+            }
+
+            selectedEntity = entity;
+
+            UpdateSelectedEntity();
+        }
+
+        private void SelectEntityAtPosition(float x, float y)
+        {
+            SelectEntity(OpenRoom.Entities.LastOrDefault(e =>
+                e.Collides(new Microsoft.Xna.Framework.Vector2(x, y))));
+        }
+
+        private void CreateEntityAtPosition(float x, float y, bool pushToUndoStack)
+        {
+            Entity newEntity = new(
+                new Microsoft.Xna.Framework.Vector2(x, y),
+                Microsoft.Xna.Framework.Vector2.One,
+                null);
+
+            if (newEntity.IsOutOfBounds(OpenRoom) || OpenRoom.Entities.Any(e => e.Collides(newEntity)))
+            {
+                return;
+            }
+
+            if (pushToUndoStack)
+            {
+                PushEntityCreateUndoStack(x, y);
+            }
+
+            OpenRoom.Entities.Add(newEntity);
+            SelectEntity(newEntity);
+        }
+
+        private void DeleteEntity(Entity entity)
+        {
+            PushEntityDeleteUndoStack(entity);
+            SelectEntity(null);
+            DrawEntity(entity, true);
+            _ = OpenRoom.Entities.Remove(entity);
+        }
+
+        private void ProcessEntityMove()
+        {
+            if (!movingEntity)
+            {
+                return;
+            }
+
+            if (selectedEntity is null)
+            {
+                movingEntity = false;
+                return;
+            }
+
+            Point relativeMousePos = Mouse.GetPosition(tileGridDisplay);
+            relativeMousePos = new Point((relativeMousePos.X - moveStartOffset.X) / TileSize.X, (relativeMousePos.Y - moveStartOffset.Y) / TileSize.Y);
+
+            Microsoft.Xna.Framework.Vector2 oldPos = selectedEntity.Position;
+
+            Microsoft.Xna.Framework.Vector2 newPos = new((float)relativeMousePos.X, (float)relativeMousePos.Y);
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+            {
+                // Snap to nearest grid intersection based on current grid size
+                newPos.X = MathF.Round(newPos.X / CurrentGridInterval) * CurrentGridInterval;
+                newPos.Y = MathF.Round(newPos.Y / CurrentGridInterval) * CurrentGridInterval;
+            }
+
+            _ = selectedEntity.Move(newPos, false);
+            if (selectedEntity.IsOutOfBounds(OpenRoom) || OpenRoom.Entities.Any(ent => ent.Collides(selectedEntity)))
+            {
+                _ = selectedEntity.Move(oldPos, false);
+            }
+            UpdateSelectedEntity(false);
+        }
+
+        private void ShowProblems()
+        {
+            StringBuilder problems = new();
+
+            // Missing tile textures
+            for (int x = 0; x < OpenRoom.TileMap.GetLength(0); x++)
+            {
+                for (int y = 0; y < OpenRoom.TileMap.GetLength(1); y++)
+                {
+                    if (ReferenceEquals(LoadTileTexture(x, y), placeholderImage))
+                    {
+                        _ = problems.AppendLine(
+                            $"Tile at ({x}, {y}) uses texture \"{OpenRoom.TileMap[x, y].Texture}\", which doesn't exist.");
+                    }
+                }
+            }
+
+            // Missing entity textures
+            foreach (Entity entity in OpenRoom.Entities.Where(e => ReferenceEquals(LoadEntityTexture(e), placeholderImage)))
+            {
+                // TODO: Reference entity by name also, if present
+                _ = problems.AppendLine(
+                    $"Entity of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) " +
+                    $"uses texture \"{entity.Texture}\", which doesn't exist.");
+            }
+
+            // Out of bounds entities
+            foreach (Entity entity in OpenRoom.Entities.Where(e => e.IsOutOfBounds(OpenRoom)))
+            {
+                // TODO: Reference entity by name also, if present
+                _ = problems.AppendLine(
+                    $"Entity of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) is out of bounds.");
+            }
+
+            // Overlapping entities
+            foreach (Entity entity in OpenRoom.Entities.Where(e => OpenRoom.Entities.Any(o => o.Collides(e))))
+            {
+                // TODO: Reference entity by name also, if present
+                _ = problems.AppendLine(
+                    $"Entity of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) collides with another entity.");
+            }
+
+            if (problems.Length == 0)
+            {
+                _ = problems.AppendLine("There are no issues with the current room");
+            }
+
+            new ToolWindows.ScrollableMessageBox(this, "Detected problems", problems.ToString()).Show();
+        }
+
+        private void StartPositionSelection(PropertyInfo targetProperty)
+        {
+            tileGridDisplay.Cursor = Cursors.Cross;
+            selectingPosition = true;
+            selectedPositionTarget = targetProperty;
         }
 
         private void TextureSelect_MouseUp(object sender, MouseButtonEventArgs e)
@@ -431,6 +873,13 @@ namespace RPGLevelEditor
                     tileMapScaleTransform.ScaleY = newScale;
                 }
             }
+            else if (Keyboard.Modifiers == ModifierKeys.Shift)
+            {
+                // Prevent horizontal scroll from also scrolling vertically
+                e.Handled = true;
+
+                tileMapScroll.ScrollToHorizontalOffset(tileMapScroll.HorizontalOffset - (e.Delta / 2f));
+            }
         }
 
         private void tileGridDisplay_MouseDown(object sender, MouseButtonEventArgs e)
@@ -440,12 +889,40 @@ namespace RPGLevelEditor
                 Point relativeMousePos = e.GetPosition(tileGridDisplay);
                 relativeMousePos = new Point(relativeMousePos.X / TileSize.X, relativeMousePos.Y / TileSize.Y);
 
+                if (selectingPosition && selectedPositionTarget is not null && selectedEntity is not null)
+                {
+                    selectingPosition = false;
+                    tileGridDisplay.Cursor = null;
+
+                    PushEntityPropertyEditUndoStack(selectedEntity);
+
+                    selectedPositionTarget.SetValue(selectedEntity,
+                        new Microsoft.Xna.Framework.Vector2((float)relativeMousePos.X, (float)relativeMousePos.Y));
+
+                    selectedPositionTarget = null;
+
+                    UpdateSelectedEntity();
+                    return;
+                }
+
                 lastDrawnPoint = relativeMousePos;
-                if (collisionEditItem.IsChecked)
+                if (currentToolType == ToolType.Collision)
                 {
                     collisionDrawType = !OpenRoom.TileMap[(int)relativeMousePos.X, (int)relativeMousePos.Y].IsCollision;
                 }
-                EditTileAtPosition((int)relativeMousePos.X, (int)relativeMousePos.Y);
+                switch (currentToolType)
+                {
+                    case ToolType.Tile:
+                    case ToolType.Collision:
+                        EditTileAtPosition((int)relativeMousePos.X, (int)relativeMousePos.Y);
+                        break;
+                    case ToolType.Entity when Keyboard.Modifiers == ModifierKeys.Control:
+                        CreateEntityAtPosition((float)relativeMousePos.X, (float)relativeMousePos.Y, true);
+                        break;
+                    case ToolType.Entity:
+                        SelectEntityAtPosition((float)relativeMousePos.X, (float)relativeMousePos.Y);
+                        break;
+                }
             }
         }
 
@@ -488,6 +965,8 @@ namespace RPGLevelEditor
                 }
                 lastDrawnPoint = relativeMousePos;
             }
+
+            ProcessEntityMove();
         }
 
         private void tileGridDisplay_MouseLeave(object sender, MouseEventArgs e)
@@ -503,8 +982,7 @@ namespace RPGLevelEditor
             mousePositionLabel.Content = $"Mouse: ({relativeMousePos.X:N2}, {relativeMousePos.Y:N2})";
             gridPositionLabel.Content = $"Grid: ({(int)relativeMousePos.X:N0}, {(int)relativeMousePos.Y:N0})";
 
-            if (relativeMousePos.X >= 0 && relativeMousePos.X < OpenRoom.TileMap.GetLength(0)
-                && relativeMousePos.Y >= 0 && relativeMousePos.Y < OpenRoom.TileMap.GetLength(1))
+            if (!OpenRoom.IsOutOfBounds(new Microsoft.Xna.Framework.Vector2((int)relativeMousePos.X, (int)relativeMousePos.Y)))
             {
                 mouseTextureLabel.Content = $"Texture: {OpenRoom.TileMap[(int)relativeMousePos.X, (int)relativeMousePos.Y].Texture}";
                 mouseCollisionLabel.Content = $"Collision: {OpenRoom.TileMap[(int)relativeMousePos.X, (int)relativeMousePos.Y].IsCollision}";
@@ -536,70 +1014,24 @@ namespace RPGLevelEditor
             CreateGridOverlay();
         }
 
-        private void collisionEditItem_OnClick(object sender, RoutedEventArgs e)
+        private void gridOverlayLarger_OnClick(object sender, RoutedEventArgs e)
         {
-            CreateTileGrid();
+            GridOverlayEnlarge();
+        }
+
+        private void gridOverlaySmaller_OnClick(object sender, RoutedEventArgs e)
+        {
+            GridOverlayShrink();
         }
 
         private void DimensionsItem_OnClick(object sender, RoutedEventArgs e)
         {
-            if (SelectedTextureName is null)
-            {
-                _ = MessageBox.Show(this, "Please select a texture before changing room dimensions",
-                    "No texture", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            int xLength = OpenRoom.TileMap.GetLength(0);
-            int yLength = OpenRoom.TileMap.GetLength(1);
-
-            ToolWindows.DimensionsDialog dialog = new(xLength, yLength)
-            {
-                Owner = this
-            };
-            if (dialog.ShowDialog() ?? false)
-            {
-                if (dialog.X < xLength || dialog.Y < yLength)
-                {
-                    MessageBoxResult result = MessageBox.Show(this,
-                        "The entered dimensions are smaller than the current dimensions. " +
-                        "Shrinking the room will cause tiles and entities outside the new boundaries to be lost.\n\n" +
-                        "Are you sure you want to continue?",
-                        "Potential loss", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
-                    if (result != MessageBoxResult.Yes)
-                    {
-                        return;
-                    }
-                }
-                ChangeDimensions(dialog.X, dialog.Y);
-            }
+            PromptDimensionChange();
         }
 
         private void BackgroundColourItem_OnClick(object sender, RoutedEventArgs e)
         {
-            ToolWindows.ColorDialog dialog = new()
-            {
-                SelectedColor = new Color()
-                {
-                    R = OpenRoom.BackgroundColor.R,
-                    G = OpenRoom.BackgroundColor.G,
-                    B = OpenRoom.BackgroundColor.B,
-                    A = byte.MaxValue
-                },
-                StartFullOpen = true
-            };
-            if (dialog.ShowDialog(this))
-            {
-                OpenRoom.BackgroundColor = new Microsoft.Xna.Framework.Color()
-                {
-                    R = dialog.SelectedColor.R,
-                    G = dialog.SelectedColor.G,
-                    B = dialog.SelectedColor.B,
-                    A = byte.MaxValue
-                };
-                UnsavedChanges = true;
-                UpdateGridBackground();
-            }
+            PromptBackgroundColourChange();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -625,20 +1057,67 @@ namespace RPGLevelEditor
         {
             switch (e.Key)
             {
-                case Key.Z when e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control):
+                // Undo/redo
+                case Key.Z when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     if (!Undo())
                     {
                         SystemSounds.Exclamation.Play();
                     }
                     break;
-                case Key.Y when e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control):
+                case Key.Y when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     if (!Redo())
                     {
                         SystemSounds.Exclamation.Play();
                     }
                     break;
-                case Key.S when e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control):
+                // Other edit options
+                case Key.D when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+                    PromptDimensionChange();
+                    break;
+                case Key.B when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+                    PromptBackgroundColourChange();
+                    break;
+                // File options
+                case Key.S when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
                     Save();
+                    break;
+                case Key.P when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+                    ShowProblems();
+                    break;
+                // Grid
+                case Key.G when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+                    gridOverlayItem.IsChecked = !gridOverlayItem.IsChecked;
+                    CreateGridOverlay();
+                    break;
+                case Key.OemOpenBrackets when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+                    GridOverlayShrink();
+                    break;
+                case Key.OemCloseBrackets when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+                    GridOverlayEnlarge();
+                    break;
+                // Additional view options
+                case Key.E when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+                    alwaysShowEntitiesItem.IsChecked = !alwaysShowEntitiesItem.IsChecked;
+                    UpdateBitmapVisibility();
+                    break;
+                case Key.C when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+                    alwaysShowCollisionItem.IsChecked = !alwaysShowCollisionItem.IsChecked;
+                    UpdateBitmapVisibility();
+                    break;
+                case Key.H when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+                    hideInvisibleEntitiesItem.IsChecked = !hideInvisibleEntitiesItem.IsChecked;
+                    SelectEntity(null);
+                    foreach (Entity entity in OpenRoom.Entities)
+                    {
+                        DrawEntity(entity, false);
+                    }
+                    break;
+                // Entity edit shortcuts
+                case Key.Delete when e.KeyboardDevice.Modifiers == ModifierKeys.Shift:
+                    if (selectedEntity is not null)
+                    {
+                        DeleteEntity(selectedEntity);
+                    }
                     break;
             }
         }
@@ -647,6 +1126,104 @@ namespace RPGLevelEditor
         {
             // Prevent main window from being hidden when this window closes
             _ = ParentWindow.Activate();
+        }
+
+        private void toolPanel_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ReferenceEquals(toolPanel.SelectedContent, tileTextureScroll))
+            {
+                currentToolType = ToolType.Tile;
+                SelectEntity(null);
+            }
+            else if (ReferenceEquals(toolPanel.SelectedContent, collisionOptionsPanel))
+            {
+                currentToolType = ToolType.Collision;
+                SelectEntity(null);
+            }
+            else if (ReferenceEquals(toolPanel.SelectedContent, entityPropertiesGrid))
+            {
+                currentToolType = ToolType.Entity;
+            }
+
+            UpdateBitmapVisibility();
+        }
+
+        private void selectedEntityContainer_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (selectedEntity is null)
+            {
+                return;
+            }
+
+            PushEntityMoveUndoStack(selectedEntity);
+
+            movingEntity = true;
+            moveStartOffset = Mouse.GetPosition(selectedEntityOrigin);
+            moveStartOffset.X -= selectedEntityOrigin.Width / 2;
+            moveStartOffset.Y -= selectedEntityOrigin.Width / 2;
+        }
+
+        private void selectedEntityContainer_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            movingEntity = false;
+            UpdateEntityPropertiesPanel();
+        }
+
+        private void selectedEntityContainer_MouseMove(object sender, MouseEventArgs e)
+        {
+            ProcessEntityMove();
+        }
+
+        private void tileGridDisplay_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            movingEntity = false;
+            UpdateEntityPropertiesPanel();
+        }
+
+        private void hideInvisibleEntitiesItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            SelectEntity(null);
+            foreach (Entity entity in OpenRoom.Entities)
+            {
+                DrawEntity(entity, false);
+            }
+        }
+
+        private void alwaysShowEntitiesItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            UpdateBitmapVisibility();
+        }
+
+        private void alwaysShowCollisionItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            UpdateBitmapVisibility();
+        }
+
+        private void ProblemsItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            ShowProblems();
+        }
+
+        private void entityApplyButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (selectedEntity is null)
+            {
+                return;
+            }
+
+            PushEntityPropertyEditUndoStack(selectedEntity);
+
+            foreach (PropertyEditBox.PropertyEditBox editBox in
+                entityPropertiesPanel.Children.OfType<PropertyEditBox.PropertyEditBox>())
+            {
+                if (!editBox.IsValueValid)
+                {
+                    continue;
+                }
+                editBox.Property.SetValue(selectedEntity, editBox.ObjectValue);
+            }
+
+            UpdateSelectedEntity();
         }
     }
 }

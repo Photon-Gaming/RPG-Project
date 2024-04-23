@@ -1,6 +1,5 @@
 ﻿using System.Windows.Media.Imaging;
 using System.Windows;
-using System.Windows.Media;
 
 namespace RPGLevelEditor
 {
@@ -10,9 +9,8 @@ namespace RPGLevelEditor
         {
             if (source.PixelWidth != width || source.PixelHeight != height || source.Format != target.Format)
             {
-                source = new FormatConvertedBitmap(source, target.Format, target.Palette, 0);
-                source = new TransformedBitmap(source,
-                    new ScaleTransform(width / (double)source.PixelWidth, height / (double)source.PixelHeight));
+                source = new WriteableBitmap(new FormatConvertedBitmap(source, target.Format, target.Palette, 0))
+                    .Resize(width, height, WriteableBitmapExtensions.Interpolation.NearestNeighbor);
             }
 
             int sourceBytesPerPixel = source.Format.BitsPerPixel / 8;

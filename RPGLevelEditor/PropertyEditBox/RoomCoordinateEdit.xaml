@@ -1,0 +1,18 @@
+﻿<local:RoomCoordinatePropertyEditBox x:TypeArguments="xna:Vector2" x:Class="RPGLevelEditor.PropertyEditBox.RoomCoordinateEdit"
+                                     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+                                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+                                     xmlns:local="clr-namespace:RPGLevelEditor.PropertyEditBox"
+                                     xmlns:xna="clr-namespace:Microsoft.Xna.Framework;assembly=MonoGame.Framework"
+                                     mc:Ignorable="d" 
+                                     d:DesignHeight="80" d:DesignWidth="350" d:Background="#F0F0F0">
+    <Grid>
+        <TextBlock x:Name="propertyName" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10" d:Text="Property Name (PropertyName):"/>
+        <TextBox x:Name="propertyValueX" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,10,10,40" Width="100" TextChanged="propertyValue_TextChanged"/>
+        <TextBox x:Name="propertyValueY" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,40,10,10" Width="100" TextChanged="propertyValue_TextChanged"/>
+        <Label Content="X:" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,10,115,40"/>
+        <Label Content="Y:" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,40,115,10"/>
+        <Button Content="⌖" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,10,140,10" Width="20" Height="20" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontWeight="Bold" FontSize="16" FontFamily="Arial" Click="SelectButton_Click"/>
+    </Grid>
+</local:RoomCoordinatePropertyEditBox>
