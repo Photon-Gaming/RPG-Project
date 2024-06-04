@@ -842,7 +842,8 @@ namespace RPGLevelEditor
                 _ = problems.AppendLine("There are no issues with the current room");
             }
 
-            new ToolWindows.ScrollableMessageBox(this, "Detected problems", problems.ToString()).Show();
+            new ToolWindows.ScrollableMessageBox(this, "Detected problems", problems.ToString(),
+                "pack://application:,,,/Resources/MenuIcons/script--exclamation.png").Show();
         }
 
         private void StartPositionSelection(PropertyInfo targetProperty)

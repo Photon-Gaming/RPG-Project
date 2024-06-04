@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RPGLevelEditor.ToolWindows"
         mc:Ignorable="d"
-        Title="Enter dimensions..." Height="150" Width="400" WindowStyle="ToolWindow" ResizeMode="NoResize">
+        Title="Enter dimensions..." Height="150" Width="400" ResizeMode="NoResize" Icon="pack://application:,,,/Resources/MenuIcons/ruler--pencil.png">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition/>
