@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RPGLevelEditor"
         mc:Ignorable="d"
-        Title="RPG Editor" Height="450" Width="800" Closed="Window_Closed" Loaded="Window_Loaded">
+        Title="RPG Editor" Height="450" Width="800" Closed="Window_Closed" Loaded="Window_Loaded" Icon="pack://application:,,,/Resources/MenuIcons/game-monitor.png">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -13,12 +13,24 @@
         </Grid.RowDefinitions>
         <Menu Grid.Row="0" Padding="0,0,0,3">
             <MenuItem Header="_File">
-                <MenuItem Header="_New Room..." Click="NewRoomItem_OnClick"/>
+                <MenuItem Header="_New Room..." Click="NewRoomItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/map--plus.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
                 <Separator/>
-                <MenuItem Header="Open _Room..." Click="OpenRoomItem_OnClick"/>
+                <MenuItem Header="Open _Room..." Click="OpenRoomItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/folder-open-slide.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
             <MenuItem Header="_Config">
-                <MenuItem Header="Set _Content Folder Path..." Click="ContentPathItem_OnClick"/>
+                <MenuItem Header="Set _Content Folder Path..." Click="ContentPathItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/folder--pencil.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
         </Menu>
     </Grid>

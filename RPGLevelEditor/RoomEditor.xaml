@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RPGLevelEditor"
         mc:Ignorable="d"
-        Title="Room Editor" Height="900" Width="1620" Closing="Window_Closing" KeyDown="Window_KeyDown" Closed="Window_Closed" WindowState="Maximized">
+        Title="Room Editor" Height="900" Width="1620" Closing="Window_Closing" KeyDown="Window_KeyDown" Closed="Window_Closed" WindowState="Maximized" Icon="pack://application:,,,/Resources/MenuIcons/map--pencil.png">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -18,25 +18,73 @@
         </Grid.ColumnDefinitions>
         <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Padding="0,0,0,3">
             <MenuItem Header="_File">
-                <MenuItem Header="_Save" InputGestureText="Ctrl+S" Click="SaveItem_OnClick"/>
+                <MenuItem Header="_Save" InputGestureText="Ctrl+S" Click="SaveItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/disk.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
                 <Separator/>
-                <MenuItem Header="Check for _Problems..." InputGestureText="Ctrl+P" Click="ProblemsItem_OnClick"/>
+                <MenuItem Header="Check for _Problems..." InputGestureText="Ctrl+P" Click="ProblemsItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/map--exclamation.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
             <MenuItem Header="_Edit">
-                <MenuItem x:Name="undoItem" Header="_Undo" InputGestureText="Ctrl+Z" IsEnabled="False" Click="undoItem_OnClick"/>
-                <MenuItem x:Name="redoItem" Header="_Redo" InputGestureText="Ctrl+Y" IsEnabled="False" Click="redoItem_OnClick"/>
+                <MenuItem x:Name="undoItem" Header="_Undo" InputGestureText="Ctrl+Z" IsEnabled="False" Click="undoItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/arrow-curve-180-left.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem x:Name="redoItem" Header="_Redo" InputGestureText="Ctrl+Y" IsEnabled="False" Click="redoItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/arrow-curve.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
                 <Separator/>
-                <MenuItem Header="Change Room _Dimensions..." InputGestureText="Ctrl+D" Click="DimensionsItem_OnClick"/>
-                <MenuItem Header="Change Room _Background Colour..." InputGestureText="Ctrl+B" Click="BackgroundColourItem_OnClick"/>
+                <MenuItem Header="Change Room _Dimensions..." InputGestureText="Ctrl+D" Click="DimensionsItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/map-resize.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Change Room _Background Colour..." InputGestureText="Ctrl+B" Click="BackgroundColourItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/color--pencil.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
             <MenuItem Header="_View">
-                <MenuItem x:Name="gridOverlayItem" Header="_Show Grid Overlay" InputGestureText="Ctrl+G" IsCheckable="True" Click="gridOverlayItem_OnClick"/>
-                <MenuItem Header="_Decrease Grid Size" InputGestureText="Ctrl+[" Click="gridOverlaySmaller_OnClick"/>
-                <MenuItem Header="_Increase Grid Size" InputGestureText="Ctrl+]" Click="gridOverlayLarger_OnClick"/>
+                <MenuItem x:Name="gridOverlayItem" Header="_Show Grid Overlay" InputGestureText="Ctrl+G" IsCheckable="True" Click="gridOverlayItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/grid.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="_Decrease Grid Size" InputGestureText="Ctrl+[" Click="gridOverlaySmaller_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/selection-resize.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="_Increase Grid Size" InputGestureText="Ctrl+]" Click="gridOverlayLarger_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/selection-resize-actual.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
                 <Separator/>
-                <MenuItem x:Name="hideInvisibleEntitiesItem" Header="_Hide Invisible Entities" InputGestureText="Ctrl+H" IsCheckable="True" Click="hideInvisibleEntitiesItem_OnClick"/>
-                <MenuItem x:Name="alwaysShowEntitiesItem" Header="Always Show _Entities" InputGestureText="Ctrl+E" IsCheckable="True" Click="alwaysShowEntitiesItem_OnClick"/>
-                <MenuItem x:Name="alwaysShowCollisionItem" Header="Always Show _Collision" InputGestureText="Ctrl+C" IsCheckable="True" Click="alwaysShowCollisionItem_OnClick"/>
+                <MenuItem x:Name="hideInvisibleEntitiesItem" Header="_Hide Invisible Entities" InputGestureText="Ctrl+H" IsCheckable="True" Click="hideInvisibleEntitiesItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/user-silhouette-question.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem x:Name="alwaysShowEntitiesItem" Header="Always Show _Entities" InputGestureText="Ctrl+E" IsCheckable="True" Click="alwaysShowEntitiesItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/user.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem x:Name="alwaysShowCollisionItem" Header="Always Show _Collision" InputGestureText="Ctrl+C" IsCheckable="True" Click="alwaysShowCollisionItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/wall.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
         </Menu>
         <ScrollViewer x:Name="tileMapScroll" Grid.Row="1" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" PreviewMouseWheel="tileMapScroll_PreviewMouseWheel" MouseMove="tileMapScroll_MouseMove">
@@ -67,15 +115,33 @@
             </Grid>
         </ScrollViewer>
         <TabControl x:Name="toolPanel" Grid.Row="1" Grid.Column="1" SelectionChanged="toolPanel_SelectionChanged" Background="#FFE0E0E0">
-            <TabItem Header="Tiles">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/maps-stack.png" Width="16" Height="16"/>
+                        <TextBlock Text="Tiles" Margin="5,0,0,0"/>
+                    </StackPanel>
+                </TabItem.Header>
                 <ScrollViewer x:Name="tileTextureScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
                     <WrapPanel x:Name="tileTextureSelectPanel"/>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="Collision">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/wall.png" Width="16" Height="16"/>
+                        <TextBlock Text="Collision" Margin="5,0,0,0"/>
+                    </StackPanel>
+                </TabItem.Header>
                 <UIElement x:Name="collisionOptionsPanel"/>
             </TabItem>
-            <TabItem Header="Entities">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/user.png" Width="16" Height="16"/>
+                        <TextBlock Text="Entities" Margin="5,0,0,0"/>
+                    </StackPanel>
+                </TabItem.Header>
                 <Grid x:Name="entityPropertiesGrid">
                     <ScrollViewer Margin="0,0,0,25" HorizontalScrollBarVisibility="Auto">
                         <StackPanel x:Name="entityPropertiesPanel" Orientation="Vertical" MinWidth="290"/>
