@@ -24,10 +24,19 @@ namespace RPGLevelEditor
             Entity
         }
 
+        private enum ConnectionType
+        {
+            None,
+            Vert,
+            Side
+        }
+
         public const string TileTextureFolderName = "Tiles";
+        public const string AutoTileTextureFolderName = "AutoTiled";
         public const string EntityTextureFolderName = "Entities";
         public const string ToolEntityTextureFolderPath = "pack://application:,,,/Resources/ToolEntity/";
         public readonly string TileTextureFolderPath;
+        public readonly string AutoTileTextureFolderPath;
         public readonly string EntityTextureFolderPath;
 
         public static readonly Point TileSize = new(32, 32);
@@ -64,6 +73,77 @@ namespace RPGLevelEditor
         private static readonly BitmapImage collisionImage = new(new Uri("pack://application:,,,/Resources/collision.png"));
         private static readonly BitmapImage transparentImage = new(new Uri("pack://application:,,,/Resources/transparent.png"));
 
+        private static readonly Dictionary<(ConnectionType North, ConnectionType East,
+            ConnectionType South, ConnectionType West), string> tiledTextureNames = new()
+        {
+            { (ConnectionType.None, ConnectionType.None, ConnectionType.None, ConnectionType.None), "c" },
+            { (ConnectionType.None, ConnectionType.None, ConnectionType.None, ConnectionType.Vert), "c-w" },
+            { (ConnectionType.None, ConnectionType.None, ConnectionType.Vert, ConnectionType.None), "c-s" },
+            { (ConnectionType.None, ConnectionType.None, ConnectionType.Vert, ConnectionType.Vert), "c-sw" },
+            { (ConnectionType.None, ConnectionType.Vert, ConnectionType.None, ConnectionType.None), "c-e" },
+            { (ConnectionType.None, ConnectionType.Vert, ConnectionType.None, ConnectionType.Vert), "c-ew" },
+            { (ConnectionType.None, ConnectionType.Vert, ConnectionType.Vert, ConnectionType.None), "c-es" },
+            { (ConnectionType.None, ConnectionType.Vert, ConnectionType.Vert, ConnectionType.Vert), "c-esw" },
+            { (ConnectionType.Vert, ConnectionType.None, ConnectionType.None, ConnectionType.None), "c-n" },
+            { (ConnectionType.Vert, ConnectionType.None, ConnectionType.None, ConnectionType.Vert), "c-nw" },
+            { (ConnectionType.Vert, ConnectionType.None, ConnectionType.Vert, ConnectionType.None), "c-ns" },
+            { (ConnectionType.Vert, ConnectionType.None, ConnectionType.Vert, ConnectionType.Vert), "c-nsw" },
+            { (ConnectionType.Vert, ConnectionType.Vert, ConnectionType.None, ConnectionType.None), "c-ne" },
+            { (ConnectionType.Vert, ConnectionType.Vert, ConnectionType.None, ConnectionType.Vert), "c-new" },
+            { (ConnectionType.Vert, ConnectionType.Vert, ConnectionType.Vert, ConnectionType.None), "c-nes" },
+            { (ConnectionType.Vert, ConnectionType.Vert, ConnectionType.Vert, ConnectionType.Vert), "c-nesw" },
+
+            { (ConnectionType.None, ConnectionType.None, ConnectionType.None, ConnectionType.Side), "w" },
+            { (ConnectionType.None, ConnectionType.Vert, ConnectionType.None, ConnectionType.Side), "w-e" },
+            { (ConnectionType.Vert, ConnectionType.None, ConnectionType.None, ConnectionType.Side), "w-n" },
+            { (ConnectionType.Vert, ConnectionType.Vert, ConnectionType.None, ConnectionType.Side), "w-ne" },
+
+            { (ConnectionType.None, ConnectionType.None, ConnectionType.Side, ConnectionType.None), "s" },
+            { (ConnectionType.None, ConnectionType.None, ConnectionType.Side, ConnectionType.Vert), "s-w" },
+            { (ConnectionType.Vert, ConnectionType.None, ConnectionType.Side, ConnectionType.None), "s-n" },
+            { (ConnectionType.Vert, ConnectionType.None, ConnectionType.Side, ConnectionType.Vert), "s-nw" },
+
+            { (ConnectionType.None, ConnectionType.None, ConnectionType.Side, ConnectionType.Side), "sw" },
+            { (ConnectionType.Vert, ConnectionType.None, ConnectionType.Side, ConnectionType.Side), "sw-n" },
+
+            { (ConnectionType.None, ConnectionType.Side, ConnectionType.None, ConnectionType.None), "e" },
+            { (ConnectionType.None, ConnectionType.Side, ConnectionType.None, ConnectionType.Vert), "e-w" },
+            { (ConnectionType.None, ConnectionType.Side, ConnectionType.Vert, ConnectionType.None), "e-s" },
+            { (ConnectionType.None, ConnectionType.Side, ConnectionType.Vert, ConnectionType.Vert), "e-sw" },
+
+            { (ConnectionType.None, ConnectionType.Side, ConnectionType.None, ConnectionType.Side), "ew" },
+
+            { (ConnectionType.None, ConnectionType.Side, ConnectionType.Side, ConnectionType.None), "es" },
+            { (ConnectionType.None, ConnectionType.Side, ConnectionType.Side, ConnectionType.Vert), "es-w" },
+
+            { (ConnectionType.None, ConnectionType.Side, ConnectionType.Side, ConnectionType.Side), "esw" },
+
+            { (ConnectionType.Side, ConnectionType.None, ConnectionType.None, ConnectionType.None), "n" },
+            { (ConnectionType.Side, ConnectionType.None, ConnectionType.Vert, ConnectionType.None), "n-s" },
+            { (ConnectionType.Side, ConnectionType.Vert, ConnectionType.None, ConnectionType.None), "n-e" },
+            { (ConnectionType.Side, ConnectionType.Vert, ConnectionType.Vert, ConnectionType.None), "n-es" },
+
+            { (ConnectionType.Side, ConnectionType.None, ConnectionType.None, ConnectionType.Side), "nw" },
+            { (ConnectionType.Side, ConnectionType.Vert, ConnectionType.None, ConnectionType.Side), "nw-e" },
+
+            { (ConnectionType.Side, ConnectionType.None, ConnectionType.Side, ConnectionType.None), "ns" },
+
+            { (ConnectionType.Side, ConnectionType.None, ConnectionType.Side, ConnectionType.Side), "nsw" },
+
+            { (ConnectionType.Side, ConnectionType.Side, ConnectionType.None, ConnectionType.None), "ne" },
+            { (ConnectionType.Side, ConnectionType.Side, ConnectionType.Vert, ConnectionType.None), "ne-s" },
+
+            { (ConnectionType.Side, ConnectionType.Side, ConnectionType.None, ConnectionType.Side), "new" },
+
+            { (ConnectionType.Side, ConnectionType.Side, ConnectionType.Side, ConnectionType.None), "nes" },
+
+            { (ConnectionType.Side, ConnectionType.Side, ConnectionType.Side, ConnectionType.Side), "nesw" },
+        };
+
+        // Use center texture as tile set preview
+        private static readonly string tileThumbnailName =
+            tiledTextureNames[(ConnectionType.None, ConnectionType.None, ConnectionType.None, ConnectionType.None)];
+
         private readonly Stack<StateStackFrame> undoStack = new();
         private readonly Stack<StateStackFrame> redoStack = new();
 
@@ -97,6 +177,7 @@ namespace RPGLevelEditor
 
             TileTextureFolderPath = Path.Join(ParentWindow.EditorConfig.ContentFolderPath,
                 MainWindow.TextureFolderName, TileTextureFolderName);
+            AutoTileTextureFolderPath = Path.Join(TileTextureFolderPath, AutoTileTextureFolderName);
             EntityTextureFolderPath = Path.Join(ParentWindow.EditorConfig.ContentFolderPath,
                 MainWindow.TextureFolderName, EntityTextureFolderName);
             if (!Directory.Exists(TileTextureFolderPath))
@@ -611,6 +692,34 @@ namespace RPGLevelEditor
                 newElement.MouseUp += TextureSelect_MouseUp;
                 _ = tileTextureSelectPanel.Children.Add(newElement);
             }
+
+            foreach (string textureFolder in Directory.EnumerateDirectories(AutoTileTextureFolderPath))
+            {
+                string textureSetName = Path.GetFileName(textureFolder);
+                string centerTextureName = Path.Join(textureSetName, tileThumbnailName);
+                string centerTextureRelative = Path.Join(AutoTileTextureFolderName, centerTextureName);
+                string centerTexture = Path.Join(AutoTileTextureFolderPath, centerTextureName);
+
+                Border newElement = new()
+                {
+                    Margin = new Thickness(3),
+                    Width = 32,
+                    Height = 32,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    BorderBrush = Brushes.OrangeRed,
+                    BorderThickness = new Thickness(centerTextureRelative == SelectedTextureName ? 2 : 0),
+                    Child = new Image()
+                    {
+                        Source = new BitmapImage(new Uri(Path.ChangeExtension(centerTexture, "png"))),
+                        Stretch = Stretch.Fill
+                    },
+                    ToolTip = $"{textureSetName} (Auto Tiled)",
+                    Tag = centerTextureRelative
+                };
+                newElement.MouseUp += TextureSelect_MouseUp;
+                _ = tileTextureSelectPanel.Children.Add(newElement);
+            }
         }
 
         private void PushUndoStack(StateStackFrame stackFrame)
@@ -675,7 +784,11 @@ namespace RPGLevelEditor
                     return;
                 }
 
-                if (SelectedTextureName == OpenRoom.TileMap[x, y].Texture)
+                string currentTexture = OpenRoom.TileMap[x, y].Texture;
+                if (SelectedTextureName == currentTexture
+                    || (SelectedTextureName.StartsWith(AutoTileTextureFolderName, StringComparison.OrdinalIgnoreCase)
+                        // Only consider the tile set, not the exact texture, for auto tiled textures
+                        && Path.GetDirectoryName(SelectedTextureName) == Path.GetDirectoryName(currentTexture)))
                 {
                     // Nothing to change
                     return;
@@ -684,6 +797,8 @@ namespace RPGLevelEditor
                 PushTileUndoStack(x, y);
 
                 OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with { Texture = SelectedTextureName };
+
+                UpdateTiling(x, y);
             }
             else
             {
@@ -691,6 +806,90 @@ namespace RPGLevelEditor
             }
 
             UpdateTileTexture(x, y);
+        }
+
+        private void UpdateTiling(int x, int y, bool updateAdjacent = true)
+        {
+            // To check if adjacent tiles are part of the same tile set, the directory name is used instead of the file name,
+            // as the file name changes depending on the connected sides of the tile.
+            string? currentTile = Path.GetDirectoryName(OpenRoom.TileMap[x, y].Texture);
+
+            bool onNorthEdge = y <= 0;
+            bool onEastEdge = x >= OpenRoom.TileMap.GetLength(0) - 1;
+            bool onSouthEdge = y >= OpenRoom.TileMap.GetLength(1) - 1;
+            bool onWestEdge = x <= 0;
+
+            if (currentTile is not null && currentTile.StartsWith(AutoTileTextureFolderName, StringComparison.OrdinalIgnoreCase))
+            {
+                bool north = onNorthEdge || Path.GetDirectoryName(OpenRoom.TileMap[x, y - 1].Texture) != currentTile;
+                bool east = onEastEdge || Path.GetDirectoryName(OpenRoom.TileMap[x + 1, y].Texture) != currentTile;
+                bool south = onSouthEdge || Path.GetDirectoryName(OpenRoom.TileMap[x, y + 1].Texture) != currentTile;
+                bool west = onWestEdge || Path.GetDirectoryName(OpenRoom.TileMap[x - 1, y].Texture) != currentTile;
+
+                ConnectionType northConnection = north
+                    ? ConnectionType.Side
+                    : !east && (onEastEdge || Path.GetDirectoryName(OpenRoom.TileMap[x + 1, y - 1].Texture) != currentTile)
+                        ? ConnectionType.Vert
+                        : ConnectionType.None;
+                ConnectionType eastConnection = east
+                    ? ConnectionType.Side
+                    : !south && (onSouthEdge || Path.GetDirectoryName(OpenRoom.TileMap[x + 1, y + 1].Texture) != currentTile)
+                        ? ConnectionType.Vert
+                        : ConnectionType.None;
+                ConnectionType southConnection = south
+                    ? ConnectionType.Side
+                    : !west && (onWestEdge || Path.GetDirectoryName(OpenRoom.TileMap[x - 1, y + 1].Texture) != currentTile)
+                        ? ConnectionType.Vert
+                        : ConnectionType.None;
+                ConnectionType westConnection = west
+                    ? ConnectionType.Side
+                    : !north && (onNorthEdge || Path.GetDirectoryName(OpenRoom.TileMap[x - 1, y - 1].Texture) != currentTile)
+                        ? ConnectionType.Vert
+                        : ConnectionType.None;
+
+                OpenRoom.TileMap[x, y] = OpenRoom.TileMap[x, y] with
+                {
+                    Texture = Path.Join(currentTile, tiledTextureNames[(northConnection, eastConnection, southConnection, westConnection)])
+                };
+            }
+
+            UpdateTileTexture(x, y);
+
+            if (updateAdjacent)
+            {
+                if (!onNorthEdge)
+                {
+                    UpdateTiling(x, y - 1, false);
+                    if (!onEastEdge)
+                    {
+                        UpdateTiling(x + 1, y - 1, false);
+                    }
+                    if (!onWestEdge)
+                    {
+                        UpdateTiling(x - 1, y - 1, false);
+                    }
+                }
+                if (!onEastEdge)
+                {
+                    UpdateTiling(x + 1, y, false);
+                }
+                if (!onSouthEdge)
+                {
+                    UpdateTiling(x, y + 1, false);
+                    if (!onEastEdge)
+                    {
+                        UpdateTiling(x + 1, y + 1, false);
+                    }
+                    if (!onWestEdge)
+                    {
+                        UpdateTiling(x - 1, y + 1, false);
+                    }
+                }
+                if (!onWestEdge)
+                {
+                    UpdateTiling(x - 1, y, false);
+                }
+            }
         }
 
         private void SelectEntity(Entity? entity)

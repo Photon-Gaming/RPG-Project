@@ -27,6 +27,7 @@ namespace RPGLevelEditor
                 EditorWindow.toolPanel.SelectedIndex = EditorWindow.OpenRoom.TileMap[X, Y].IsCollision != Tile.IsCollision ? 1 : 0;
 
                 EditorWindow.OpenRoom.TileMap[X, Y] = Tile;
+                EditorWindow.UpdateTiling(X, Y);
                 EditorWindow.UpdateTileTexture(X, Y);
             }
         }
