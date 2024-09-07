@@ -17,6 +17,13 @@ namespace RPGGame.GameObject
         [JsonProperty]
         public Color BackgroundColor { get; set; } = backgroundColor;
 
+        public Dictionary<string, Entity.Entity> LoadedNamedEntities { get; protected set; } = new();
+
+        public void OnLoad()
+        {
+            LoadedNamedEntities = Entities.ToDictionary(e => e.Name, e => e, StringComparer.OrdinalIgnoreCase);
+        }
+
         public bool IsOutOfBounds(Vector2 position)
         {
             return position.X < 0

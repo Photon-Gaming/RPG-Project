@@ -934,6 +934,7 @@ namespace RPGLevelEditor
         private void CreateEntityAtPosition(float x, float y, bool pushToUndoStack)
         {
             Entity newEntity = new(
+                $"Entity_{Guid.NewGuid()}",
                 new Microsoft.Xna.Framework.Vector2(x, y),
                 Microsoft.Xna.Framework.Vector2.One,
                 null);
@@ -1014,26 +1015,41 @@ namespace RPGLevelEditor
             // Missing entity textures
             foreach (Entity entity in OpenRoom.Entities.Where(e => ReferenceEquals(LoadEntityTexture(e), placeholderImage)))
             {
-                // TODO: Reference entity by name also, if present
                 _ = problems.AppendLine(
-                    $"Entity of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) " +
+                    $"Entity \"{entity.Name}\" of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) " +
                     $"uses texture \"{entity.Texture}\", which doesn't exist.");
             }
 
             // Out of bounds entities
             foreach (Entity entity in OpenRoom.Entities.Where(e => e.IsOutOfBounds(OpenRoom)))
             {
-                // TODO: Reference entity by name also, if present
                 _ = problems.AppendLine(
-                    $"Entity of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) is out of bounds.");
+                    $"Entity \"{entity.Name}\" of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) is out of bounds.");
             }
 
             // Overlapping entities
             foreach (Entity entity in OpenRoom.Entities.Where(e => OpenRoom.Entities.Any(o => o.Collides(e))))
             {
-                // TODO: Reference entity by name also, if present
                 _ = problems.AppendLine(
-                    $"Entity of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) collides with another entity.");
+                    $"Entity \"{entity.Name}\" of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) collides with another entity.");
+            }
+
+            // Duplicate names
+            HashSet<string> seenNames = new(StringComparer.OrdinalIgnoreCase);
+            foreach (Entity entity in OpenRoom.Entities)
+            {
+                if (!seenNames.Add(entity.Name))
+                {
+                    _ = problems.AppendLine(
+                        $"Entity \"{entity.Name}\" of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) uses the same name as another entity.");
+                }
+            }
+
+            // Use of reserved name
+            foreach (Entity entity in OpenRoom.Entities.Where(e => e.Name.Equals(Player.PlayerEntityName, StringComparison.OrdinalIgnoreCase)))
+            {
+                _ = problems.AppendLine(
+                    $"Entity \"{entity.Name}\" of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) uses a reserved entity name.");
             }
 
             if (problems.Length == 0)

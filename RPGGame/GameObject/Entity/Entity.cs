@@ -6,8 +6,12 @@ namespace RPGGame.GameObject.Entity
 {
     [Serializable]
     [JsonObject(MemberSerialization.OptIn)]
-    public class Entity(Vector2 position, Vector2 size, string? texture) : ICloneable
+    public class Entity(string name, Vector2 position, Vector2 size, string? texture) : ICloneable
     {
+        [JsonProperty]
+        [EditorModifiable("Name", "The unique name of this entity that other entities in this room will refer to it by")]
+        public string Name { get; protected set; } = name;
+
         [JsonProperty]
         [EditorModifiable("Position", "The location of the entity within the room.", EditType.RoomCoordinate)]
         public Vector2 Position { get; protected set; } = position;
@@ -67,9 +71,9 @@ namespace RPGGame.GameObject.Entity
                 || BottomRight.Y >= room.TileMap.GetLength(1);
         }
 
-        public object Clone()
+        public virtual object Clone()
         {
-            return new Entity(Position, Size, Texture);
+            return new Entity(Name, Position, Size, Texture);
         }
     }
 }
