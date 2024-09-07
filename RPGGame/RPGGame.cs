@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Linq;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -52,7 +53,15 @@ namespace RPGGame
                 Exit();
             }
 
-            // TODO: Add your update logic here
+            if (currentWorld?.CurrentRoom is null)
+            {
+                return;
+            }
+
+            foreach (GameObject.Entity.Entity entity in currentWorld.CurrentRoom.Entities.Where(e => e.Enabled))
+            {
+                entity.Tick(gameTime);
+            }
 
             base.Update(gameTime);
         }
@@ -77,7 +86,7 @@ namespace RPGGame
 
             Point tileGridOffset = tileDraw.DrawTileGridCentered(currentWorld.CurrentRoom.TileMap);
 
-            foreach (GameObject.Entity.Entity entity in currentWorld.CurrentRoom.Entities)
+            foreach (GameObject.Entity.Entity entity in currentWorld.CurrentRoom.Entities.Where(e => e.Enabled))
             {
                 _ = entityDraw.DrawEntityOnGrid(entity, tileGridOffset, tileDraw.TileSize);
             }

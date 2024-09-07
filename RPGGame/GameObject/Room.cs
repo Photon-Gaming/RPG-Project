@@ -21,11 +21,24 @@ namespace RPGGame.GameObject
 
         public void OnLoad(World world)
         {
+            foreach (Entity.Entity entity in Entities.Where(e => e.Enabled))
+            {
+                entity.Init();
+            }
+
             LoadedNamedEntities = Entities.ToDictionary(e => e.Name, e => e, StringComparer.OrdinalIgnoreCase);
             if (world.CurrentPlayer is not null)
             {
                 Entities.Add(world.CurrentPlayer);
                 LoadedNamedEntities[Entity.Player.PlayerEntityName] = world.CurrentPlayer;
+            }
+        }
+
+        public void OnUnload()
+        {
+            foreach (Entity.Entity entity in Entities.Where(e => e.Enabled))
+            {
+                entity.Destroy();
             }
         }
 

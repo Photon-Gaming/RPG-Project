@@ -24,9 +24,28 @@ namespace RPGGame.GameObject.Entity
         [EditorModifiable("Render Texture", "The optional name of the texture that the game will draw for this entity.", EditType.EntityTexture)]
         public string? Texture { get; protected set; } = texture;
 
+        [JsonProperty]
+        [EditorModifiable("Enabled?", "Whether or not this entity will be rendered and run its Tick function every frame.")]
+        public bool Enabled { get; private set; } = true;
+
         // Entity origin is the bottom middle, tile origin is the top left
         public Vector2 TopLeft => new(Position.X - (Size.X / 2), Position.Y - Size.Y);
         public Vector2 BottomRight => new(TopLeft.X + Size.X, TopLeft.Y + Size.Y);
+
+        /// <summary>
+        /// Called every time the entity is loaded or enabled, for example when the player enters its room.
+        /// </summary>
+        public virtual void Init() { }
+
+        /// <summary>
+        /// Called every time the entity is unloaded or disabled, for example when the player leaves its room.
+        /// </summary>
+        public virtual void Destroy() { }
+
+        /// <summary>
+        /// Called every frame while the entity is loaded and enabled.
+        /// </summary>
+        public virtual void Tick(GameTime gameTime) { }
 
         public virtual bool Move(Vector2 targetPos, bool relative)
         {
@@ -42,6 +61,11 @@ namespace RPGGame.GameObject.Entity
 
             Position = targetPos;
             return true;
+        }
+
+        public virtual object Clone()
+        {
+            return new Entity(Name, Position, Size, Texture);
         }
 
         public bool Collides(Entity other)
@@ -71,9 +95,24 @@ namespace RPGGame.GameObject.Entity
                 || BottomRight.Y >= room.TileMap.GetLength(1);
         }
 
-        public virtual object Clone()
+        public void Enable()
         {
-            return new Entity(Name, Position, Size, Texture);
+            if (Enabled)
+            {
+                return;
+            }
+            Enabled = true;
+            Init();
+        }
+
+        public void Disable()
+        {
+            if (!Enabled)
+            {
+                return;
+            }
+            Enabled = false;
+            Destroy();
         }
     }
 }
