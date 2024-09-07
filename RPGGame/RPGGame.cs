@@ -82,11 +82,6 @@ namespace RPGGame
                 _ = entityDraw.DrawEntityOnGrid(entity, tileGridOffset, tileDraw.TileSize);
             }
 
-            if (currentWorld.CurrentPlayer is not null)
-            {
-                Rectangle playerScreenArea = entityDraw.DrawEntityOnGrid(currentWorld.CurrentPlayer, tileGridOffset, tileDraw.TileSize);
-            }
-
             spriteBatch.End();
 
             base.Draw(gameTime);

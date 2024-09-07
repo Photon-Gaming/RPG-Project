@@ -19,9 +19,14 @@ namespace RPGGame.GameObject
 
         public Dictionary<string, Entity.Entity> LoadedNamedEntities { get; protected set; } = new();
 
-        public void OnLoad()
+        public void OnLoad(World world)
         {
             LoadedNamedEntities = Entities.ToDictionary(e => e.Name, e => e, StringComparer.OrdinalIgnoreCase);
+            if (world.CurrentPlayer is not null)
+            {
+                Entities.Add(world.CurrentPlayer);
+                LoadedNamedEntities[Entity.Player.PlayerEntityName] = world.CurrentPlayer;
+            }
         }
 
         public bool IsOutOfBounds(Vector2 position)

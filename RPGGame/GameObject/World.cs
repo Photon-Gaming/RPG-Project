@@ -22,7 +22,7 @@ namespace RPGGame.GameObject
         public void ChangeRoom(Room room)
         {
             CurrentRoom = room;
-            CurrentRoom.OnLoad();
+            CurrentRoom.OnLoad(this);
         }
     }
 }
