@@ -2,6 +2,8 @@
 
 namespace RPGGame.GameObject.Entity
 {
+    // Editor property edits
+
     public enum EditType
     {
         Default,
@@ -30,5 +32,28 @@ namespace RPGGame.GameObject.Entity
     {
         public readonly int Minimum = min;
         public readonly int Maximum = max;
+    }
+
+    // Event->Action system
+
+    [AttributeUsage(AttributeTargets.Method)]
+    public class ActionMethodAttribute(string description) : Attribute
+    {
+        public readonly string Description = description;
+    }
+
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+    public class ActionMethodParameterAttribute(string name, Type parameterType, EditType editorEditType = EditType.Default) : Attribute
+    {
+        public readonly string Name = name;
+        public readonly Type ParameterType = parameterType;
+        public readonly EditType EditorEditType = editorEditType;
+    }
+
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    public class FiresEventAttribute(string name, string description) : Attribute
+    {
+        public readonly string Name = name;
+        public readonly string Description = description;
     }
 }

@@ -1323,6 +1323,7 @@
   ],
   "Entities": [
     {
+      "EventActionLinks": {},
       "Name": "3x2",
       "Position": "4.3, 9.2",
       "Size": "3, 2",
@@ -1330,6 +1331,7 @@
       "Enabled": true
     },
     {
+      "EventActionLinks": {},
       "Name": "2x1",
       "Position": "10, 10",
       "Size": "2, 1",
@@ -1337,6 +1339,7 @@
       "Enabled": true
     },
     {
+      "EventActionLinks": {},
       "Name": "1x1",
       "Position": "16.5, 8",
       "Size": "1, 1",
@@ -1344,6 +1347,7 @@
       "Enabled": true
     },
     {
+      "EventActionLinks": {},
       "Name": "1x1_2",
       "Position": "12.8, 4.4",
       "Size": "1, 1",
@@ -1351,6 +1355,7 @@
       "Enabled": true
     },
     {
+      "EventActionLinks": {},
       "Name": "1x2",
       "Position": "12.5, 12",
       "Size": "1, 2",
@@ -1358,6 +1363,7 @@
       "Enabled": true
     },
     {
+      "EventActionLinks": {},
       "Name": "3x2_2",
       "Position": "2.5, 5",
       "Size": "1, 1",
@@ -1365,6 +1371,7 @@
       "Enabled": true
     },
     {
+      "EventActionLinks": {},
       "Name": "3x4_tex1x1",
       "Position": "17, 13.5",
       "Size": "3, 4",

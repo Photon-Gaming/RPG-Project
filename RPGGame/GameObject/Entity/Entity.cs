@@ -1,11 +1,25 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 
 namespace RPGGame.GameObject.Entity
 {
+    public readonly struct EventActionLink(string targetEntityName, string targetAction, Dictionary<string, object> parameters)
+    {
+        public readonly string TargetEntityName = targetEntityName;
+        public readonly string TargetAction = targetAction;
+        public readonly Dictionary<string, object> Parameters = new(parameters);
+    }
+
     [Serializable]
     [JsonObject(MemberSerialization.OptIn)]
+    [FiresEvent("OnInit", "Fired when the entity is loaded, before it runs its initialisation logic.")]
+    [FiresEvent("OnLoad", "Fired when the entity is loaded, after it runs its initialisation logic.")]
+    [FiresEvent("OnUnload", "Fired when the entity is loaded, before it runs its destroy logic.")]
+    [FiresEvent("OnDestroy", "Fired when the entity is loaded, after it runs its destroy logic.")]
+    [FiresEvent("OnMove", "Fired when the entity's position changes.")]
     public class Entity(string name, Vector2 position, Vector2 size, string? texture) : ICloneable
     {
         [JsonProperty]
@@ -28,19 +42,45 @@ namespace RPGGame.GameObject.Entity
         [EditorModifiable("Enabled", "Whether or not this entity will be rendered and run its Tick function every frame.")]
         public bool Enabled { get; private set; } = true;
 
+        /// <summary>
+        /// Dictionary of event names to all the actions fired by that event.
+        /// </summary>
+        [JsonProperty]
+        public Dictionary<string, List<EventActionLink>> EventActionLinks = new();
+
+        public Room? CurrentRoom { get; internal set; } = null;
+
         // Entity origin is the bottom middle, tile origin is the top left
         public Vector2 TopLeft => new(Position.X - (Size.X / 2), Position.Y - Size.Y);
         public Vector2 BottomRight => new(TopLeft.X + Size.X, TopLeft.Y + Size.Y);
 
+        private static Type[] actionMethodTypes = new[] { typeof(Entity), typeof(Dictionary<string, object>) };
+
         /// <summary>
         /// Called every time the entity is loaded or enabled, for example when the player enters its room.
+        /// To implement custom init logic, override the <see cref="InitLogic"/> method.
         /// </summary>
-        public virtual void Init() { }
+        public void Init()
+        {
+            FireEvent("OnInit");
+            InitLogic();
+            FireEvent("OnLoad");
+        }
+
+        protected virtual void InitLogic() { }
 
         /// <summary>
         /// Called every time the entity is unloaded or disabled, for example when the player leaves its room.
+        /// To implement custom destroy logic, override the <see cref="DestroyLogic"/> method.
         /// </summary>
-        public virtual void Destroy() { }
+        public void Destroy()
+        {
+            FireEvent("OnUnload");
+            DestroyLogic();
+            FireEvent("OnDestroy");
+        }
+
+        protected virtual void DestroyLogic() { }
 
         /// <summary>
         /// Called every frame while the entity is loaded and enabled.
@@ -60,6 +100,7 @@ namespace RPGGame.GameObject.Entity
             }
 
             Position = targetPos;
+            FireEvent("OnMove");
             return true;
         }
 
@@ -113,6 +154,45 @@ namespace RPGGame.GameObject.Entity
             }
             Enabled = false;
             Destroy();
+        }
+
+        private static Dictionary<Type, MethodInfo> actionEventMethods = new();
+        protected void FireEvent(string eventName)
+        {
+            if (CurrentRoom is null
+                || !EventActionLinks.TryGetValue(eventName, out List<EventActionLink>? links))
+            {
+                return;
+            }
+
+            foreach (EventActionLink link in links)
+            {
+                if (!CurrentRoom.LoadedNamedEntities.TryGetValue(link.TargetEntityName, out Entity? targetEntity))
+                {
+                    continue;
+                }
+
+                Type targetEntityType = targetEntity.GetType();
+                MethodInfo? actionMethod;
+                // Action methods are cached so non-performant reflection doesn't have to be used each time.
+                if (actionEventMethods.TryGetValue(targetEntityType, out MethodInfo? outMethod))
+                {
+                    actionMethod = outMethod;
+                }
+                else
+                {
+                    actionMethod = targetEntityType.GetMethod(link.TargetAction,
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static,
+                        actionMethodTypes);
+                    if (actionMethod is null)
+                    {
+                        continue;
+                    }
+                    actionEventMethods[targetEntityType] = actionMethod;
+                }
+
+                _ = actionMethod.Invoke(targetEntity, new object[] { this, link.Parameters });
+            }
         }
     }
 }

@@ -21,9 +21,13 @@ namespace RPGGame.GameObject
 
         public void OnLoad(World world)
         {
-            foreach (Entity.Entity entity in Entities.Where(e => e.Enabled))
+            foreach (Entity.Entity entity in Entities)
             {
-                entity.Init();
+                entity.CurrentRoom = this;
+                if (entity.Enabled)
+                {
+                    entity.Init();
+                }
             }
 
             LoadedNamedEntities = Entities.ToDictionary(e => e.Name, e => e, StringComparer.OrdinalIgnoreCase);
