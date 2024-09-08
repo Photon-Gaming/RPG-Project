@@ -25,7 +25,7 @@ namespace RPGGame.GameObject.Entity
         public string? Texture { get; protected set; } = texture;
 
         [JsonProperty]
-        [EditorModifiable("Enabled?", "Whether or not this entity will be rendered and run its Tick function every frame.")]
+        [EditorModifiable("Enabled", "Whether or not this entity will be rendered and run its Tick function every frame.")]
         public bool Enabled { get; private set; } = true;
 
         // Entity origin is the bottom middle, tile origin is the top left

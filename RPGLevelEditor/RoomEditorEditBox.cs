@@ -8,7 +8,9 @@ namespace RPGLevelEditor
         public PropertyEditBox.PropertyEditBox CreatePropertyEditBox(PropertyInfo property,
             EditorModifiableAttribute editorAttribute, Entity entity)
         {
-            string labelText = $"{editorAttribute.Name} ({property.Name})";
+            string labelText = editorAttribute.Name == property.Name
+                ? editorAttribute.Name
+                : $"{editorAttribute.Name} ({property.Name})";
 
             switch (editorAttribute.EditorEditType)
             {
@@ -31,6 +33,12 @@ namespace RPGLevelEditor
                         return new PropertyEditBox.StringEdit(
                             labelText, editorAttribute.Description, property,
                             (string)property.GetValue(entity)!, _ => true);
+                    }
+                    if (property.PropertyType == typeof(bool))
+                    {
+                        return new PropertyEditBox.BoolEdit(
+                            labelText, editorAttribute.Description, property,
+                            (bool)property.GetValue(entity)!, _ => true);
                     }
                     if (property.PropertyType == typeof(Microsoft.Xna.Framework.Vector2))
                     {
