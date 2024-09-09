@@ -116,6 +116,19 @@ namespace RPGLevelEditor
                         return editBox;
                     }
                     break;
+                case EditType.EntityLink:
+                    if (property.PropertyType == typeof(string))
+                    {
+                        PropertyEditBox.EntityLinkEdit editBox = new(
+                            labelText, editorAttribute.Description, property,
+                            (string)(property.GetValue(entity) ?? ""), _ => true,
+                            OpenRoom);
+
+                        editBox.EntitySelectButtonClick += (_, _) => StartEntitySelection(property);
+
+                        return editBox;
+                    }
+                    break;
             }
 
             return new PropertyEditBox.ErrorEdit(property,

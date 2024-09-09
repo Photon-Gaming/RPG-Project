@@ -10,6 +10,7 @@ namespace RPGGame.GameObject.Entity
         RoomCoordinate,
         EntityTexture,
         ConstrainedNumeric,
+        EntityLink,
     }
 
     [AttributeUsage(AttributeTargets.Property)]

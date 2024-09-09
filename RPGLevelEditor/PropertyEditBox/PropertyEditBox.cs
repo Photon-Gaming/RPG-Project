@@ -36,4 +36,11 @@ namespace RPGLevelEditor.PropertyEditBox
     {
         public abstract event EventHandler<RoutedEventArgs>? TextureSelectButtonClick;
     }
+
+    public abstract class EntityLinkPropertyEditBox<T> : PropertyEditBox<T>
+    {
+        public abstract RPGGame.GameObject.Room ContainingRoom { get; }
+
+        public abstract event EventHandler<RoutedEventArgs>? EntitySelectButtonClick;
+    }
 }

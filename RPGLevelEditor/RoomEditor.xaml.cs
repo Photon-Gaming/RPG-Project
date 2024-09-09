@@ -159,6 +159,9 @@ namespace RPGLevelEditor
         private bool selectingPosition = false;
         private PropertyInfo? selectedPositionTarget = null;
 
+        private bool selectingEntity = false;
+        private PropertyInfo? selectedEntityTarget = null;
+
         private Point? lastDrawnPoint = new();
         // When editing collision, whether or not moving the mouse removes or adds collision is based on the initially clicked tile
         private bool collisionDrawType = false;
@@ -894,6 +897,21 @@ namespace RPGLevelEditor
 
         private void SelectEntity(Entity? entity)
         {
+            if (selectingEntity && selectedEntity is not null && entity is not null)
+            {
+                selectingEntity = false;
+                tileGridDisplay.Cursor = null;
+
+                PushEntityPropertyEditUndoStack(selectedEntity);
+
+                selectedEntityTarget!.SetValue(selectedEntity, entity.Name);
+
+                selectedEntityTarget = null;
+
+                UpdateSelectedEntity();
+                return;
+            }
+
             if (ReferenceEquals(entity, selectedEntity))
             {
                 // Entity is already selected
@@ -904,6 +922,8 @@ namespace RPGLevelEditor
 
             selectingPosition = false;
             selectedPositionTarget = null;
+            selectingEntity = false;
+            selectedEntityTarget = null;
             tileGridDisplay.Cursor = null;
 
             if (selectedEntity is not null)
@@ -1066,6 +1086,13 @@ namespace RPGLevelEditor
             tileGridDisplay.Cursor = Cursors.Cross;
             selectingPosition = true;
             selectedPositionTarget = targetProperty;
+        }
+
+        private void StartEntitySelection(PropertyInfo targetProperty)
+        {
+            tileGridDisplay.Cursor = Cursors.ScrollNW;
+            selectingEntity = true;
+            selectedEntityTarget = targetProperty;
         }
 
         private void TextureSelect_MouseUp(object sender, MouseButtonEventArgs e)
