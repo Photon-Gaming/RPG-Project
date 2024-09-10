@@ -55,6 +55,13 @@ namespace RPGLevelEditor.PropertyEditBox
             LabelTooltip = labelTooltip;
             Property = property;
             Value = initialValue;
+
+            ValidateName();
+        }
+
+        private void ValidateName()
+        {
+            propertyValue.Background = IsValueValid ? Brushes.White : Brushes.Salmon;
         }
 
         private void SelectButton_Click(object sender, RoutedEventArgs e)
@@ -64,7 +71,7 @@ namespace RPGLevelEditor.PropertyEditBox
 
         private void propertyValue_TextChanged(object sender, TextChangedEventArgs e)
         {
-            propertyValue.Background = IsValueValid ? Brushes.White : Brushes.Salmon;
+            ValidateName();
         }
     }
 }

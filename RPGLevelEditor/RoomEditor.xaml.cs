@@ -1398,6 +1398,14 @@ namespace RPGLevelEditor
                 return;
             }
 
+            if (selectingEntity)
+            {
+                // We're current selecting an entity for an entity name link property.
+                // Instead of moving, use the entity's name for the property.
+                SelectEntity(selectedEntity);
+                return;
+            }
+
             PushEntityMoveUndoStack(selectedEntity);
 
             movingEntity = true;
