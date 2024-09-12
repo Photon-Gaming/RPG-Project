@@ -156,7 +156,6 @@ namespace RPGGame.GameObject.Entity
             Destroy();
         }
 
-        private static Dictionary<Type, MethodInfo> actionEventMethods = new();
         protected void FireEvent(string eventName)
         {
             if (CurrentRoom is null
@@ -172,27 +171,33 @@ namespace RPGGame.GameObject.Entity
                     continue;
                 }
 
-                Type targetEntityType = targetEntity.GetType();
-                MethodInfo? actionMethod;
-                // Action methods are cached so non-performant reflection doesn't have to be used each time.
-                if (actionEventMethods.TryGetValue(targetEntityType, out MethodInfo? outMethod))
+                MethodInfo? actionMethod = GetActionMethod(targetEntity.GetType(), link.TargetAction);
+                if (actionMethod is null)
                 {
-                    actionMethod = outMethod;
-                }
-                else
-                {
-                    actionMethod = targetEntityType.GetMethod(link.TargetAction,
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static,
-                        actionMethodTypes);
-                    if (actionMethod is null)
-                    {
-                        continue;
-                    }
-                    actionEventMethods[targetEntityType] = actionMethod;
+                    continue;
                 }
 
                 _ = actionMethod.Invoke(targetEntity, new object[] { this, link.Parameters });
             }
+        }
+
+        private static Dictionary<Type, MethodInfo> actionMethods = new();
+        protected static MethodInfo? GetActionMethod(Type entityType, string methodName)
+        {
+            // Action methods are cached so non-performant reflection doesn't have to be used each time.
+            if (actionMethods.TryGetValue(entityType, out MethodInfo? outMethod))
+            {
+                return outMethod;
+            }
+
+            MethodInfo? actionMethod = entityType.GetMethod(methodName,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static,
+                actionMethodTypes);
+            if (actionMethod is not null)
+            {
+                actionMethods[entityType] = actionMethod;
+            }
+            return actionMethod;
         }
     }
 }
