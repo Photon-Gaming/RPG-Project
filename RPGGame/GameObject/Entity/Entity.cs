@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 
 namespace RPGGame.GameObject.Entity
 {
+    public delegate void ActionMethod(Entity sender, Dictionary<string, object> parameters);
+
     public readonly struct EventActionLink(string targetEntityName, string targetAction, Dictionary<string, object> parameters)
     {
         public readonly string TargetEntityName = targetEntityName;
@@ -171,32 +172,25 @@ namespace RPGGame.GameObject.Entity
                     continue;
                 }
 
-                MethodInfo? actionMethod = GetActionMethod(targetEntity.GetType(), link.TargetAction);
-                if (actionMethod is null)
-                {
-                    continue;
-                }
-
-                _ = actionMethod.Invoke(targetEntity, new object[] { this, link.Parameters });
+                targetEntity.GetActionMethod(link.TargetAction)?.Invoke(this, link.Parameters);
             }
         }
 
-        private static Dictionary<Type, MethodInfo> actionMethods = new();
-        protected static MethodInfo? GetActionMethod(Type entityType, string methodName)
+        private Dictionary<string, ActionMethod> actionMethods = new();
+        protected ActionMethod? GetActionMethod(string methodName)
         {
             // Action methods are cached so non-performant reflection doesn't have to be used each time.
-            if (actionMethods.TryGetValue(entityType, out MethodInfo? outMethod))
+            if (actionMethods.TryGetValue(methodName, out ActionMethod? outMethod))
             {
                 return outMethod;
             }
 
-            MethodInfo? actionMethod = entityType.GetMethod(methodName,
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static,
-                actionMethodTypes);
-            if (actionMethod is not null)
+            ActionMethod? actionMethod = (ActionMethod?)Delegate.CreateDelegate(GetType(), this, methodName, false, false);
+            if (actionMethod is null)
             {
-                actionMethods[entityType] = actionMethod;
+                return null;
             }
+            actionMethods[methodName] = actionMethod;
             return actionMethod;
         }
     }
