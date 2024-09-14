@@ -73,7 +73,7 @@ namespace RPGGame.GameObject.Entity
             }
             catch (Exception exc)
             {
-                logger.LogError(exc, "Uncaught error in InitLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
+                logger.LogCritical(exc, "Uncaught error in InitLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
                     Name, Position.X, Position.Y);
             }
             FireEvent("OnLoad");
@@ -94,7 +94,7 @@ namespace RPGGame.GameObject.Entity
             }
             catch (Exception exc)
             {
-                logger.LogError(exc, "Uncaught error in DestroyLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
+                logger.LogCritical(exc, "Uncaught error in DestroyLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
                     Name, Position.X, Position.Y);
             }
             FireEvent("OnDestroy");
@@ -232,6 +232,8 @@ namespace RPGGame.GameObject.Entity
             {
                 if (!CurrentRoom.LoadedNamedEntities.TryGetValue(link.TargetEntityName, out Entity? targetEntity))
                 {
+                    logger.LogError("Entity \"{Target}\" linked from \"{Source}\" for {Event}->{Action} could not be found",
+                        link.TargetEntityName, Name, eventName, link.TargetAction);
                     continue;
                 }
 
@@ -251,6 +253,8 @@ namespace RPGGame.GameObject.Entity
             ActionMethod? actionMethod = (ActionMethod?)Delegate.CreateDelegate(GetType(), this, methodName, false, false);
             if (actionMethod is null)
             {
+                logger.LogError("Action method with name \"{Name}\" could not be found on Entity \"{Entity}\" of type {Type}",
+                    methodName, Name, GetType().ToString());
                 return null;
             }
             actionMethods[methodName] = actionMethod;

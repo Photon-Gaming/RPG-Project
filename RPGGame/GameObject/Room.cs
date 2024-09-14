@@ -63,7 +63,7 @@ namespace RPGGame.GameObject
                 }
                 catch (Exception exc)
                 {
-                    logger.LogError(exc, "Uncaught error in Tick function for Entity \"{Name}\" at ({PosX}, {PosY})",
+                    logger.LogCritical(exc, "Uncaught error in Tick function for Entity \"{Name}\" at ({PosX}, {PosY})",
                         entity.Name, entity.Position.X, entity.Position.Y);
                 }
             }
