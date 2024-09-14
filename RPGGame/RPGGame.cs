@@ -1,4 +1,6 @@
 ﻿using System.Linq;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -9,10 +11,18 @@ namespace RPGGame
     {
         public const string TextureFolder = "Textures";
 
+        internal static readonly ILoggerFactory loggerFactory = LoggerFactory.Create(
+            b => b.AddConsoleFormatter<CustomConsoleFormatter, ConsoleFormatterOptions>().AddConsole(options =>
+            {
+                options.FormatterName = "RPG";
+            }));
+
         internal GraphicsDeviceManager? graphics;
         internal SpriteBatch? spriteBatch;
 
         private const string defaultWorldName = "default";
+
+        private static readonly ILogger logger = loggerFactory.CreateLogger("Core");
 
         private RPGContentLoader? rpgContentLoader;
         private GameObject.World? currentWorld;
@@ -32,6 +42,7 @@ namespace RPGGame
 
         protected override void Initialize()
         {
+            logger.LogInformation("RPGGame Engine initialising. Default world name is \"{Name}\"", defaultWorldName);
             base.Initialize();
         }
 
@@ -55,13 +66,11 @@ namespace RPGGame
 
             if (currentWorld?.CurrentRoom is null)
             {
+                logger.LogError("No room loaded. Updates cannot be performed.");
                 return;
             }
 
-            foreach (GameObject.Entity.Entity entity in currentWorld.CurrentRoom.Entities.Where(e => e.Enabled))
-            {
-                entity.Tick(gameTime);
-            }
+            currentWorld.CurrentRoom.TickLoadedEntities(gameTime);
 
             base.Update(gameTime);
         }
@@ -70,16 +79,18 @@ namespace RPGGame
         {
             if (spriteBatch is null)
             {
+                logger.LogCritical("Sprite batch is undefined. Render aborted.");
                 return;
             }
-
-            GraphicsDevice.Clear(currentWorld?.CurrentRoom?.BackgroundColor ?? Color.Purple);
 
             if (currentWorld?.CurrentRoom is null)
             {
-                GraphicsDevice.Clear(currentWorld?.CurrentRoom?.BackgroundColor ?? Color.Magenta);
+                logger.LogError("No room loaded, nothing to render.");
+                GraphicsDevice.Clear(Color.Magenta);
                 return;
             }
+
+            GraphicsDevice.Clear(currentWorld.CurrentRoom.BackgroundColor);
 
             // PointClamp = Use nearest neighbour scaling
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
@@ -88,6 +99,8 @@ namespace RPGGame
 
             foreach (GameObject.Entity.Entity entity in currentWorld.CurrentRoom.Entities.Where(e => e.Enabled))
             {
+                logger.LogTrace("Rendering entity Entity \"{Name}\" at ({PosX}, {PosY})",
+                    entity.Name, entity.Position.X, entity.Position.Y);
                 _ = entityDraw.DrawEntityOnGrid(entity, tileGridOffset, tileDraw.TileSize);
             }
 

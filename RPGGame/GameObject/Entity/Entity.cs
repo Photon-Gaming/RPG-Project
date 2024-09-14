@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 
@@ -57,6 +58,8 @@ namespace RPGGame.GameObject.Entity
 
         private static Type[] actionMethodTypes = new[] { typeof(Entity), typeof(Dictionary<string, object>) };
 
+        private static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Entity");
+
         /// <summary>
         /// Called every time the entity is loaded or enabled, for example when the player enters its room.
         /// To implement custom init logic, override the <see cref="InitLogic"/> method.
@@ -64,7 +67,15 @@ namespace RPGGame.GameObject.Entity
         public void Init()
         {
             FireEvent("OnInit");
-            InitLogic();
+            try
+            {
+                InitLogic();
+            }
+            catch (Exception exc)
+            {
+                logger.LogError(exc, "Uncaught error in InitLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
+                    Name, Position.X, Position.Y);
+            }
             FireEvent("OnLoad");
         }
 
@@ -77,7 +88,15 @@ namespace RPGGame.GameObject.Entity
         public void Destroy()
         {
             FireEvent("OnUnload");
-            DestroyLogic();
+            try
+            {
+                DestroyLogic();
+            }
+            catch (Exception exc)
+            {
+                logger.LogError(exc, "Uncaught error in DestroyLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
+                    Name, Position.X, Position.Y);
+            }
             FireEvent("OnDestroy");
         }
 
@@ -177,6 +196,9 @@ namespace RPGGame.GameObject.Entity
         {
             if (!parameters.TryGetValue("TargetPosition", out object? positionObj) || positionObj is not Vector2 position)
             {
+                logger.LogError("TargetPosition parameter for SetPosition action was not given or was of incorrect type" +
+                    " (fired by \"{Source}\" to \"{Target}\")",
+                    sender.Name, Name);
                 return;
             }
             Move(position, false);
@@ -188,6 +210,9 @@ namespace RPGGame.GameObject.Entity
         {
             if (!parameters.TryGetValue("MovementVector", out object? positionObj) || positionObj is not Vector2 position)
             {
+                logger.LogError("MovementVector parameter for Move action was not given or was of incorrect type" +
+                    " (fired by \"{Source}\" to \"{Target}\")",
+                    sender.Name, Name);
                 return;
             }
             Move(position, true);

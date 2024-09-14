@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 
@@ -19,6 +20,8 @@ namespace RPGGame.GameObject
 
         public Dictionary<string, Entity.Entity> LoadedNamedEntities { get; protected set; } = new();
 
+        private static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Room");
+
         public void OnLoad(World world)
         {
             foreach (Entity.Entity entity in Entities)
@@ -26,6 +29,7 @@ namespace RPGGame.GameObject
                 entity.CurrentRoom = this;
                 if (entity.Enabled)
                 {
+                    logger.LogDebug("Loading Entity \"{Name}\"", entity.Name);
                     entity.Init();
                 }
             }
@@ -42,7 +46,26 @@ namespace RPGGame.GameObject
         {
             foreach (Entity.Entity entity in Entities.Where(e => e.Enabled))
             {
+                logger.LogDebug("Unloading Entity \"{Name}\"", entity.Name);
                 entity.Destroy();
+            }
+        }
+
+        public void TickLoadedEntities(GameTime gameTime)
+        {
+            foreach (Entity.Entity entity in Entities.Where(e => e.Enabled))
+            {
+                try
+                {
+                    logger.LogTrace("Ticking entity Entity \"{Name}\" at ({PosX}, {PosY})",
+                        entity.Name, entity.Position.X, entity.Position.Y);
+                    entity.Tick(gameTime);
+                }
+                catch (Exception exc)
+                {
+                    logger.LogError(exc, "Uncaught error in Tick function for Entity \"{Name}\" at ({PosX}, {PosY})",
+                        entity.Name, entity.Position.X, entity.Position.Y);
+                }
             }
         }
 
