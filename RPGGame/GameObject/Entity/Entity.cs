@@ -157,6 +157,44 @@ namespace RPGGame.GameObject.Entity
             Destroy();
         }
 
+        // Action Methods
+
+        [ActionMethod("Enables the entity, starting its Tick method and making it visible if it has a texture assigned")]
+        private void Enable(Entity sender, Dictionary<string, object> parameters)
+        {
+            Enable();
+        }
+
+        [ActionMethod("Disables the entity, stopping its Tick method and making it invisible")]
+        private void Disable(Entity sender, Dictionary<string, object> parameters)
+        {
+            Disable();
+        }
+
+        [ActionMethod("Moves the entity to an absolute position in the current room. Class-specific movement logic applies")]
+        [ActionMethodParameter("TargetPosition", "The absolute room coordinates to move the entity to", typeof(Vector2), EditType.RoomCoordinate)]
+        private void SetPosition(Entity sender, Dictionary<string, object> parameters)
+        {
+            if (!parameters.TryGetValue("TargetPosition", out object? positionObj) || positionObj is not Vector2 position)
+            {
+                return;
+            }
+            Move(position, false);
+        }
+
+        [ActionMethod("Moves the entity to a position in the current room relative to its current position. Class-specific movement logic applies")]
+        [ActionMethodParameter("MovementVector", "The amount to change the X and Y coordinates by", typeof(Vector2))]
+        private void Move(Entity sender, Dictionary<string, object> parameters)
+        {
+            if (!parameters.TryGetValue("MovementVector", out object? positionObj) || positionObj is not Vector2 position)
+            {
+                return;
+            }
+            Move(position, true);
+        }
+
+        // Event->Action System
+
         protected void FireEvent(string eventName)
         {
             if (CurrentRoom is null

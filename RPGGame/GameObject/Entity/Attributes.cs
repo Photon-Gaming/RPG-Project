@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JetBrains.Annotations;
+using System;
 
 namespace RPGGame.GameObject.Entity
 {
@@ -38,15 +39,17 @@ namespace RPGGame.GameObject.Entity
     // Event->Action system
 
     [AttributeUsage(AttributeTargets.Method)]
+    [MeansImplicitUse]
     public class ActionMethodAttribute(string description) : Attribute
     {
         public readonly string Description = description;
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public class ActionMethodParameterAttribute(string name, Type parameterType, EditType editorEditType = EditType.Default) : Attribute
+    public class ActionMethodParameterAttribute(string name, string description, Type parameterType, EditType editorEditType = EditType.Default) : Attribute
     {
         public readonly string Name = name;
+        public readonly string Description = description;
         public readonly Type ParameterType = parameterType;
         public readonly EditType EditorEditType = editorEditType;
     }
