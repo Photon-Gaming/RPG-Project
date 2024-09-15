@@ -43,12 +43,11 @@ namespace RPGGame
             }
         }
 
-        public GameObject.Room LoadRoom(string roomName)
+        public GameObject.Room LoadRoom(string roomName, bool nameIsPath = false)
         {
             logger.LogInformation("Loading room \"{Room}\"", roomName);
 
-            string roomFilePath = Path.Join(roomFolder, roomName);
-            roomFilePath = Path.ChangeExtension(roomFilePath, "json");
+            string roomFilePath = nameIsPath ? roomName : Path.ChangeExtension(Path.Join(roomFolder, roomName), "json");
 
             if (!File.Exists(roomFilePath))
             {
@@ -62,6 +61,10 @@ namespace RPGGame
                 if (room is null)
                 {
                     throw new JsonException();
+                }
+                foreach (GameObject.Entity.Entity entity in room.Entities)
+                {
+                    entity.CurrentRoom = room;
                 }
                 return room;
             }

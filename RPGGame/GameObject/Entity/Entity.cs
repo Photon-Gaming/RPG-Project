@@ -114,12 +114,14 @@ namespace RPGGame.GameObject.Entity
                 targetPos += Position;
             }
 
-            if (targetPos.X < 0 || targetPos.Y < 0)
+            Vector2 originalPosition = Position;
+            Position = targetPos;
+            if (IsOutOfBounds())
             {
+                Position = originalPosition;
                 return false;
             }
 
-            Position = targetPos;
             FireEvent("OnMove");
             return true;
         }
@@ -146,14 +148,15 @@ namespace RPGGame.GameObject.Entity
                 && position.Y < BottomRight.Y;
         }
 
-        public bool IsOutOfBounds(Room room)
+        public bool IsOutOfBounds()
         {
             // Room.IsOutOfBounds could be used for this, but we can reduce the number of comparisons needed
             // by only checking TopLeft against the lower bound and BottomRight against the upper bound.
-            return TopLeft.X < 0
+            return CurrentRoom is null
+                || TopLeft.X < 0
                 || TopLeft.Y < 0
-                || BottomRight.X >= room.TileMap.GetLength(0)
-                || BottomRight.Y >= room.TileMap.GetLength(1);
+                || BottomRight.X >= CurrentRoom.TileMap.GetLength(0)
+                || BottomRight.Y >= CurrentRoom.TileMap.GetLength(1);
         }
 
         public void Enable()

@@ -195,11 +195,7 @@ namespace RPGLevelEditor
             {
                 try
                 {
-                    RPGGame.GameObject.Room? deserialized = JsonConvert.DeserializeObject<RPGGame.GameObject.Room>(File.ReadAllText(RoomPath));
-                    if (deserialized is not null)
-                    {
-                        OpenRoom = deserialized;
-                    }
+                    OpenRoom = new RPGGame.RPGContentLoader("").LoadRoom(roomPath, true);
                 }
                 catch (Exception exc)
                 {
@@ -493,7 +489,7 @@ namespace RPGLevelEditor
                 return;
             }
 
-            if (entity.IsOutOfBounds(OpenRoom))
+            if (entity.IsOutOfBounds())
             {
                 return;
             }
@@ -959,7 +955,7 @@ namespace RPGLevelEditor
                 Microsoft.Xna.Framework.Vector2.One,
                 null);
 
-            if (newEntity.IsOutOfBounds(OpenRoom) || OpenRoom.Entities.Any(e => e.Collides(newEntity)))
+            if (newEntity.IsOutOfBounds() || OpenRoom.Entities.Any(e => e.Collides(newEntity)))
             {
                 return;
             }
@@ -1007,12 +1003,14 @@ namespace RPGLevelEditor
                 newPos.Y = MathF.Round(newPos.Y / CurrentGridInterval) * CurrentGridInterval;
             }
 
-            _ = selectedEntity.Move(newPos, false);
-            if (selectedEntity.IsOutOfBounds(OpenRoom) || OpenRoom.Entities.Any(ent => ent.Collides(selectedEntity)))
+            if (selectedEntity.Move(newPos, false))
             {
-                _ = selectedEntity.Move(oldPos, false);
+                if (OpenRoom.Entities.Any(ent => ent.Collides(selectedEntity)))
+                {
+                    _ = selectedEntity.Move(oldPos, false);
+                }
+                UpdateSelectedEntity(false);
             }
-            UpdateSelectedEntity(false);
         }
 
         private void ShowProblems()
@@ -1041,7 +1039,7 @@ namespace RPGLevelEditor
             }
 
             // Out of bounds entities
-            foreach (Entity entity in OpenRoom.Entities.Where(e => e.IsOutOfBounds(OpenRoom)))
+            foreach (Entity entity in OpenRoom.Entities.Where(e => e.IsOutOfBounds()))
             {
                 _ = problems.AppendLine(
                     $"Entity \"{entity.Name}\" of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) is out of bounds.");
