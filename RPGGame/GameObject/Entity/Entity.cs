@@ -221,6 +221,20 @@ namespace RPGGame.GameObject.Entity
             Move(position, true);
         }
 
+        [ActionMethod("Sets the render texture of the entity.")]
+        [ActionMethodParameter("TextureName", "The name of the new texture to use. Must be part of the built game content", typeof(string), EditType.EntityTexture)]
+        private void ChangeTexture(Entity sender, Dictionary<string, object> parameters)
+        {
+            if (!parameters.TryGetValue("TextureName", out object? textureObj) || textureObj is not string texture)
+            {
+                logger.LogError("TextureName parameter for ChangeTexture action was not given or was of incorrect type" +
+                    " (fired by \"{Source}\" to \"{Target}\")",
+                    sender.Name, Name);
+                return;
+            }
+            Texture = texture == "" ? null : texture;
+        }
+
         // Event->Action System
 
         protected void FireEvent(string eventName)
