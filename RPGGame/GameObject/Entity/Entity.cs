@@ -254,6 +254,13 @@ namespace RPGGame.GameObject.Entity
                     continue;
                 }
 
+                if (!targetEntity.Enabled)
+                {
+                    logger.LogDebug("Entity \"{Target}\" linked from \"{Source}\" for {Event}->{Action} is disabled. Action method will not run",
+                        link.TargetEntityName, Name, eventName, link.TargetAction);
+                    continue;
+                }
+
                 targetEntity.GetActionMethod(link.TargetAction)?.Invoke(this, link.Parameters);
             }
         }
