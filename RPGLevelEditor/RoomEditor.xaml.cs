@@ -157,10 +157,11 @@ namespace RPGLevelEditor
         private Point moveStartOffset = new();
 
         private bool selectingPosition = false;
-        private PropertyInfo? selectedPositionTarget = null;
+        private PropertyEditBox.RoomCoordinateEdit? selectedPositionTarget = null;
 
         private bool selectingEntity = false;
         private PropertyInfo? selectedEntityTarget = null;
+        private object? selectedEntityTargetObject = null;
 
         private Point? lastDrawnPoint = new();
         // When editing collision, whether or not moving the mouse removes or adds collision is based on the initially clicked tile
@@ -222,7 +223,7 @@ namespace RPGLevelEditor
         {
             try
             {
-                File.WriteAllText(RoomPath, JsonConvert.SerializeObject(OpenRoom, Formatting.Indented));
+                File.WriteAllText(RoomPath, JsonConvert.SerializeObject(OpenRoom, Formatting.Indented, RPGGame.RPGContentLoader.SerializerSettings));
                 UnsavedChanges = false;
             }
             catch (Exception exc)
@@ -560,23 +561,82 @@ namespace RPGLevelEditor
             }
         }
 
+        private static IEnumerable<FiresEventAttribute> GetFiredEvents(Entity entity)
+        {
+            return entity.GetType().GetCustomAttributes(typeof(FiresEventAttribute)).Cast<FiresEventAttribute>();
+        }
+
+        /// <param name="entity">
+        /// The entity to get a list of action methods for,
+        /// or <see langword="null"/> to get a list of action methods for <see cref="Player"/>.
+        /// </param>
+        internal static IEnumerable<(string MethodName, ActionMethodAttribute ActionAttribute,
+            ActionMethodParameterAttribute[] ParameterAttributes)> GetEntityActionMethods(Entity? entity)
+        {
+            Type entityType = entity is null ? typeof(Player) : entity.GetType();
+            foreach (MethodInfo method in entityType.GetMethods(
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
+            {
+                List<ActionMethodAttribute> actionMethodAttributes = method
+                    .GetCustomAttributes(typeof(ActionMethodAttribute))
+                    .Cast<ActionMethodAttribute>().ToList();
+                if (actionMethodAttributes.Count == 0)
+                {
+                    // Only methods with the ActionMethod attribute should be shown
+                    continue;
+                }
+
+                List<ActionMethodParameterAttribute> parameterAttributes = method
+                    .GetCustomAttributes(typeof(ActionMethodParameterAttribute))
+                    .Cast<ActionMethodParameterAttribute>().ToList();
+
+                yield return (method.Name, actionMethodAttributes[0], parameterAttributes.ToArray());
+            }
+        }
+
         private void UpdateEntityPropertiesPanel()
         {
             entityPropertiesPanel.Children.Clear();
+            entityEventActionLinksPanel.Children.Clear();
 
             if (selectedEntity is null)
             {
                 entityApplyButton.IsEnabled = false;
+                addEventActionLinkButton.IsEnabled = false;
                 return;
             }
 
             entityApplyButton.IsEnabled = true;
+            addEventActionLinkButton.IsEnabled = true;
 
             foreach ((PropertyInfo property, EditorModifiableAttribute editorAttribute) in GetEditableEntityProperties(selectedEntity))
             {
                 _ = entityPropertiesPanel.Children.Add(CreatePropertyEditBox(property, editorAttribute, selectedEntity));
                 _ = entityPropertiesPanel.Children.Add(new Separator());
             }
+
+            foreach ((string eventName, List<EventActionLink> actionLinks) in selectedEntity.EventActionLinks)
+            {
+                foreach (EventActionLink link in actionLinks)
+                {
+                    CreateEventActionLinkEditBox(eventName, link);
+                }
+            }
+        }
+
+        private void CreateEventActionLinkEditBox(string eventName, EventActionLink link)
+        {
+            if (selectedEntity is null)
+            {
+                return;
+            }
+
+            PropertyEditBox.EventActionLinkEdit editBox = new(eventName, link.TargetEntityName, link.TargetAction,
+                GetFiredEvents(selectedEntity).ToArray(), OpenRoom.Entities, selectedEntity, link.Parameters, this);
+            editBox.EntitySelectButtonClick += (_, _) => StartEntitySelection(
+                typeof(PropertyEditBox.EventActionLinkEdit).GetProperty("TargetEntity")!, editBox);
+            _ = entityEventActionLinksPanel.Children.Add(editBox);
+            _ = entityEventActionLinksPanel.Children.Add(new Separator());
         }
 
         private void UpdateGridBackground()
@@ -893,18 +953,16 @@ namespace RPGLevelEditor
 
         private void SelectEntity(Entity? entity)
         {
-            if (selectingEntity && selectedEntity is not null && entity is not null)
+            if (selectingEntity && selectedEntity is not null && entity is not null
+                && selectedEntityTarget is not null && selectedEntityTargetObject is not null)
             {
                 selectingEntity = false;
                 tileGridDisplay.Cursor = null;
 
-                PushEntityPropertyEditUndoStack(selectedEntity);
-
-                selectedEntityTarget!.SetValue(selectedEntity, entity.Name);
+                selectedEntityTarget.SetValue(selectedEntityTargetObject, entity.Name);
 
                 selectedEntityTarget = null;
-
-                UpdateSelectedEntity();
+                selectedEntityTargetObject = null;
                 return;
             }
 
@@ -920,6 +978,7 @@ namespace RPGLevelEditor
             selectedPositionTarget = null;
             selectingEntity = false;
             selectedEntityTarget = null;
+            selectedEntityTargetObject = null;
             tileGridDisplay.Cursor = null;
 
             if (selectedEntity is not null)
@@ -1079,18 +1138,19 @@ namespace RPGLevelEditor
                 "pack://application:,,,/Resources/MenuIcons/script--exclamation.png").Show();
         }
 
-        private void StartPositionSelection(PropertyInfo targetProperty)
+        private void StartPositionSelection(PropertyEditBox.RoomCoordinateEdit targetProperty)
         {
             tileGridDisplay.Cursor = Cursors.Cross;
             selectingPosition = true;
             selectedPositionTarget = targetProperty;
         }
 
-        private void StartEntitySelection(PropertyInfo targetProperty)
+        private void StartEntitySelection(PropertyInfo targetProperty, object targetObject)
         {
             tileGridDisplay.Cursor = Cursors.ScrollNW;
             selectingEntity = true;
             selectedEntityTarget = targetProperty;
+            selectedEntityTargetObject = targetObject;
         }
 
         private void TextureSelect_MouseUp(object sender, MouseButtonEventArgs e)
@@ -1135,14 +1195,10 @@ namespace RPGLevelEditor
                     selectingPosition = false;
                     tileGridDisplay.Cursor = null;
 
-                    PushEntityPropertyEditUndoStack(selectedEntity);
-
-                    selectedPositionTarget.SetValue(selectedEntity,
-                        new Microsoft.Xna.Framework.Vector2((float)relativeMousePos.X, (float)relativeMousePos.Y));
+                    selectedPositionTarget.Value =
+                        new Microsoft.Xna.Framework.Vector2((float)relativeMousePos.X, (float)relativeMousePos.Y);
 
                     selectedPositionTarget = null;
-
-                    UpdateSelectedEntity();
                     return;
                 }
 
@@ -1414,8 +1470,11 @@ namespace RPGLevelEditor
 
         private void selectedEntityContainer_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            movingEntity = false;
-            UpdateEntityPropertiesPanel();
+            if (movingEntity)
+            {
+                movingEntity = false;
+                UpdateEntityPropertiesPanel();
+            }
         }
 
         private void selectedEntityContainer_MouseMove(object sender, MouseEventArgs e)
@@ -1425,8 +1484,11 @@ namespace RPGLevelEditor
 
         private void tileGridDisplay_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            movingEntity = false;
-            UpdateEntityPropertiesPanel();
+            if (movingEntity)
+            {
+                movingEntity = false;
+                UpdateEntityPropertiesPanel();
+            }
         }
 
         private void hideInvisibleEntitiesItem_OnClick(object sender, RoutedEventArgs e)
@@ -1465,14 +1527,35 @@ namespace RPGLevelEditor
             foreach (PropertyEditBox.PropertyEditBox editBox in
                 entityPropertiesPanel.Children.OfType<PropertyEditBox.PropertyEditBox>())
             {
-                if (!editBox.IsValueValid)
+                if (!editBox.IsValueValid || editBox.Property is null)
                 {
                     continue;
                 }
                 editBox.Property.SetValue(selectedEntity, editBox.ObjectValue);
             }
 
+            // Clear existing links as they'll all be recreated when iterating edit boxes
+            selectedEntity.EventActionLinks.Clear();
+
+            foreach (PropertyEditBox.EventActionLinkEdit editBox in
+                entityEventActionLinksPanel.Children.OfType<PropertyEditBox.EventActionLinkEdit>())
+            {
+                if (!editBox.IsValueValid)
+                {
+                    continue;
+                }
+                // Make sure a list exists to insert new link into - events may not necessarily have one by default
+                selectedEntity.EventActionLinks.TryAdd(editBox.TargetEvent, new List<EventActionLink>());
+                selectedEntity.EventActionLinks[editBox.TargetEvent].Add(
+                    new EventActionLink(editBox.TargetEntity, editBox.TargetAction, editBox.GetActionParameters()));
+            }
+
             UpdateSelectedEntity();
+        }
+
+        private void addEventActionLinkButton_Click(object sender, RoutedEventArgs e)
+        {
+            CreateEventActionLinkEditBox("", new EventActionLink("", "", new Dictionary<string, object?>()));
         }
     }
 }

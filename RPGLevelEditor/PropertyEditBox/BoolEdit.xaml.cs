@@ -19,7 +19,7 @@ namespace RPGLevelEditor.PropertyEditBox
             set => propertyValue.ToolTip = value;
         }
 
-        public override PropertyInfo Property { get; init; }
+        public override PropertyInfo? Property { get; init; }
 
         public override bool Value
         {
@@ -33,7 +33,7 @@ namespace RPGLevelEditor.PropertyEditBox
 
         public override bool IsValueValid => ExtraValidityCheck(Value);
 
-        public BoolEdit(string labelText, string labelTooltip, PropertyInfo property, bool initialValue,
+        public BoolEdit(string labelText, string labelTooltip, PropertyInfo? property, bool initialValue,
             Predicate<bool> extraValidityCheck)
         {
             ExtraValidityCheck = extraValidityCheck;

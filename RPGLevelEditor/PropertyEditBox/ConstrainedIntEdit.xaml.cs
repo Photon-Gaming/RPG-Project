@@ -23,7 +23,7 @@ namespace RPGLevelEditor.PropertyEditBox
             set => propertyName.ToolTip = value;
         }
 
-        public override PropertyInfo Property { get; init; }
+        public override PropertyInfo? Property { get; init; }
 
         public override int Value
         {
@@ -58,7 +58,7 @@ namespace RPGLevelEditor.PropertyEditBox
             set => propertySlider.Minimum = value;
         }
 
-        public ConstrainedIntEdit(string labelText, string labelTooltip, PropertyInfo property, int initialValue,
+        public ConstrainedIntEdit(string labelText, string labelTooltip, PropertyInfo? property, int initialValue,
             Predicate<int> extraValidityCheck, int maxValue, int minValue)
         {
             ExtraValidityCheck = extraValidityCheck;

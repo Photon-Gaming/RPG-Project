@@ -23,7 +23,7 @@ namespace RPGLevelEditor.PropertyEditBox
             set => propertyName.ToolTip = value;
         }
 
-        public override PropertyInfo Property { get; init; }
+        public override PropertyInfo? Property { get; init; }
 
         public override Vector2 Value
         {
@@ -43,7 +43,7 @@ namespace RPGLevelEditor.PropertyEditBox
             && float.TryParse(propertyValueX.Text, out float y)
             && ExtraValidityCheck(new Vector2(x, y));
 
-        public Vector2Edit(string labelText, string labelTooltip, PropertyInfo property, Vector2 initialValue,
+        public Vector2Edit(string labelText, string labelTooltip, PropertyInfo? property, Vector2 initialValue,
             Predicate<Vector2> extraValidityCheck)
         {
             ExtraValidityCheck = extraValidityCheck;

@@ -66,7 +66,7 @@ namespace RPGGame
 
             if (currentWorld?.CurrentRoom is null)
             {
-                logger.LogError("No room loaded. Updates cannot be performed.");
+                logger.LogError("No room loaded. Updates cannot be performed");
                 return;
             }
 
@@ -79,13 +79,13 @@ namespace RPGGame
         {
             if (spriteBatch is null)
             {
-                logger.LogCritical("Sprite batch is undefined. Render aborted.");
+                logger.LogCritical("Sprite batch is undefined. Render aborted");
                 return;
             }
 
             if (currentWorld?.CurrentRoom is null)
             {
-                logger.LogError("No room loaded, nothing to render.");
+                logger.LogError("No room loaded, nothing to render");
                 GraphicsDevice.Clear(Color.Magenta);
                 return;
             }

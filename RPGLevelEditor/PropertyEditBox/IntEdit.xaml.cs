@@ -22,7 +22,7 @@ namespace RPGLevelEditor.PropertyEditBox
             set => propertyName.ToolTip = value;
         }
 
-        public override PropertyInfo Property { get; init; }
+        public override PropertyInfo? Property { get; init; }
 
         public override int Value
         {
@@ -36,7 +36,7 @@ namespace RPGLevelEditor.PropertyEditBox
 
         public override bool IsValueValid => int.TryParse(propertyValue.Text, out int value) && ExtraValidityCheck(value);
 
-        public IntEdit(string labelText, string labelTooltip, PropertyInfo property, int initialValue,
+        public IntEdit(string labelText, string labelTooltip, PropertyInfo? property, int initialValue,
             Predicate<int> extraValidityCheck)
         {
             ExtraValidityCheck = extraValidityCheck;

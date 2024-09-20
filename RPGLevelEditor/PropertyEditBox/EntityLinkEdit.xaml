@@ -9,7 +9,9 @@
                                  d:DesignHeight="50" d:DesignWidth="400" d:Background="#F0F0F0">
     <Grid>
         <TextBlock x:Name="propertyName" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10" d:Text="Property Name (PropertyName):"/>
-        <TextBox x:Name="propertyValue" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10" Width="100" TextChanged="propertyValue_TextChanged"/>
+        <ComboBox x:Name="propertyValue" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10" Width="100" TextBoxBase.TextChanged="propertyValue_TextChanged" IsEditable="True">
+            <ComboBoxItem Content="Player" ToolTip="Player"/>
+        </ComboBox>
         <Button Content="⌖" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,10,120,10" Width="20" Height="20" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="14" Click="SelectButton_Click"/>
     </Grid>
 </local:EntityLinkPropertyEditBox>

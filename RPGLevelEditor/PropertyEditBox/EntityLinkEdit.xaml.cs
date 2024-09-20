@@ -22,7 +22,7 @@ namespace RPGLevelEditor.PropertyEditBox
             set => propertyName.ToolTip = value;
         }
 
-        public override PropertyInfo Property { get; init; }
+        public override PropertyInfo? Property { get; init; }
 
         public override string Value
         {
@@ -35,21 +35,32 @@ namespace RPGLevelEditor.PropertyEditBox
         public override Predicate<string> ExtraValidityCheck { get; set; }
 
         public override bool IsValueValid =>
-            ContainingRoom.Entities.Any(e => e.Name.Equals(Value, StringComparison.OrdinalIgnoreCase))
+            (Value.Equals(RPGGame.GameObject.Entity.Player.PlayerEntityName, StringComparison.OrdinalIgnoreCase)
+                || ContainingRoom.Entities.Any(e => e.Name.Equals(Value, StringComparison.OrdinalIgnoreCase)))
             && ExtraValidityCheck(Value);
 
         public override RPGGame.GameObject.Room ContainingRoom { get; }
 
         public override event EventHandler<RoutedEventArgs>? EntitySelectButtonClick;
 
-        public EntityLinkEdit(string labelText, string labelTooltip, PropertyInfo property, string initialValue,
-            Predicate<string> extraValidityCheck, RPGGame.GameObject.Room containingRoom)
+        public EntityLinkEdit(string labelText, string labelTooltip, PropertyInfo? property, string initialValue,
+            Predicate<string> extraValidityCheck, RPGGame.GameObject.Room containingRoom,
+            IEnumerable<RPGGame.GameObject.Entity.Entity> entities)
         {
             ExtraValidityCheck = extraValidityCheck;
 
             ContainingRoom = containingRoom;
 
             InitializeComponent();
+
+            foreach (RPGGame.GameObject.Entity.Entity entity in entities)
+            {
+                propertyValue.Items.Add(new ComboBoxItem()
+                {
+                    Content = entity.Name,
+                    ToolTip = entity.GetType().Name
+                });
+            }
 
             LabelText = labelText;
             LabelTooltip = labelTooltip;
@@ -61,7 +72,7 @@ namespace RPGLevelEditor.PropertyEditBox
 
         private void ValidateName()
         {
-            propertyValue.Background = IsValueValid ? Brushes.White : Brushes.Salmon;
+            propertyValue.Foreground = IsValueValid ? Brushes.Black : Brushes.Red;
         }
 
         private void SelectButton_Click(object sender, RoutedEventArgs e)

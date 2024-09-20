@@ -144,7 +144,15 @@
                 </TabItem.Header>
                 <Grid x:Name="entityPropertiesGrid">
                     <ScrollViewer Margin="0,0,0,25" HorizontalScrollBarVisibility="Auto">
-                        <StackPanel x:Name="entityPropertiesPanel" Orientation="Vertical" MinWidth="290"/>
+                        <StackPanel Orientation="Vertical" MinWidth="290">
+                            <TextBlock Margin="10,5" Text="Properties:" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                            <StackPanel x:Name="entityPropertiesPanel" Orientation="Vertical"/>
+                            <Grid>
+                                <TextBlock Margin="10,5" Text="Event→Action Links:" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                <Button x:Name="addEventActionLinkButton" Margin="10,5" HorizontalAlignment="Right" VerticalAlignment="Center" Content="+" Width="20" Height="20" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="14" Click="addEventActionLinkButton_Click" IsEnabled="False"/>
+                            </Grid>
+                            <StackPanel x:Name="entityEventActionLinksPanel" Orientation="Vertical"/>
+                        </StackPanel>
                     </ScrollViewer>
                     <Button x:Name="entityApplyButton" VerticalAlignment="Bottom" Content="Apply" Padding="10,0" Height="20" Click="entityApplyButton_Click"/>
                 </Grid>

@@ -12,6 +12,11 @@ namespace RPGGame
         private string worldFolder => Path.Join(ContentFolderPath, "Worlds");
         private string roomFolder => Path.Join(ContentFolderPath, "Rooms");
 
+        public static readonly JsonSerializerSettings SerializerSettings = new()
+        {
+            TypeNameHandling = TypeNameHandling.Auto
+        };
+
         private static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("ContentLoader");
 
         public GameObject.World LoadWorld(string worldName)
@@ -29,7 +34,7 @@ namespace RPGGame
 
             try
             {
-                GameObject.World? world = JsonConvert.DeserializeObject<GameObject.World>(File.ReadAllText(worldFilePath));
+                GameObject.World? world = JsonConvert.DeserializeObject<GameObject.World>(File.ReadAllText(worldFilePath), SerializerSettings);
                 if (world is null)
                 {
                     throw new JsonException();
@@ -57,7 +62,7 @@ namespace RPGGame
 
             try
             {
-                GameObject.Room? room = JsonConvert.DeserializeObject<GameObject.Room>(File.ReadAllText(roomFilePath));
+                GameObject.Room? room = JsonConvert.DeserializeObject<GameObject.Room>(File.ReadAllText(roomFilePath), SerializerSettings);
                 if (room is null)
                 {
                     throw new JsonException();

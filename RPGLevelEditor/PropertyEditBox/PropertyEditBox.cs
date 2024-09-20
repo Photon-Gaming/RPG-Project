@@ -8,7 +8,7 @@ namespace RPGLevelEditor.PropertyEditBox
     {
         public abstract string LabelText { get; set; }
         public abstract string LabelTooltip { get; set; }
-        public abstract PropertyInfo Property { get; init; }
+        public abstract PropertyInfo? Property { get; init; }
         public abstract bool IsValueValid { get; }
         public abstract object? ObjectValue { get; }
     }

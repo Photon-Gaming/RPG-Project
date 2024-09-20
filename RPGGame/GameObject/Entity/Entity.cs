@@ -6,22 +6,22 @@ using Newtonsoft.Json;
 
 namespace RPGGame.GameObject.Entity
 {
-    public delegate void ActionMethod(Entity sender, Dictionary<string, object> parameters);
+    public delegate void ActionMethod(Entity sender, Dictionary<string, object?> parameters);
 
-    public readonly struct EventActionLink(string targetEntityName, string targetAction, Dictionary<string, object> parameters)
+    public readonly struct EventActionLink(string targetEntityName, string targetAction, Dictionary<string, object?> parameters)
     {
         public readonly string TargetEntityName = targetEntityName;
         public readonly string TargetAction = targetAction;
-        public readonly Dictionary<string, object> Parameters = new(parameters);
+        public readonly Dictionary<string, object?> Parameters = new(parameters);
     }
 
     [Serializable]
     [JsonObject(MemberSerialization.OptIn)]
-    [FiresEvent("OnInit", "Fired when the entity is loaded, before it runs its initialisation logic.")]
-    [FiresEvent("OnLoad", "Fired when the entity is loaded, after it runs its initialisation logic.")]
-    [FiresEvent("OnUnload", "Fired when the entity is loaded, before it runs its destroy logic.")]
-    [FiresEvent("OnDestroy", "Fired when the entity is loaded, after it runs its destroy logic.")]
-    [FiresEvent("OnMove", "Fired when the entity's position changes.")]
+    [FiresEvent("OnInit", "Fired when the entity is loaded, before it runs its initialisation logic")]
+    [FiresEvent("OnLoad", "Fired when the entity is loaded, after it runs its initialisation logic")]
+    [FiresEvent("OnUnload", "Fired when the entity is loaded, before it runs its destroy logic")]
+    [FiresEvent("OnDestroy", "Fired when the entity is loaded, after it runs its destroy logic")]
+    [FiresEvent("OnMove", "Fired when the entity's position changes")]
     public class Entity(string name, Vector2 position, Vector2 size, string? texture) : ICloneable
     {
         [JsonProperty]
@@ -29,19 +29,19 @@ namespace RPGGame.GameObject.Entity
         public string Name { get; protected set; } = name;
 
         [JsonProperty]
-        [EditorModifiable("Position", "The location of the entity within the room.", EditType.RoomCoordinate)]
+        [EditorModifiable("Position", "The location of the entity within the room", EditType.RoomCoordinate)]
         public Vector2 Position { get; protected set; } = position;
 
         [JsonProperty]
-        [EditorModifiable("Size", "The size of the entity relative to the tile grid.")]
+        [EditorModifiable("Size", "The size of the entity relative to the tile grid")]
         public Vector2 Size { get; protected set; } = size;
 
         [JsonProperty]
-        [EditorModifiable("Render Texture", "The optional name of the texture that the game will draw for this entity.", EditType.EntityTexture)]
+        [EditorModifiable("Render Texture", "The optional name of the texture that the game will draw for this entity", EditType.EntityTexture)]
         public string? Texture { get; protected set; } = texture;
 
         [JsonProperty]
-        [EditorModifiable("Enabled", "Whether or not this entity will be rendered and run its Tick function every frame.")]
+        [EditorModifiable("Enabled", "Whether or not this entity will be rendered and run its Tick function every frame")]
         public bool Enabled { get; private set; } = true;
 
         /// <summary>
@@ -56,7 +56,7 @@ namespace RPGGame.GameObject.Entity
         public Vector2 TopLeft => new(Position.X - (Size.X / 2), Position.Y - Size.Y);
         public Vector2 BottomRight => new(TopLeft.X + Size.X, TopLeft.Y + Size.Y);
 
-        private static Type[] actionMethodTypes = new[] { typeof(Entity), typeof(Dictionary<string, object>) };
+        private static Type[] actionMethodTypes = new[] { typeof(Entity), typeof(Dictionary<string, object?>) };
 
         private static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Entity");
 
@@ -182,20 +182,20 @@ namespace RPGGame.GameObject.Entity
         // Action Methods
 
         [ActionMethod("Enables the entity, starting its Tick method and making it visible if it has a texture assigned")]
-        private void Enable(Entity sender, Dictionary<string, object> parameters)
+        protected void Enable(Entity sender, Dictionary<string, object?> parameters)
         {
             Enable();
         }
 
         [ActionMethod("Disables the entity, stopping its Tick method and making it invisible")]
-        private void Disable(Entity sender, Dictionary<string, object> parameters)
+        protected void Disable(Entity sender, Dictionary<string, object?> parameters)
         {
             Disable();
         }
 
         [ActionMethod("Moves the entity to an absolute position in the current room. Class-specific movement logic applies")]
         [ActionMethodParameter("TargetPosition", "The absolute room coordinates to move the entity to", typeof(Vector2), EditType.RoomCoordinate)]
-        private void SetPosition(Entity sender, Dictionary<string, object> parameters)
+        protected void SetPosition(Entity sender, Dictionary<string, object?> parameters)
         {
             if (!parameters.TryGetValue("TargetPosition", out object? positionObj) || positionObj is not Vector2 position)
             {
@@ -209,7 +209,7 @@ namespace RPGGame.GameObject.Entity
 
         [ActionMethod("Moves the entity to a position in the current room relative to its current position. Class-specific movement logic applies")]
         [ActionMethodParameter("MovementVector", "The amount to change the X and Y coordinates by", typeof(Vector2))]
-        private void Move(Entity sender, Dictionary<string, object> parameters)
+        protected void Move(Entity sender, Dictionary<string, object?> parameters)
         {
             if (!parameters.TryGetValue("MovementVector", out object? positionObj) || positionObj is not Vector2 position)
             {
@@ -221,9 +221,9 @@ namespace RPGGame.GameObject.Entity
             Move(position, true);
         }
 
-        [ActionMethod("Sets the render texture of the entity.")]
+        [ActionMethod("Sets the render texture of the entity")]
         [ActionMethodParameter("TextureName", "The name of the new texture to use. Must be part of the built game content", typeof(string), EditType.EntityTexture)]
-        private void ChangeTexture(Entity sender, Dictionary<string, object> parameters)
+        protected void ChangeTexture(Entity sender, Dictionary<string, object?> parameters)
         {
             if (!parameters.TryGetValue("TextureName", out object? textureObj) || textureObj is not string texture)
             {
@@ -259,7 +259,7 @@ namespace RPGGame.GameObject.Entity
         }
 
         private Dictionary<string, ActionMethod> actionMethods = new();
-        protected ActionMethod? GetActionMethod(string methodName)
+        public ActionMethod? GetActionMethod(string methodName)
         {
             // Action methods are cached so non-performant reflection doesn't have to be used each time.
             if (actionMethods.TryGetValue(methodName, out ActionMethod? outMethod))
@@ -267,7 +267,7 @@ namespace RPGGame.GameObject.Entity
                 return outMethod;
             }
 
-            ActionMethod? actionMethod = (ActionMethod?)Delegate.CreateDelegate(GetType(), this, methodName, false, false);
+            ActionMethod? actionMethod = (ActionMethod?)Delegate.CreateDelegate(typeof(ActionMethod), this, methodName, false, false);
             if (actionMethod is null)
             {
                 logger.LogError("Action method with name \"{Name}\" could not be found on Entity \"{Entity}\" of type {Type}",
