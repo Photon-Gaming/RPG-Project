@@ -12,6 +12,8 @@ namespace RPGGame.GameObject.Entity
     {
         public readonly string TargetEntityName = targetEntityName;
         public readonly string TargetAction = targetAction;
+
+        [JsonConverter(typeof(JsonActionParametersConverter))]
         public readonly Dictionary<string, object?> Parameters = new(parameters);
     }
 

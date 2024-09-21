@@ -40,8 +40,8 @@ public bool Enabled { get; private set; } = true;
 
 | Edit Type | Compatible Data Types | Purpose and Effect |
 |-----------|-----------------------|--------------------|
-| `Default` | `float`, `int`, `string`, `bool`, `RPGGame.Vector2` | No special effect - value is edited directly |
-| `RoomCoordinate` | `RPGGame.Vector2` | Used for coordinates within the current room - editor will provide coordinate selection via the mouse and verify the coordinate is inside the room boundaries |
+| `Default` | `float`, `int`, `string`, `bool`, `Vector2` | No special effect - value is edited directly |
+| `RoomCoordinate` | `Vector2` | Used for coordinates within the current room - editor will provide coordinate selection via the mouse and verify the coordinate is inside the room boundaries |
 | `EntityTexture` | `string` | Used to assign the name of an entity texture resource - the editor will provide a pop-up window previewing all available textures |
 | `ConstrainedNumeric` | `float`, `int` | Constrains an integer or floating point value between a given minimum and maximum value - the editor will enforce these and provide a draggable slider to set the value. **Must be combined with the `EditorFloatConstraint` / `EditorIntConstraint` attributes to provide the minimum and maximum values** |
 | `EntityLink` | `string` | Used to assign the name of an entity within the current room - the editor will provide entity selection via the mouse and verify the name belongs to an existing entity |
