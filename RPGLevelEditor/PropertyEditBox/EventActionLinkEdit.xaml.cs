@@ -42,6 +42,7 @@ namespace RPGLevelEditor.PropertyEditBox
         public RoomEditor EditorWindow { get; }
 
         public event EventHandler<RoutedEventArgs>? EntitySelectButtonClick;
+        public event EventHandler<RoutedEventArgs>? LinkDeleteButtonClick;
 
         public EventActionLinkEdit(string initialEvent, string initialTarget, string initialAction,
             IEnumerable<FiresEventAttribute> events, IEnumerable<Entity> entities, Entity sourceEntity,
@@ -180,6 +181,11 @@ namespace RPGLevelEditor.PropertyEditBox
         {
             ValidateName();
             UpdateParameterEditBoxes();
+        }
+
+        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            LinkDeleteButtonClick?.Invoke(this, e);
         }
     }
 }

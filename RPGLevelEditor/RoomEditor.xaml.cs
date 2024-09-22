@@ -633,10 +633,16 @@ namespace RPGLevelEditor
 
             PropertyEditBox.EventActionLinkEdit editBox = new(eventName, link.TargetEntityName, link.TargetAction,
                 GetFiredEvents(selectedEntity).ToArray(), OpenRoom.Entities, selectedEntity, link.Parameters, this);
+            Separator separator = new();
             editBox.EntitySelectButtonClick += (_, _) => StartEntitySelection(
                 typeof(PropertyEditBox.EventActionLinkEdit).GetProperty("TargetEntity")!, editBox);
+            editBox.LinkDeleteButtonClick += (_, _) =>
+            {
+                entityEventActionLinksPanel.Children.Remove(editBox);
+                entityEventActionLinksPanel.Children.Remove(separator);
+            };
             _ = entityEventActionLinksPanel.Children.Add(editBox);
-            _ = entityEventActionLinksPanel.Children.Add(new Separator());
+            _ = entityEventActionLinksPanel.Children.Add(separator);
         }
 
         private void UpdateGridBackground()
