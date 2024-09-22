@@ -542,6 +542,59 @@ namespace RPGLevelEditor
             selectedEntityImage.Source = LoadEntityTexture(selectedEntity);
 
             selectedEntityImage.BringIntoView();
+
+            UpdateEntityNetworkLines();
+        }
+
+        private void UpdateEntityNetworkLines()
+        {
+            if (!showEntityNetworkItem.IsChecked || selectedEntity is null)
+            {
+                entityNetworkCanvas.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            entityNetworkCanvas.Visibility = Visibility.Visible;
+
+            entityNetworkCanvas.Children.Clear();
+
+            HashSet<Entity> visitedEntities = new();
+            Queue<Entity> networkRenderQueue = new();
+            networkRenderQueue.Enqueue(selectedEntity);
+
+            while (networkRenderQueue.TryDequeue(out Entity? sourceEntity))
+            {
+                if (!visitedEntities.Add(sourceEntity))
+                {
+                    continue;
+                }
+
+                // Aggregate combines all List dictionary values into a single enumerable
+                IEnumerable<EventActionLink> allLinks = sourceEntity.EventActionLinks
+                    .Aggregate(Enumerable.Empty<EventActionLink>(), (a, v) => a.Concat(v.Value));
+
+                foreach (EventActionLink link in allLinks)
+                {
+                    Entity? targetEntity = OpenRoom.Entities.FirstOrDefault(e =>
+                        e.Name.Equals(link.TargetEntityName, StringComparison.OrdinalIgnoreCase));
+                    if (targetEntity is null)
+                    {
+                        continue;
+                    }
+
+                    networkRenderQueue.Enqueue(targetEntity);
+
+                    entityNetworkCanvas.Children.Add(new System.Windows.Shapes.Line()
+                    {
+                        X1 = sourceEntity.Position.X * TileSize.X,
+                        Y1 = sourceEntity.Position.Y * TileSize.Y,
+                        X2 = targetEntity.Position.X * TileSize.X,
+                        Y2 = targetEntity.Position.Y * TileSize.Y,
+                        Stroke = Brushes.Magenta,
+                        StrokeThickness = 4
+                    });
+                }
+            }
         }
 
         private static IEnumerable<(PropertyInfo Property, EditorModifiableAttribute EditorAttribute)> GetEditableEntityProperties(Entity entity)
@@ -1415,6 +1468,10 @@ namespace RPGLevelEditor
                         DrawEntity(entity, false);
                     }
                     break;
+                case Key.W when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+                    showEntityNetworkItem.IsChecked = !showEntityNetworkItem.IsChecked;
+                    UpdateEntityNetworkLines();
+                    break;
                 // Entity edit shortcuts
                 case Key.Delete when e.KeyboardDevice.Modifiers == ModifierKeys.Shift:
                     if (selectedEntity is not null)
@@ -1514,6 +1571,11 @@ namespace RPGLevelEditor
         private void alwaysShowCollisionItem_OnClick(object sender, RoutedEventArgs e)
         {
             UpdateBitmapVisibility();
+        }
+
+        private void showEntityNetworkItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            UpdateEntityNetworkLines();
         }
 
         private void ProblemsItem_OnClick(object sender, RoutedEventArgs e)

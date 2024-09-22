@@ -85,6 +85,11 @@
                         <Image Source="pack://application:,,,/Resources/MenuIcons/wall.png"/>
                     </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem x:Name="showEntityNetworkItem" Header="Show Entity _Network" InputGestureText="Ctrl+W" IsCheckable="True" Click="showEntityNetworkItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/plug-connect.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
         </Menu>
         <ScrollViewer x:Name="tileMapScroll" Grid.Row="1" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" PreviewMouseWheel="tileMapScroll_PreviewMouseWheel" MouseMove="tileMapScroll_MouseMove">
@@ -112,6 +117,7 @@
                     <Rectangle x:Name="selectedEntityBorder" HorizontalAlignment="Left" VerticalAlignment="Top" Stroke="Blue" StrokeThickness="2"/>
                     <Ellipse x:Name="selectedEntityOrigin" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Red" Width="8" Height="8"/>
                 </Grid>
+                <Canvas x:Name="entityNetworkCanvas" IsHitTestVisible="False"/>
             </Grid>
         </ScrollViewer>
         <TabControl x:Name="toolPanel" Grid.Row="1" Grid.Column="1" SelectionChanged="toolPanel_SelectionChanged" Background="#FFE0E0E0">
