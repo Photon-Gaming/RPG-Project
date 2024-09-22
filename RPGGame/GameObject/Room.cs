@@ -24,13 +24,14 @@ namespace RPGGame.GameObject
 
         public void OnLoad(World world)
         {
+            LoadedNamedEntities = Entities.ToDictionary(e => e.Name, e => e, StringComparer.OrdinalIgnoreCase);
+
             foreach (Entity.Entity entity in Entities.Where(entity => entity.Enabled))
             {
                 logger.LogDebug("Loading Entity \"{Name}\"", entity.Name);
                 entity.Init();
             }
 
-            LoadedNamedEntities = Entities.ToDictionary(e => e.Name, e => e, StringComparer.OrdinalIgnoreCase);
             if (world.CurrentPlayer is not null)
             {
                 Entities.Add(world.CurrentPlayer);

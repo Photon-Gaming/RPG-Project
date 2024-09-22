@@ -241,6 +241,8 @@ namespace RPGGame.GameObject.Entity
 
         protected void FireEvent(string eventName)
         {
+            logger.LogTrace("Event \"{Event}\" fired by \"{Source}\"", eventName, Name);
+
             if (CurrentRoom is null
                 || !EventActionLinks.TryGetValue(eventName, out List<EventActionLink>? links))
             {
@@ -263,6 +265,8 @@ namespace RPGGame.GameObject.Entity
                     continue;
                 }
 
+                logger.LogTrace("Running action method on \"{Target}\" linked from \"{Source}\" for {Event}->{Action}",
+                    link.TargetEntityName, Name, eventName, link.TargetAction);
                 targetEntity.GetActionMethod(link.TargetAction)?.Invoke(this, link.Parameters);
             }
         }
