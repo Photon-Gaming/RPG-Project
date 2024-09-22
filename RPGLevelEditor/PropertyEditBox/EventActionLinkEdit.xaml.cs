@@ -143,12 +143,17 @@ namespace RPGLevelEditor.PropertyEditBox
             parameterEditStack.Children.Clear();
 
             if (!IsTargetActionValid || actionValue.SelectedItem is not ComboBoxItem
-                {
-                    Tag: ActionMethodParameterAttribute[] parameterAttributes
-                })
+                    { Tag: ActionMethodParameterAttribute[] parameterAttributes }
+                || parameterAttributes.Length == 0)
             {
+                parametersHeader.Visibility = Visibility.Collapsed;
+                parameterEditStack.Visibility = Visibility.Collapsed;
+
                 return;
             }
+
+            parametersHeader.Visibility = Visibility.Visible;
+            parameterEditStack.Visibility = Visibility.Visible;
 
             foreach (ActionMethodParameterAttribute parameter in parameterAttributes)
             {
