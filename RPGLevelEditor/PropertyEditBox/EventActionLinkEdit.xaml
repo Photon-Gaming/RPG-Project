@@ -15,18 +15,18 @@
         <StackPanel VerticalAlignment="Center" Grid.Column="0">
             <Grid>
                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10" Text="Event:"/>
-                <ComboBox x:Name="eventValue" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10" Width="100" IsEditable="True"/>
+                <ComboBox x:Name="eventValue" VerticalAlignment="Center" Margin="260,10,10,10" MinWidth="100" IsEditable="True"/>
             </Grid>
             <Grid>
                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10" Text="Target Entity:"/>
-                <ComboBox x:Name="targetEntityValue" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10" Width="100" TextBoxBase.TextChanged="targetEntityValue_TextChanged" IsEditable="True">
+                <ComboBox x:Name="targetEntityValue" VerticalAlignment="Center" Margin="260,10,10,10" MinWidth="100" TextBoxBase.TextChanged="targetEntityValue_TextChanged" IsEditable="True">
                     <ComboBoxItem Content="Player" ToolTip="Player"/>
                 </ComboBox>
-                <Button Content="⌖" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,10,120,10" Width="20" Height="20" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="14" Click="SelectButton_Click"/>
+                <Button Content="⌖" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="235,10,10,10" Width="20" Height="20" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="16" FontFamily="Arial" Click="SelectButton_Click"/>
             </Grid>
             <Grid>
                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10" Text="Action:"/>
-                <ComboBox x:Name="actionValue" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10" Width="100" IsEditable="True" TextBoxBase.TextChanged="actionValue_TextChanged"/>
+                <ComboBox x:Name="actionValue" VerticalAlignment="Center" Margin="260,10,10,10" MinWidth="100" IsEditable="True" TextBoxBase.TextChanged="actionValue_TextChanged"/>
             </Grid>
             <TextBlock x:Name="parametersHeader" Margin="10" Text="Parameters:" FontWeight="Bold" FontSize="14"/>
             <StackPanel x:Name="parameterEditStack" Margin="10" Background="#3F000000"/>

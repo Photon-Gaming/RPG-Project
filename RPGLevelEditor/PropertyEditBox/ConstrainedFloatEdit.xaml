@@ -6,10 +6,10 @@
                                          xmlns:local="clr-namespace:RPGLevelEditor.PropertyEditBox"
                                          xmlns:system="clr-namespace:System;assembly=System.Runtime"
                                          mc:Ignorable="d" 
-                                         d:DesignHeight="80" d:DesignWidth="400" d:Background="#F0F0F0">
+                                         d:DesignWidth="400" d:Background="#F0F0F0">
     <Grid>
         <TextBlock x:Name="propertyName" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,10,10,40" d:Text="Property Name (PropertyName):"/>
-        <TextBox x:Name="propertyValue" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,10,10,40" Width="100" TextChanged="propertyValue_TextChanged"/>
+        <TextBox x:Name="propertyValue" VerticalAlignment="Center" Margin="290,10,10,40" MinWidth="100" TextChanged="propertyValue_TextChanged"/>
         <Slider x:Name="propertySlider" VerticalAlignment="Center" Margin="10,40,10,10" ValueChanged="propertySlider_ValueChanged"/>
     </Grid>
 </local:ConstrainedNumericPropertyEditBox>

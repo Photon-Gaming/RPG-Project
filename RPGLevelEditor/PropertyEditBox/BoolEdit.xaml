@@ -6,7 +6,7 @@
                        xmlns:local="clr-namespace:RPGLevelEditor.PropertyEditBox"
                        xmlns:system="clr-namespace:System;assembly=System.Runtime"
                        mc:Ignorable="d" 
-                       d:DesignHeight="50" d:DesignWidth="400" d:Background="#F0F0F0">
+                       d:DesignWidth="400" d:Background="#F0F0F0">
     <Grid>
         <CheckBox x:Name="propertyValue" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10" d:Content="Property Name (PropertyName)"/>
     </Grid>
