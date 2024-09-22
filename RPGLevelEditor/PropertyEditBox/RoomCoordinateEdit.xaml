@@ -13,6 +13,8 @@
         <TextBox x:Name="propertyValueY" VerticalAlignment="Center" Margin="290,40,10,10" MinWidth="100" TextChanged="propertyValue_TextChanged"/>
         <Label Content="X:" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="270,10,10,40"/>
         <Label Content="Y:" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="270,40,10,10"/>
-        <Button Content="⌖" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="245,10,10,10" Width="20" Height="20" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="16" FontFamily="Arial" Click="SelectButton_Click"/>
+        <Button VerticalAlignment="Center" HorizontalAlignment="Left" Margin="245,10,10,10" Width="20" Height="20" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="16" FontFamily="Arial" Click="SelectButton_Click">
+            <Image Source="pack://application:,,,/Resources/MenuIcons/target--arrow.png" Stretch="None"/>
+        </Button>
     </Grid>
 </local:RoomCoordinatePropertyEditBox>

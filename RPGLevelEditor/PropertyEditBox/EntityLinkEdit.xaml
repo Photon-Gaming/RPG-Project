@@ -12,6 +12,8 @@
         <ComboBox x:Name="propertyValue" VerticalAlignment="Center" Margin="290,10,10,10" MinWidth="100" TextBoxBase.TextChanged="propertyValue_TextChanged" IsEditable="True">
             <ComboBoxItem Content="Player" ToolTip="Player"/>
         </ComboBox>
-        <Button Content="⌖" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="265,10,10,10" Width="20" Height="20" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="16" FontFamily="Arial" Click="SelectButton_Click"/>
+        <Button VerticalAlignment="Center" HorizontalAlignment="Left" Margin="265,10,10,10" Width="20" Height="20" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="16" FontFamily="Arial" Click="SelectButton_Click">
+            <Image Source="pack://application:,,,/Resources/MenuIcons/user--arrow.png" Stretch="None"/>
+        </Button>
     </Grid>
 </local:EntityLinkPropertyEditBox>

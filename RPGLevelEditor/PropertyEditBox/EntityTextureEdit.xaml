@@ -10,6 +10,8 @@
     <Grid>
         <TextBlock x:Name="propertyName" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10" d:Text="Property Name (PropertyName):"/>
         <TextBox x:Name="propertyValue" VerticalAlignment="Center" Margin="290,10,10,10" MinWidth="100"/>
-        <Button Content="..." VerticalAlignment="Center" HorizontalAlignment="Left" Margin="265,10,10,10" Width="20" Height="20" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="14" Click="SelectButton_Click"/>
+        <Button VerticalAlignment="Center" HorizontalAlignment="Left" Margin="265,10,10,10" Width="20" Height="20" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="14" Click="SelectButton_Click">
+            <Image Source="pack://application:,,,/Resources/MenuIcons/folder-open-image.png" Stretch="None"/>
+        </Button>
     </Grid>
 </local:EntityTexturePropertyEditBox>

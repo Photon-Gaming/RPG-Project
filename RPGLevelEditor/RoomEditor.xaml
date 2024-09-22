@@ -149,7 +149,9 @@
                             <StackPanel x:Name="entityPropertiesPanel" Orientation="Vertical"/>
                             <Grid>
                                 <TextBlock Margin="10,5" Text="Event→Action Links:" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                                <Button x:Name="addEventActionLinkButton" Margin="10,5" HorizontalAlignment="Right" VerticalAlignment="Center" Content="+" Width="20" Height="20" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="14" Click="addEventActionLinkButton_Click" IsEnabled="False"/>
+                                <Button x:Name="addEventActionLinkButton" Margin="10,5" HorizontalAlignment="Right" VerticalAlignment="Center" Width="20" Height="20" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="14" Click="addEventActionLinkButton_Click" IsEnabled="False">
+                                    <Image Source="pack://application:,,,/Resources/MenuIcons/chain--plus.png" Stretch="None"/>
+                                </Button>
                             </Grid>
                             <StackPanel x:Name="entityEventActionLinksPanel" Orientation="Vertical"/>
                         </StackPanel>
