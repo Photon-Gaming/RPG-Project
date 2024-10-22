@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
 namespace RPGGame.GameObject.Entity
@@ -60,6 +61,20 @@ namespace RPGGame.GameObject.Entity
             movementVector.Normalize();
 
             Move(movementVector * Speed * (float)gameTime.ElapsedGameTime.TotalSeconds, true);
+        }
+
+        // Action Methods
+
+        [ActionMethod("Enables player input, allowing the user to move the player")]
+        protected void EnableInput(Entity sender, Dictionary<string, object?> parameters)
+        {
+            InputEnabled = true;
+        }
+
+        [ActionMethod("Disables player input, stopping the user from moving the player")]
+        protected void DisableInput(Entity sender, Dictionary<string, object?> parameters)
+        {
+            InputEnabled = false;
         }
     };
 }
