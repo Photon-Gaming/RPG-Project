@@ -8,7 +8,7 @@ namespace RPGLevelEditor.PropertyEditBox
     {
         public abstract string LabelText { get; set; }
         public abstract string LabelTooltip { get; set; }
-        public abstract PropertyInfo Property { get; init; }
+        public abstract PropertyInfo? Property { get; init; }
         public abstract bool IsValueValid { get; }
         public abstract object? ObjectValue { get; }
     }
@@ -35,5 +35,12 @@ namespace RPGLevelEditor.PropertyEditBox
     public abstract class EntityTexturePropertyEditBox<T> : PropertyEditBox<T>
     {
         public abstract event EventHandler<RoutedEventArgs>? TextureSelectButtonClick;
+    }
+
+    public abstract class EntityLinkPropertyEditBox<T> : PropertyEditBox<T>
+    {
+        public abstract RPGGame.GameObject.Room ContainingRoom { get; }
+
+        public abstract event EventHandler<RoutedEventArgs>? EntitySelectButtonClick;
     }
 }

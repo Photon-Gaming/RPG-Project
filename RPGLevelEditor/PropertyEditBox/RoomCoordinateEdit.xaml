@@ -6,13 +6,15 @@
                                      xmlns:local="clr-namespace:RPGLevelEditor.PropertyEditBox"
                                      xmlns:xna="clr-namespace:Microsoft.Xna.Framework;assembly=MonoGame.Framework"
                                      mc:Ignorable="d" 
-                                     d:DesignHeight="80" d:DesignWidth="350" d:Background="#F0F0F0">
+                                     d:DesignWidth="400" d:Background="#F0F0F0">
     <Grid>
         <TextBlock x:Name="propertyName" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10" d:Text="Property Name (PropertyName):"/>
-        <TextBox x:Name="propertyValueX" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,10,10,40" Width="100" TextChanged="propertyValue_TextChanged"/>
-        <TextBox x:Name="propertyValueY" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,40,10,10" Width="100" TextChanged="propertyValue_TextChanged"/>
-        <Label Content="X:" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,10,115,40"/>
-        <Label Content="Y:" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,40,115,10"/>
-        <Button Content="⌖" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,10,140,10" Width="20" Height="20" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontWeight="Bold" FontSize="16" FontFamily="Arial" Click="SelectButton_Click"/>
+        <TextBox x:Name="propertyValueX" VerticalAlignment="Center" Margin="290,10,10,40" MinWidth="100" TextChanged="propertyValue_TextChanged"/>
+        <TextBox x:Name="propertyValueY" VerticalAlignment="Center" Margin="290,40,10,10" MinWidth="100" TextChanged="propertyValue_TextChanged"/>
+        <Label Content="X:" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="270,10,10,40"/>
+        <Label Content="Y:" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="270,40,10,10"/>
+        <Button VerticalAlignment="Center" HorizontalAlignment="Left" Margin="245,10,10,10" Width="20" Height="20" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="16" FontFamily="Arial" Click="SelectButton_Click">
+            <Image Source="pack://application:,,,/Resources/MenuIcons/target--arrow.png" Stretch="None"/>
+        </Button>
     </Grid>
 </local:RoomCoordinatePropertyEditBox>

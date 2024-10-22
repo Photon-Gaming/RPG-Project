@@ -1,0 +1,19 @@
+﻿<local:EntityLinkPropertyEditBox x:TypeArguments="system:String" x:Class="RPGLevelEditor.PropertyEditBox.EntityLinkEdit"
+                                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+                                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+                                 xmlns:local="clr-namespace:RPGLevelEditor.PropertyEditBox"
+                                 xmlns:system="clr-namespace:System;assembly=System.Runtime"
+                                 mc:Ignorable="d" 
+                                 d:DesignWidth="400" d:Background="#F0F0F0">
+    <Grid>
+        <TextBlock x:Name="propertyName" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10" d:Text="Property Name (PropertyName):"/>
+        <ComboBox x:Name="propertyValue" VerticalAlignment="Center" Margin="290,10,10,10" MinWidth="100" TextBoxBase.TextChanged="propertyValue_TextChanged" IsEditable="True">
+            <ComboBoxItem Content="Player" ToolTip="Player"/>
+        </ComboBox>
+        <Button VerticalAlignment="Center" HorizontalAlignment="Left" Margin="265,10,10,10" Width="20" Height="20" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="16" FontFamily="Arial" Click="SelectButton_Click">
+            <Image Source="pack://application:,,,/Resources/MenuIcons/user--arrow.png" Stretch="None"/>
+        </Button>
+    </Grid>
+</local:EntityLinkPropertyEditBox>

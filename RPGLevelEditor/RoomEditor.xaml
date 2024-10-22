@@ -85,6 +85,11 @@
                         <Image Source="pack://application:,,,/Resources/MenuIcons/wall.png"/>
                     </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem x:Name="showEntityNetworkItem" Header="Show Entity _Network" InputGestureText="Ctrl+W" IsCheckable="True" Click="showEntityNetworkItem_OnClick">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Resources/MenuIcons/plug-connect.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
         </Menu>
         <ScrollViewer x:Name="tileMapScroll" Grid.Row="1" Grid.Column="0" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" PreviewMouseWheel="tileMapScroll_PreviewMouseWheel" MouseMove="tileMapScroll_MouseMove">
@@ -112,6 +117,7 @@
                     <Rectangle x:Name="selectedEntityBorder" HorizontalAlignment="Left" VerticalAlignment="Top" Stroke="Blue" StrokeThickness="2"/>
                     <Ellipse x:Name="selectedEntityOrigin" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Red" Width="8" Height="8"/>
                 </Grid>
+                <Canvas x:Name="entityNetworkCanvas" IsHitTestVisible="False"/>
             </Grid>
         </ScrollViewer>
         <TabControl x:Name="toolPanel" Grid.Row="1" Grid.Column="1" SelectionChanged="toolPanel_SelectionChanged" Background="#FFE0E0E0">
@@ -144,7 +150,17 @@
                 </TabItem.Header>
                 <Grid x:Name="entityPropertiesGrid">
                     <ScrollViewer Margin="0,0,0,25" HorizontalScrollBarVisibility="Auto">
-                        <StackPanel x:Name="entityPropertiesPanel" Orientation="Vertical" MinWidth="290"/>
+                        <StackPanel Orientation="Vertical" MinWidth="290">
+                            <TextBlock Margin="10,5" Text="Properties:" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                            <StackPanel x:Name="entityPropertiesPanel" Orientation="Vertical"/>
+                            <Grid>
+                                <TextBlock Margin="10,5" Text="Event→Action Links:" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                <Button x:Name="addEventActionLinkButton" Margin="10,5" HorizontalAlignment="Right" VerticalAlignment="Center" Width="20" Height="20" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="14" Click="addEventActionLinkButton_Click" IsEnabled="False">
+                                    <Image Source="pack://application:,,,/Resources/MenuIcons/chain--plus.png" Stretch="None"/>
+                                </Button>
+                            </Grid>
+                            <StackPanel x:Name="entityEventActionLinksPanel" Orientation="Vertical"/>
+                        </StackPanel>
                     </ScrollViewer>
                     <Button x:Name="entityApplyButton" VerticalAlignment="Bottom" Content="Apply" Padding="10,0" Height="20" Click="entityApplyButton_Click"/>
                 </Grid>

@@ -19,7 +19,7 @@ namespace RPGLevelEditor.PropertyEditBox
             set => throw new InvalidOperationException();
         }
 
-        public override PropertyInfo Property { get; init; }
+        public override PropertyInfo? Property { get; init; }
 
         public override object Value
         {
@@ -37,7 +37,7 @@ namespace RPGLevelEditor.PropertyEditBox
 
         public override bool IsValueValid => false;
 
-        public ErrorEdit(PropertyInfo property, string errorText)
+        public ErrorEdit(PropertyInfo? property, string errorText)
         {
             InitializeComponent();
 

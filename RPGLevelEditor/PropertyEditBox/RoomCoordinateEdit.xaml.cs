@@ -24,7 +24,7 @@ namespace RPGLevelEditor.PropertyEditBox
             set => propertyName.ToolTip = value;
         }
 
-        public override PropertyInfo Property { get; init; }
+        public override PropertyInfo? Property { get; init; }
 
         public override Vector2 Value
         {
@@ -49,7 +49,7 @@ namespace RPGLevelEditor.PropertyEditBox
 
         public override event EventHandler<RoutedEventArgs>? CoordinateSelectButtonClick;
 
-        public RoomCoordinateEdit(string labelText, string labelTooltip, PropertyInfo property, Vector2 initialValue,
+        public RoomCoordinateEdit(string labelText, string labelTooltip, PropertyInfo? property, Vector2 initialValue,
             Predicate<Vector2> extraValidityCheck, RPGGame.GameObject.Room room)
         {
             ExtraValidityCheck = extraValidityCheck;

@@ -3,38 +3,38 @@
 namespace RPGLevelEditor.PropertyEditBox
 {
     /// <summary>
-    /// Interaction logic for StringEdit.xaml
+    /// Interaction logic for BoolEdit.xaml
     /// </summary>
-    public sealed partial class StringEdit : PropertyEditBox<string>
+    public sealed partial class BoolEdit : PropertyEditBox<bool>
     {
         public override string LabelText
         {
-            get => propertyName.Text;
-            set => propertyName.Text = value;
+            get => (string)propertyValue.Content;
+            set => propertyValue.Content = value;
         }
 
         public override string LabelTooltip
         {
-            get => (string)propertyName.ToolTip;
-            set => propertyName.ToolTip = value;
+            get => (string)propertyValue.ToolTip;
+            set => propertyValue.ToolTip = value;
         }
 
         public override PropertyInfo? Property { get; init; }
 
-        public override string Value
+        public override bool Value
         {
-            get => propertyValue.Text;
-            set => propertyValue.Text = value;
+            get => propertyValue.IsChecked ?? false;
+            set => propertyValue.IsChecked = value;
         }
 
         public override object ObjectValue => Value;
 
-        public override Predicate<string> ExtraValidityCheck { get; set; }
+        public override Predicate<bool> ExtraValidityCheck { get; set; }
 
         public override bool IsValueValid => ExtraValidityCheck(Value);
 
-        public StringEdit(string labelText, string labelTooltip, PropertyInfo? property, string initialValue,
-            Predicate<string> extraValidityCheck)
+        public BoolEdit(string labelText, string labelTooltip, PropertyInfo? property, bool initialValue,
+            Predicate<bool> extraValidityCheck)
         {
             ExtraValidityCheck = extraValidityCheck;
 

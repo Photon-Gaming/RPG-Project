@@ -157,7 +157,11 @@ namespace RPGLevelEditor
         private Point moveStartOffset = new();
 
         private bool selectingPosition = false;
-        private PropertyInfo? selectedPositionTarget = null;
+        private PropertyEditBox.RoomCoordinateEdit? selectedPositionTarget = null;
+
+        private bool selectingEntity = false;
+        private PropertyInfo? selectedEntityTarget = null;
+        private object? selectedEntityTargetObject = null;
 
         private Point? lastDrawnPoint = new();
         // When editing collision, whether or not moving the mouse removes or adds collision is based on the initially clicked tile
@@ -192,11 +196,7 @@ namespace RPGLevelEditor
             {
                 try
                 {
-                    RPGGame.GameObject.Room? deserialized = JsonConvert.DeserializeObject<RPGGame.GameObject.Room>(File.ReadAllText(RoomPath));
-                    if (deserialized is not null)
-                    {
-                        OpenRoom = deserialized;
-                    }
+                    OpenRoom = new RPGGame.RPGContentLoader("").LoadRoom(roomPath, true);
                 }
                 catch (Exception exc)
                 {
@@ -223,7 +223,7 @@ namespace RPGLevelEditor
         {
             try
             {
-                File.WriteAllText(RoomPath, JsonConvert.SerializeObject(OpenRoom, Formatting.Indented));
+                File.WriteAllText(RoomPath, JsonConvert.SerializeObject(OpenRoom, Formatting.Indented, RPGGame.RPGContentLoader.SerializerSettings));
                 UnsavedChanges = false;
             }
             catch (Exception exc)
@@ -490,7 +490,7 @@ namespace RPGLevelEditor
                 return;
             }
 
-            if (entity.IsOutOfBounds(OpenRoom))
+            if (entity.IsOutOfBounds())
             {
                 return;
             }
@@ -542,6 +542,59 @@ namespace RPGLevelEditor
             selectedEntityImage.Source = LoadEntityTexture(selectedEntity);
 
             selectedEntityImage.BringIntoView();
+
+            UpdateEntityNetworkLines();
+        }
+
+        private void UpdateEntityNetworkLines()
+        {
+            if (!showEntityNetworkItem.IsChecked || selectedEntity is null)
+            {
+                entityNetworkCanvas.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            entityNetworkCanvas.Visibility = Visibility.Visible;
+
+            entityNetworkCanvas.Children.Clear();
+
+            HashSet<Entity> visitedEntities = new();
+            Queue<Entity> networkRenderQueue = new();
+            networkRenderQueue.Enqueue(selectedEntity);
+
+            while (networkRenderQueue.TryDequeue(out Entity? sourceEntity))
+            {
+                if (!visitedEntities.Add(sourceEntity))
+                {
+                    continue;
+                }
+
+                // Aggregate combines all List dictionary values into a single enumerable
+                IEnumerable<EventActionLink> allLinks = sourceEntity.EventActionLinks
+                    .Aggregate(Enumerable.Empty<EventActionLink>(), (a, v) => a.Concat(v.Value));
+
+                foreach (EventActionLink link in allLinks)
+                {
+                    Entity? targetEntity = OpenRoom.Entities.FirstOrDefault(e =>
+                        e.Name.Equals(link.TargetEntityName, StringComparison.OrdinalIgnoreCase));
+                    if (targetEntity is null)
+                    {
+                        continue;
+                    }
+
+                    networkRenderQueue.Enqueue(targetEntity);
+
+                    entityNetworkCanvas.Children.Add(new System.Windows.Shapes.Line()
+                    {
+                        X1 = sourceEntity.Position.X * TileSize.X,
+                        Y1 = sourceEntity.Position.Y * TileSize.Y,
+                        X2 = targetEntity.Position.X * TileSize.X,
+                        Y2 = targetEntity.Position.Y * TileSize.Y,
+                        Stroke = Brushes.Magenta,
+                        StrokeThickness = 4
+                    });
+                }
+            }
         }
 
         private static IEnumerable<(PropertyInfo Property, EditorModifiableAttribute EditorAttribute)> GetEditableEntityProperties(Entity entity)
@@ -561,23 +614,88 @@ namespace RPGLevelEditor
             }
         }
 
+        private static IEnumerable<FiresEventAttribute> GetFiredEvents(Entity entity)
+        {
+            return entity.GetType().GetCustomAttributes(typeof(FiresEventAttribute)).Cast<FiresEventAttribute>();
+        }
+
+        /// <param name="entity">
+        /// The entity to get a list of action methods for,
+        /// or <see langword="null"/> to get a list of action methods for <see cref="Player"/>.
+        /// </param>
+        internal static IEnumerable<(string MethodName, ActionMethodAttribute ActionAttribute,
+            ActionMethodParameterAttribute[] ParameterAttributes)> GetEntityActionMethods(Entity? entity)
+        {
+            Type entityType = entity is null ? typeof(Player) : entity.GetType();
+            foreach (MethodInfo method in entityType.GetMethods(
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
+            {
+                List<ActionMethodAttribute> actionMethodAttributes = method
+                    .GetCustomAttributes(typeof(ActionMethodAttribute))
+                    .Cast<ActionMethodAttribute>().ToList();
+                if (actionMethodAttributes.Count == 0)
+                {
+                    // Only methods with the ActionMethod attribute should be shown
+                    continue;
+                }
+
+                List<ActionMethodParameterAttribute> parameterAttributes = method
+                    .GetCustomAttributes(typeof(ActionMethodParameterAttribute))
+                    .Cast<ActionMethodParameterAttribute>().ToList();
+
+                yield return (method.Name, actionMethodAttributes[0], parameterAttributes.ToArray());
+            }
+        }
+
         private void UpdateEntityPropertiesPanel()
         {
             entityPropertiesPanel.Children.Clear();
+            entityEventActionLinksPanel.Children.Clear();
 
             if (selectedEntity is null)
             {
                 entityApplyButton.IsEnabled = false;
+                addEventActionLinkButton.IsEnabled = false;
                 return;
             }
 
             entityApplyButton.IsEnabled = true;
+            addEventActionLinkButton.IsEnabled = true;
 
             foreach ((PropertyInfo property, EditorModifiableAttribute editorAttribute) in GetEditableEntityProperties(selectedEntity))
             {
                 _ = entityPropertiesPanel.Children.Add(CreatePropertyEditBox(property, editorAttribute, selectedEntity));
                 _ = entityPropertiesPanel.Children.Add(new Separator());
             }
+
+            foreach ((string eventName, List<EventActionLink> actionLinks) in selectedEntity.EventActionLinks)
+            {
+                foreach (EventActionLink link in actionLinks)
+                {
+                    CreateEventActionLinkEditBox(eventName, link);
+                }
+            }
+        }
+
+        private void CreateEventActionLinkEditBox(string eventName, EventActionLink link)
+        {
+            if (selectedEntity is null)
+            {
+                return;
+            }
+
+            PropertyEditBox.EventActionLinkEdit editBox = new(eventName, link.TargetEntityName, link.TargetAction,
+                GetFiredEvents(selectedEntity).ToArray(), OpenRoom.Entities, selectedEntity, link.Parameters, this);
+            Separator separator = new();
+            editBox.EntitySelectButtonClick += (_, _) => StartEntitySelection(
+                typeof(PropertyEditBox.EventActionLinkEdit).GetProperty("TargetEntity")!, editBox);
+            editBox.LinkDeleteButtonClick += (_, _) =>
+            {
+                entityEventActionLinksPanel.Children.Remove(editBox);
+                entityEventActionLinksPanel.Children.Remove(separator);
+            };
+            _ = entityEventActionLinksPanel.Children.Add(editBox);
+            _ = entityEventActionLinksPanel.Children.Add(separator);
         }
 
         private void UpdateGridBackground()
@@ -894,6 +1012,19 @@ namespace RPGLevelEditor
 
         private void SelectEntity(Entity? entity)
         {
+            if (selectingEntity && selectedEntity is not null && entity is not null
+                && selectedEntityTarget is not null && selectedEntityTargetObject is not null)
+            {
+                selectingEntity = false;
+                tileGridDisplay.Cursor = null;
+
+                selectedEntityTarget.SetValue(selectedEntityTargetObject, entity.Name);
+
+                selectedEntityTarget = null;
+                selectedEntityTargetObject = null;
+                return;
+            }
+
             if (ReferenceEquals(entity, selectedEntity))
             {
                 // Entity is already selected
@@ -904,6 +1035,9 @@ namespace RPGLevelEditor
 
             selectingPosition = false;
             selectedPositionTarget = null;
+            selectingEntity = false;
+            selectedEntityTarget = null;
+            selectedEntityTargetObject = null;
             tileGridDisplay.Cursor = null;
 
             if (selectedEntity is not null)
@@ -934,11 +1068,12 @@ namespace RPGLevelEditor
         private void CreateEntityAtPosition(float x, float y, bool pushToUndoStack)
         {
             Entity newEntity = new(
+                $"Entity_{Guid.NewGuid()}",
                 new Microsoft.Xna.Framework.Vector2(x, y),
                 Microsoft.Xna.Framework.Vector2.One,
                 null);
 
-            if (newEntity.IsOutOfBounds(OpenRoom) || OpenRoom.Entities.Any(e => e.Collides(newEntity)))
+            if (newEntity.IsOutOfBounds() || OpenRoom.Entities.Any(e => e.Collides(newEntity)))
             {
                 return;
             }
@@ -986,12 +1121,14 @@ namespace RPGLevelEditor
                 newPos.Y = MathF.Round(newPos.Y / CurrentGridInterval) * CurrentGridInterval;
             }
 
-            _ = selectedEntity.Move(newPos, false);
-            if (selectedEntity.IsOutOfBounds(OpenRoom) || OpenRoom.Entities.Any(ent => ent.Collides(selectedEntity)))
+            if (selectedEntity.Move(newPos, false))
             {
-                _ = selectedEntity.Move(oldPos, false);
+                if (OpenRoom.Entities.Any(ent => ent.Collides(selectedEntity)))
+                {
+                    _ = selectedEntity.Move(oldPos, false);
+                }
+                UpdateSelectedEntity(false);
             }
-            UpdateSelectedEntity(false);
         }
 
         private void ShowProblems()
@@ -1014,26 +1151,41 @@ namespace RPGLevelEditor
             // Missing entity textures
             foreach (Entity entity in OpenRoom.Entities.Where(e => ReferenceEquals(LoadEntityTexture(e), placeholderImage)))
             {
-                // TODO: Reference entity by name also, if present
                 _ = problems.AppendLine(
-                    $"Entity of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) " +
+                    $"Entity \"{entity.Name}\" of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) " +
                     $"uses texture \"{entity.Texture}\", which doesn't exist.");
             }
 
             // Out of bounds entities
-            foreach (Entity entity in OpenRoom.Entities.Where(e => e.IsOutOfBounds(OpenRoom)))
+            foreach (Entity entity in OpenRoom.Entities.Where(e => e.IsOutOfBounds()))
             {
-                // TODO: Reference entity by name also, if present
                 _ = problems.AppendLine(
-                    $"Entity of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) is out of bounds.");
+                    $"Entity \"{entity.Name}\" of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) is out of bounds.");
             }
 
             // Overlapping entities
             foreach (Entity entity in OpenRoom.Entities.Where(e => OpenRoom.Entities.Any(o => o.Collides(e))))
             {
-                // TODO: Reference entity by name also, if present
                 _ = problems.AppendLine(
-                    $"Entity of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) collides with another entity.");
+                    $"Entity \"{entity.Name}\" of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) collides with another entity.");
+            }
+
+            // Duplicate names
+            HashSet<string> seenNames = new(StringComparer.OrdinalIgnoreCase);
+            foreach (Entity entity in OpenRoom.Entities)
+            {
+                if (!seenNames.Add(entity.Name))
+                {
+                    _ = problems.AppendLine(
+                        $"Entity \"{entity.Name}\" of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) uses the same name as another entity.");
+                }
+            }
+
+            // Use of reserved name
+            foreach (Entity entity in OpenRoom.Entities.Where(e => e.Name.Equals(Player.PlayerEntityName, StringComparison.OrdinalIgnoreCase)))
+            {
+                _ = problems.AppendLine(
+                    $"Entity \"{entity.Name}\" of type \"{entity.GetType().Name}\" at ({entity.Position.X}, {entity.Position.Y}) uses a reserved entity name.");
             }
 
             if (problems.Length == 0)
@@ -1045,11 +1197,19 @@ namespace RPGLevelEditor
                 "pack://application:,,,/Resources/MenuIcons/script--exclamation.png").Show();
         }
 
-        private void StartPositionSelection(PropertyInfo targetProperty)
+        private void StartPositionSelection(PropertyEditBox.RoomCoordinateEdit targetProperty)
         {
             tileGridDisplay.Cursor = Cursors.Cross;
             selectingPosition = true;
             selectedPositionTarget = targetProperty;
+        }
+
+        private void StartEntitySelection(PropertyInfo targetProperty, object targetObject)
+        {
+            tileGridDisplay.Cursor = Cursors.ScrollNW;
+            selectingEntity = true;
+            selectedEntityTarget = targetProperty;
+            selectedEntityTargetObject = targetObject;
         }
 
         private void TextureSelect_MouseUp(object sender, MouseButtonEventArgs e)
@@ -1094,14 +1254,10 @@ namespace RPGLevelEditor
                     selectingPosition = false;
                     tileGridDisplay.Cursor = null;
 
-                    PushEntityPropertyEditUndoStack(selectedEntity);
-
-                    selectedPositionTarget.SetValue(selectedEntity,
-                        new Microsoft.Xna.Framework.Vector2((float)relativeMousePos.X, (float)relativeMousePos.Y));
+                    selectedPositionTarget.Value =
+                        new Microsoft.Xna.Framework.Vector2((float)relativeMousePos.X, (float)relativeMousePos.Y);
 
                     selectedPositionTarget = null;
-
-                    UpdateSelectedEntity();
                     return;
                 }
 
@@ -1312,6 +1468,10 @@ namespace RPGLevelEditor
                         DrawEntity(entity, false);
                     }
                     break;
+                case Key.W when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+                    showEntityNetworkItem.IsChecked = !showEntityNetworkItem.IsChecked;
+                    UpdateEntityNetworkLines();
+                    break;
                 // Entity edit shortcuts
                 case Key.Delete when e.KeyboardDevice.Modifiers == ModifierKeys.Shift:
                     if (selectedEntity is not null)
@@ -1355,6 +1515,14 @@ namespace RPGLevelEditor
                 return;
             }
 
+            if (selectingEntity)
+            {
+                // We're current selecting an entity for an entity name link property.
+                // Instead of moving, use the entity's name for the property.
+                SelectEntity(selectedEntity);
+                return;
+            }
+
             PushEntityMoveUndoStack(selectedEntity);
 
             movingEntity = true;
@@ -1365,8 +1533,11 @@ namespace RPGLevelEditor
 
         private void selectedEntityContainer_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            movingEntity = false;
-            UpdateEntityPropertiesPanel();
+            if (movingEntity)
+            {
+                movingEntity = false;
+                UpdateEntityPropertiesPanel();
+            }
         }
 
         private void selectedEntityContainer_MouseMove(object sender, MouseEventArgs e)
@@ -1376,8 +1547,11 @@ namespace RPGLevelEditor
 
         private void tileGridDisplay_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            movingEntity = false;
-            UpdateEntityPropertiesPanel();
+            if (movingEntity)
+            {
+                movingEntity = false;
+                UpdateEntityPropertiesPanel();
+            }
         }
 
         private void hideInvisibleEntitiesItem_OnClick(object sender, RoutedEventArgs e)
@@ -1399,6 +1573,11 @@ namespace RPGLevelEditor
             UpdateBitmapVisibility();
         }
 
+        private void showEntityNetworkItem_OnClick(object sender, RoutedEventArgs e)
+        {
+            UpdateEntityNetworkLines();
+        }
+
         private void ProblemsItem_OnClick(object sender, RoutedEventArgs e)
         {
             ShowProblems();
@@ -1416,14 +1595,35 @@ namespace RPGLevelEditor
             foreach (PropertyEditBox.PropertyEditBox editBox in
                 entityPropertiesPanel.Children.OfType<PropertyEditBox.PropertyEditBox>())
             {
-                if (!editBox.IsValueValid)
+                if (!editBox.IsValueValid || editBox.Property is null)
                 {
                     continue;
                 }
                 editBox.Property.SetValue(selectedEntity, editBox.ObjectValue);
             }
 
+            // Clear existing links as they'll all be recreated when iterating edit boxes
+            selectedEntity.EventActionLinks.Clear();
+
+            foreach (PropertyEditBox.EventActionLinkEdit editBox in
+                entityEventActionLinksPanel.Children.OfType<PropertyEditBox.EventActionLinkEdit>())
+            {
+                if (!editBox.IsValueValid)
+                {
+                    continue;
+                }
+                // Make sure a list exists to insert new link into - events may not necessarily have one by default
+                selectedEntity.EventActionLinks.TryAdd(editBox.TargetEvent, new List<EventActionLink>());
+                selectedEntity.EventActionLinks[editBox.TargetEvent].Add(
+                    new EventActionLink(editBox.TargetEntity, editBox.TargetAction, editBox.GetActionParameters()));
+            }
+
             UpdateSelectedEntity();
+        }
+
+        private void addEventActionLinkButton_Click(object sender, RoutedEventArgs e)
+        {
+            CreateEventActionLinkEditBox("", new EventActionLink("", "", new Dictionary<string, object?>()));
         }
     }
 }

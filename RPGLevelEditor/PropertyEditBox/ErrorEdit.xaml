@@ -6,7 +6,7 @@
                        xmlns:local="clr-namespace:RPGLevelEditor.PropertyEditBox"
                        xmlns:system="clr-namespace:System;assembly=System.Runtime"
                        mc:Ignorable="d" 
-                       d:DesignHeight="60" d:DesignWidth="400" Background="#33FF0000">
+                       d:DesignWidth="400" Background="#33FF0000">
     <Border BorderBrush="Red" BorderThickness="3">
         <TextBlock x:Name="errorLabel" Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Text="Error! Hover for details."/>
     </Border>
