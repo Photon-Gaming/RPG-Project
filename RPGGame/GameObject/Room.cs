@@ -34,6 +34,7 @@ namespace RPGGame.GameObject
 
             if (world.CurrentPlayer is not null)
             {
+                world.CurrentPlayer.CurrentRoom = this;
                 Entities.Add(world.CurrentPlayer);
                 LoadedNamedEntities[Entity.Player.PlayerEntityName] = world.CurrentPlayer;
             }
