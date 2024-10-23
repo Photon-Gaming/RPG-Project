@@ -136,6 +136,11 @@ namespace RPGGame.GameObject.Entity
                 targetSize += Size;
             }
 
+            if (targetSize.X <= 0 || targetSize.Y <= 0)
+            {
+                return false;
+            }
+
             Vector2 originalSize = Size;
             Size = targetSize;
             if (IsOutOfBounds())

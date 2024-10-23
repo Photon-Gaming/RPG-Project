@@ -31,6 +31,21 @@ namespace RPGLevelEditor
             Side
         }
 
+        private enum ResizeEdge
+        {
+            None = 0,
+
+            Top = 0b1,
+            Right = 0b10,
+            Bottom = 0b100,
+            Left = 0b1000,
+
+            TopRight = Top | Right,
+            BottomRight = Bottom | Right,
+            BottomLeft = Bottom | Left,
+            TopLeft = Top | Left
+        }
+
         public const string TileTextureFolderName = "Tiles";
         public const string AutoTileTextureFolderName = "AutoTiled";
         public const string EntityTextureFolderName = "Entities";
@@ -153,8 +168,12 @@ namespace RPGLevelEditor
         private ToolType currentToolType = ToolType.Tile;
 
         private Entity? selectedEntity = null;
+
         private bool movingEntity = false;
-        private Point moveStartOffset = new();
+        private ResizeEdge resizingEntityEdge = ResizeEdge.None;
+        private Point dragStartOffset = new();
+        private Microsoft.Xna.Framework.Vector2 dragStartPosition = new();
+        private Microsoft.Xna.Framework.Vector2 dragStartSize = new();
 
         private bool selectingPosition = false;
         private PropertyEditBox.RoomCoordinateEdit? selectedPositionTarget = null;
@@ -861,6 +880,11 @@ namespace RPGLevelEditor
             PushUndoStack(new EntityMoveStackFrame(this, entity, entity.Position.X, entity.Position.Y));
         }
 
+        private void PushEntityResizeUndoStack(Entity entity)
+        {
+            PushUndoStack(new EntityResizeStackFrame(this, entity, entity.Position.X, entity.Position.Y, entity.Size.X, entity.Size.Y));
+        }
+
         private void PushEntityCreateUndoStack(float x, float y)
         {
             PushUndoStack(new EntityCreateStackFrame(this, x, y));
@@ -1109,7 +1133,7 @@ namespace RPGLevelEditor
             }
 
             Point relativeMousePos = Mouse.GetPosition(tileGridDisplay);
-            relativeMousePos = new Point((relativeMousePos.X - moveStartOffset.X) / TileSize.X, (relativeMousePos.Y - moveStartOffset.Y) / TileSize.Y);
+            relativeMousePos = new Point((relativeMousePos.X - dragStartOffset.X) / TileSize.X, (relativeMousePos.Y - dragStartOffset.Y) / TileSize.Y);
 
             Microsoft.Xna.Framework.Vector2 oldPos = selectedEntity.Position;
 
@@ -1126,6 +1150,148 @@ namespace RPGLevelEditor
                 if (OpenRoom.Entities.Any(ent => ent.Collides(selectedEntity)))
                 {
                     _ = selectedEntity.Move(oldPos, false);
+                }
+                UpdateSelectedEntity(false);
+            }
+        }
+
+        private void ProcessEntityResize()
+        {
+            if (resizingEntityEdge == ResizeEdge.None)
+            {
+                return;
+            }
+
+            if (selectedEntity is null)
+            {
+                resizingEntityEdge = ResizeEdge.None;
+                return;
+            }
+
+            Point mousePos = Mouse.GetPosition(tileGridDisplay);
+            mousePos.X /= TileSize.X;
+            mousePos.Y /= TileSize.Y;
+
+            Microsoft.Xna.Framework.Vector2 oldSize = selectedEntity.Size;
+            Microsoft.Xna.Framework.Vector2 oldPos = selectedEntity.Position;
+            float originalRatio = oldSize.X / oldSize.Y;
+
+
+            Microsoft.Xna.Framework.Vector2 newSize = oldSize;
+            Microsoft.Xna.Framework.Vector2 newPos = oldPos;
+
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
+            {
+                // Keep position constant
+                if (resizingEntityEdge.HasFlag(ResizeEdge.Left))
+                {
+                    newSize.X = (float)Math.Abs(dragStartSize.X + ((dragStartOffset.X - mousePos.X) * 2));
+                }
+                if (resizingEntityEdge.HasFlag(ResizeEdge.Right))
+                {
+                    newSize.X = (float)Math.Abs(dragStartSize.X + ((mousePos.X - dragStartOffset.X) * 2));
+                }
+            }
+            if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
+            {
+                // Adjust position to move only selected edge
+                // (new position is calculated later after potential modifications to final size have been made)
+                if (resizingEntityEdge.HasFlag(ResizeEdge.Left))
+                {
+                    newSize.X = (float)Math.Abs(dragStartSize.X + dragStartOffset.X - mousePos.X);
+                }
+                if (resizingEntityEdge.HasFlag(ResizeEdge.Right))
+                {
+                    newSize.X = (float)Math.Abs(dragStartSize.X + mousePos.X - dragStartOffset.X);
+                }
+            }
+
+            // Modifying height should not be affected by alt key.
+            // Resizing from top edge will never change position
+            // and resizing from bottom edge is impossible without changing position
+            // due to entity origin being in the bottom center.
+            if (resizingEntityEdge.HasFlag(ResizeEdge.Bottom))
+            {
+                newSize.Y = (float)Math.Abs(dragStartSize.Y + mousePos.Y - dragStartOffset.Y);
+            }
+            if (resizingEntityEdge.HasFlag(ResizeEdge.Top))
+            {
+                newSize.Y = (float)Math.Abs(dragStartSize.Y + dragStartOffset.Y - mousePos.Y);
+            }
+
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+            {
+                // Snap to nearest grid intersection based on current grid size
+                if (resizingEntityEdge.HasFlag(ResizeEdge.Left) || resizingEntityEdge.HasFlag(ResizeEdge.Right))
+                {
+                    newSize.X = MathF.Round(newSize.X / CurrentGridInterval) * CurrentGridInterval;
+                }
+                if (resizingEntityEdge.HasFlag(ResizeEdge.Top) || resizingEntityEdge.HasFlag(ResizeEdge.Bottom))
+                {
+                    newSize.Y = MathF.Round(newSize.Y / CurrentGridInterval) * CurrentGridInterval;
+                }
+            }
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+            {
+                // Maintain original aspect ratio
+                if ((resizingEntityEdge.HasFlag(ResizeEdge.Top) || resizingEntityEdge.HasFlag(ResizeEdge.Bottom))
+                    && (resizingEntityEdge.HasFlag(ResizeEdge.Left) || resizingEntityEdge.HasFlag(ResizeEdge.Right)))
+                {
+                    float newX = newSize.Y * originalRatio;
+                    float newY = newSize.X / originalRatio;
+
+                    // Adjust whichever dimension would cause the smallest change
+                    if (Math.Abs(newSize.X - newX) < Math.Abs(newSize.Y - newY))
+                    {
+                        newSize.X = newX;
+                    }
+                    else
+                    {
+                        newSize.Y = newY;
+                    }
+                }
+                else if (resizingEntityEdge.HasFlag(ResizeEdge.Top) || resizingEntityEdge.HasFlag(ResizeEdge.Bottom))
+                {
+                    newSize.X = newSize.Y * originalRatio;
+                }
+                else if (resizingEntityEdge.HasFlag(ResizeEdge.Left) || resizingEntityEdge.HasFlag(ResizeEdge.Right))
+                {
+                    newSize.Y = newSize.X / originalRatio;
+                }
+            }
+
+            // Calculate new position now that grid snap/aspect ratio restrictions have been applied
+            if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
+            {
+                if (resizingEntityEdge.HasFlag(ResizeEdge.Left))
+                {
+                    newPos.X = dragStartPosition.X - ((newSize.X - dragStartSize.X) / 2);
+                }
+                if (resizingEntityEdge.HasFlag(ResizeEdge.Right))
+                {
+                    newPos.X = dragStartPosition.X + ((newSize.X - dragStartSize.X) / 2);
+                }
+            }
+            if (resizingEntityEdge.HasFlag(ResizeEdge.Bottom))
+            {
+                newPos.Y = dragStartPosition.Y + (newSize.Y - dragStartSize.Y);
+            }
+
+            if (selectedEntity.Resize(newSize, false))
+            {
+                // If any part of the resize/move fails, return both values to what they were previously
+                // to effectively cancel the operation
+                if (selectedEntity.Move(newPos, false))
+                {
+                    if (OpenRoom.Entities.Any(ent => ent.Collides(selectedEntity)))
+                    {
+                        _ = selectedEntity.Move(oldPos, false);
+                        _ = selectedEntity.Resize(oldSize, false);
+                    }
+                }
+                else
+                {
+                    _ = selectedEntity.Resize(oldSize, false);
                 }
                 UpdateSelectedEntity(false);
             }
@@ -1322,6 +1488,24 @@ namespace RPGLevelEditor
                 lastDrawnPoint = relativeMousePos;
             }
 
+            // Entity resizing/movement from canvas dragging
+            if (selectedEntity is null)
+            {
+                return;
+            }
+
+            ResizeEdge edge = resizingEntityEdge != ResizeEdge.None
+                ? resizingEntityEdge
+                : GetResizeEdge(selectedEntity.Size, Mouse.GetPosition(selectedEntityBorder), selectedEntityBorder.StrokeThickness * 2);
+
+            Cursor? resizeCursor = GetResizeCursor(edge);
+            // Only display resize cursor outside border if entity is actually being resized
+            tileGridDisplay.Cursor = resizingEntityEdge != ResizeEdge.None ? resizeCursor : null;
+            selectedEntityImage.Cursor = resizingEntityEdge != ResizeEdge.None ? resizeCursor : Cursors.SizeAll;
+            selectedEntityBorder.Cursor = resizeCursor;
+
+            ProcessEntityResize();
+
             ProcessEntityMove();
         }
 
@@ -1508,7 +1692,7 @@ namespace RPGLevelEditor
             UpdateBitmapVisibility();
         }
 
-        private void selectedEntityContainer_MouseDown(object sender, MouseButtonEventArgs e)
+        private void selectedEntityImage_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (selectedEntity is null)
             {
@@ -1526,23 +1710,35 @@ namespace RPGLevelEditor
             PushEntityMoveUndoStack(selectedEntity);
 
             movingEntity = true;
-            moveStartOffset = Mouse.GetPosition(selectedEntityOrigin);
-            moveStartOffset.X -= selectedEntityOrigin.Width / 2;
-            moveStartOffset.Y -= selectedEntityOrigin.Width / 2;
+            dragStartOffset = Mouse.GetPosition(selectedEntityOrigin);
+            // Measure distance from the center of the origin point
+            dragStartOffset.X -= selectedEntityOrigin.Width / 2;
+            dragStartOffset.Y -= selectedEntityOrigin.Height / 2;
         }
 
-        private void selectedEntityContainer_MouseUp(object sender, MouseButtonEventArgs e)
+        private void selectedEntityBorder_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (movingEntity)
+            if (selectedEntity is null)
             {
-                movingEntity = false;
-                UpdateEntityPropertiesPanel();
+                return;
             }
-        }
 
-        private void selectedEntityContainer_MouseMove(object sender, MouseEventArgs e)
-        {
-            ProcessEntityMove();
+            if (selectingEntity)
+            {
+                // We're current selecting an entity for an entity name link property.
+                // Instead of resizing, use the entity's name for the property.
+                SelectEntity(selectedEntity);
+                return;
+            }
+
+            PushEntityResizeUndoStack(selectedEntity);
+
+            resizingEntityEdge = GetResizeEdge(selectedEntity.Size, Mouse.GetPosition(selectedEntityBorder), selectedEntityBorder.StrokeThickness * 2);
+            dragStartOffset = Mouse.GetPosition(tileGridDisplay);
+            dragStartOffset.X /= TileSize.X;
+            dragStartOffset.Y /= TileSize.Y;
+            dragStartPosition = selectedEntity.Position;
+            dragStartSize = selectedEntity.Size;
         }
 
         private void tileGridDisplay_MouseUp(object sender, MouseButtonEventArgs e)
@@ -1550,6 +1746,12 @@ namespace RPGLevelEditor
             if (movingEntity)
             {
                 movingEntity = false;
+                UpdateEntityPropertiesPanel();
+            }
+
+            if (resizingEntityEdge != ResizeEdge.None)
+            {
+                resizingEntityEdge = ResizeEdge.None;
                 UpdateEntityPropertiesPanel();
             }
         }
@@ -1624,6 +1826,70 @@ namespace RPGLevelEditor
         private void addEventActionLinkButton_Click(object sender, RoutedEventArgs e)
         {
             CreateEventActionLinkEditBox("", new EventActionLink("", "", new Dictionary<string, object?>()));
+        }
+
+        private static ResizeEdge GetResizeEdge(Microsoft.Xna.Framework.Vector2 entitySize, Point cursorOffset, double edgeTolerance)
+        {
+            double xLeftOffset = Math.Abs(cursorOffset.X);
+            double xRightOffset = Math.Abs(cursorOffset.X - (entitySize.X * TileSize.X));
+            double yTopOffset = Math.Abs(cursorOffset.Y);
+            double yBottomOffset = Math.Abs(cursorOffset.Y - (entitySize.Y * TileSize.Y));
+
+            if (xLeftOffset <= edgeTolerance)
+            {
+                if (yTopOffset <= edgeTolerance)
+                {
+                    return ResizeEdge.TopLeft;
+                }
+                if (yBottomOffset <= edgeTolerance)
+                {
+                    return ResizeEdge.BottomLeft;
+                }
+                return ResizeEdge.Left;
+            }
+            if (xRightOffset <= edgeTolerance)
+            {
+                if (yTopOffset <= edgeTolerance)
+                {
+                    return ResizeEdge.TopRight;
+                }
+                if (yBottomOffset <= edgeTolerance)
+                {
+                    return ResizeEdge.BottomRight;
+                }
+                return ResizeEdge.Right;
+            }
+            if (yTopOffset <= edgeTolerance)
+            {
+                return ResizeEdge.Top;
+            }
+            if (yBottomOffset <= edgeTolerance)
+            {
+                return ResizeEdge.Bottom;
+            }
+
+            return ResizeEdge.None;
+        }
+
+        private static Cursor? GetResizeCursor(ResizeEdge edge)
+        {
+            return edge switch
+            {
+                ResizeEdge.Top or ResizeEdge.Bottom => Cursors.SizeNS,
+                ResizeEdge.Left or ResizeEdge.Right => Cursors.SizeWE,
+                ResizeEdge.TopLeft or ResizeEdge.BottomRight => Cursors.SizeNWSE,
+                ResizeEdge.TopRight or ResizeEdge.BottomLeft => Cursors.SizeNESW,
+                _ => null
+            };
+        }
+
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key is Key.LeftAlt or Key.RightAlt or Key.System)
+            {
+                // Alt key is used as modifier in many operations - disable the default Alt key shortcuts
+                e.Handled = true;
+            }
         }
     }
 }
