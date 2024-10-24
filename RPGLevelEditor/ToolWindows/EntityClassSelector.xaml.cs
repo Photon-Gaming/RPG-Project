@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using RPGGame.GameObject.Entity;
 
 namespace RPGLevelEditor.ToolWindows
@@ -44,7 +43,7 @@ namespace RPGLevelEditor.ToolWindows
             TreeViewItem newItem = new()
             {
                 Header = immediateCategory,
-                Foreground = Brushes.DimGray,
+                FontWeight = FontWeights.Bold,
                 Focusable = false  // Prevent categories from being selected directly
             };
 
@@ -63,6 +62,7 @@ namespace RPGLevelEditor.ToolWindows
                     Header = entityClass.Name != attribute.Name
                         ? $"{attribute.Name} ({entityClass.Name})"
                         : attribute.Name,
+                    FontWeight = FontWeights.Normal,
                     ToolTip = attribute.Description,
                     Tag = entityClass
                 });
