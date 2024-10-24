@@ -19,7 +19,7 @@ namespace RPGGame.GameObject.Entity
 
     [Serializable]
     [JsonObject(MemberSerialization.OptIn)]
-    [EditorEntity("Entity", "The base class for all entities. Has no special behaviour of its own.", "Entities.Basic", 0)]
+    [EditorEntity("Entity", "The base class for all entities. Has no special behaviour of its own.", "Entities.Basic")]
     [FiresEvent("OnInit", "Fired when the entity is loaded, before it runs its initialisation logic")]
     [FiresEvent("OnLoad", "Fired when the entity is loaded, after it runs its initialisation logic")]
     [FiresEvent("OnUnload", "Fired when the entity is loaded, before it runs its destroy logic")]
@@ -53,7 +53,7 @@ namespace RPGGame.GameObject.Entity
         [JsonProperty]
         public Dictionary<string, List<EventActionLink>> EventActionLinks = new();
 
-        public Room? CurrentRoom { get; internal set; } = null;
+        public Room? CurrentRoom { get; set; } = null;
 
         // Entity origin is the bottom middle, tile origin is the top left
         public Vector2 TopLeft => new(Position.X - (Size.X / 2), Position.Y - Size.Y);

@@ -21,6 +21,7 @@ namespace RPGGame.GameObject.Entity
     /// <remarks>
     /// Applied classes must be public, instantiatable (i.e. not static or abstract),
     /// and inherit either directly or indirectly from <see cref="Entity"/>.
+    /// They also must have the default <see cref="Entity.Entity"/> constructor available.
     /// </remarks>
     /// <param name="name">
     /// The friendly name to display in the editor. If different from the class name, both will be displayed.
@@ -28,7 +29,7 @@ namespace RPGGame.GameObject.Entity
     /// <param name="description">
     /// An extended description of the entity class, displayed by the editor to give additional information.
     /// </param>
-    /// <param name="category">
+    /// <param name="categories">
     /// A dot-separated (.) hierarchical list of categories that this entity is in,
     /// which will determine where in the class selection tree view the class will be placed.
     /// For example Cat1.Cat2.Cat3 will render as:<br/>
@@ -37,17 +38,12 @@ namespace RPGGame.GameObject.Entity
     /// │├Cat3<br/>
     /// ││├Class
     /// </param>
-    /// <param name="order">
-    /// The order that the entity should be shown among others in the category. Smaller orders are placed first.
-    /// Entities with the same order are sorted alphabetically by the display name, not the class name.
-    /// </param>
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-    public class EditorEntityAttribute(string name, string description, string category, int order) : Attribute
+    public class EditorEntityAttribute(string name, string description, string categories) : Attribute
     {
         public readonly string Name = name;
         public readonly string Description = description;
-        public readonly string[] Category = category.Split('.');
-        public readonly int Order = order;
+        public readonly string Categories = categories;
     }
 
     /// <summary>

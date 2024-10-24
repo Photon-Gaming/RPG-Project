@@ -861,9 +861,9 @@ namespace RPGLevelEditor
             PushUndoStack(new EntityMoveStackFrame(this, entity, entity.Position.X, entity.Position.Y));
         }
 
-        private void PushEntityCreateUndoStack(float x, float y)
+        private void PushEntityCreateUndoStack(float x, float y, Type type)
         {
-            PushUndoStack(new EntityCreateStackFrame(this, x, y));
+            PushUndoStack(new EntityCreateStackFrame(this, x, y, type));
         }
 
         private void PushEntityPropertyEditUndoStack(Entity entity)
@@ -1065,13 +1065,20 @@ namespace RPGLevelEditor
                 e.Collides(new Microsoft.Xna.Framework.Vector2(x, y))));
         }
 
-        private void CreateEntityAtPosition(float x, float y, bool pushToUndoStack)
+        private void CreateEntityAtPosition(float x, float y, bool pushToUndoStack, Type entityType)
         {
-            Entity newEntity = new(
+            object? newInstance = Activator.CreateInstance(entityType,
                 $"Entity_{Guid.NewGuid()}",
                 new Microsoft.Xna.Framework.Vector2(x, y),
                 Microsoft.Xna.Framework.Vector2.One,
                 null);
+
+            if (newInstance is not Entity newEntity)
+            {
+                return;
+            }
+
+            newEntity.CurrentRoom = OpenRoom;
 
             if (newEntity.IsOutOfBounds() || OpenRoom.Entities.Any(e => e.Collides(newEntity)))
             {
@@ -1080,7 +1087,7 @@ namespace RPGLevelEditor
 
             if (pushToUndoStack)
             {
-                PushEntityCreateUndoStack(x, y);
+                PushEntityCreateUndoStack(x, y, entityType);
             }
 
             OpenRoom.Entities.Add(newEntity);
@@ -1273,7 +1280,13 @@ namespace RPGLevelEditor
                         EditTileAtPosition((int)relativeMousePos.X, (int)relativeMousePos.Y);
                         break;
                     case ToolType.Entity when Keyboard.Modifiers == ModifierKeys.Control:
-                        CreateEntityAtPosition((float)relativeMousePos.X, (float)relativeMousePos.Y, true);
+                        ToolWindows.EntityClassSelector classSelector = new();
+                        if (!(classSelector.ShowDialog() ?? false))
+                        {
+                            return;
+                        }
+                        CreateEntityAtPosition((float)relativeMousePos.X, (float)relativeMousePos.Y, true,
+                            classSelector.SelectedEntityClass ?? typeof(Entity));
                         break;
                     case ToolType.Entity:
                         SelectEntityAtPosition((float)relativeMousePos.X, (float)relativeMousePos.Y);
