@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RPGLevelEditor"
         mc:Ignorable="d"
-        Title="Room Editor" Height="900" Width="1620" Closing="Window_Closing" KeyDown="Window_KeyDown" Closed="Window_Closed" WindowState="Maximized" Icon="pack://application:,,,/Resources/MenuIcons/map--pencil.png">
+        Title="Room Editor" Height="900" Width="1620" Closing="Window_Closing" KeyDown="Window_KeyDown" PreviewKeyDown="Window_PreviewKeyDown" Closed="Window_Closed" WindowState="Maximized" Icon="pack://application:,,,/Resources/MenuIcons/map--pencil.png">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -112,10 +112,10 @@
                 <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Magenta" Width="3" Height="{Binding ActualHeight, ElementName=tileGridDisplay, Mode=OneWay}" Margin="0,0,-3,0"/>
                 <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Green" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="3" Margin="0,0,0,-3"/>
                 <!-- Selected entity -->
-                <Grid x:Name="selectedEntityContainer" Cursor="SizeAll" MouseDown="selectedEntityContainer_MouseDown" MouseUp="selectedEntityContainer_MouseUp" MouseMove="selectedEntityContainer_MouseMove">
-                    <Image x:Name="selectedEntityImage" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
-                    <Rectangle x:Name="selectedEntityBorder" HorizontalAlignment="Left" VerticalAlignment="Top" Stroke="Blue" StrokeThickness="2"/>
-                    <Ellipse x:Name="selectedEntityOrigin" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Red" Width="8" Height="8"/>
+                <Grid x:Name="selectedEntityContainer" MouseMove="tileGridDisplay_MouseMove" MouseUp="tileGridDisplay_MouseUp">
+                    <Image x:Name="selectedEntityImage" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor" Cursor="SizeAll" MouseDown="selectedEntityImage_MouseDown" MouseMove="tileGridDisplay_MouseMove" MouseUp="tileGridDisplay_MouseUp"/>
+                    <Rectangle x:Name="selectedEntityBorder" HorizontalAlignment="Left" VerticalAlignment="Top" Stroke="Blue" StrokeThickness="2" MouseDown="selectedEntityBorder_MouseDown" MouseMove="tileGridDisplay_MouseMove" MouseUp="tileGridDisplay_MouseUp"/>
+                    <Ellipse x:Name="selectedEntityOrigin" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Red" Width="8" Height="8" MouseMove="tileGridDisplay_MouseMove" MouseUp="tileGridDisplay_MouseUp"/>
                 </Grid>
                 <Canvas x:Name="entityNetworkCanvas" IsHitTestVisible="False"/>
             </Grid>
