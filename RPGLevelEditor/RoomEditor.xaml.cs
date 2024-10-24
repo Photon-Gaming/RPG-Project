@@ -489,12 +489,13 @@ namespace RPGLevelEditor
             while (currentType is not null)
             {
                 string texturePath = ToolEntityTextureFolderPath + currentType.Name + ".png";
-                if (File.Exists(texturePath))
+                try
                 {
-                    loadedTexture = new(new Uri(texturePath));
+                    loadedTexture = new BitmapImage(new Uri(texturePath));
                     break;
                 }
-                currentType = currentType?.BaseType;
+                catch (IOException) { }
+                currentType = currentType.BaseType;
             }
             return loadedTexture ?? transparentImage;
         }

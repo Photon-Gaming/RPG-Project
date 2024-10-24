@@ -20,6 +20,8 @@ namespace RPGGame.GameObject
 
         public Dictionary<string, Entity.Entity> LoadedNamedEntities { get; protected set; } = new();
 
+        public World? ContainingWorld { get; private set; }
+
         private static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Room");
 
         public void OnLoad(World world)
@@ -36,6 +38,7 @@ namespace RPGGame.GameObject
             {
                 Entities.Add(world.CurrentPlayer);
                 LoadedNamedEntities[Entity.Player.PlayerEntityName] = world.CurrentPlayer;
+                ContainingWorld = world;
             }
         }
 

@@ -20,7 +20,7 @@ namespace RPGGame.GameObject.Entity
     [Serializable]
     [JsonObject(MemberSerialization.OptIn)]
     [EditorEntity("Entity", "The base class for all entities. Has no special behaviour of its own, but can be rendered, moved, and scaled" +
-        " - as well as be linked to and from in the Event->Action system.", "Entities.Basic")]
+        " - as well as be linked to and from in the Event->Action system.", "Basic")]
     [FiresEvent("OnInit", "Fired when the entity is loaded, before it runs its initialisation logic")]
     [FiresEvent("OnLoad", "Fired when the entity is loaded, after it runs its initialisation logic")]
     [FiresEvent("OnUnload", "Fired when the entity is loaded, before it runs its destroy logic")]
@@ -46,7 +46,7 @@ namespace RPGGame.GameObject.Entity
 
         [JsonProperty]
         [EditorModifiable("Enabled", "Whether or not this entity will be rendered and run its Tick function every frame")]
-        public bool Enabled { get; private set; } = true;
+        public bool Enabled { get; protected set; } = true;
 
         /// <summary>
         /// Dictionary of event names to all the actions fired by that event.

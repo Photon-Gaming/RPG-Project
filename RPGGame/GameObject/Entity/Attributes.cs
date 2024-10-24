@@ -50,7 +50,7 @@ namespace RPGGame.GameObject.Entity
     /// Makes an entity property editable in the editor properties panel.
     /// </summary>
     /// <remarks>
-    /// Applied properties must have a public getter and a setter at any protection level.
+    /// Applied properties must have a public getter and a non-private (e.g. public, internal, protected) setter.
     /// Should be combined with <see cref="Newtonsoft.Json.JsonPropertyAttribute"/>.
     /// </remarks>
     /// <param name="name">

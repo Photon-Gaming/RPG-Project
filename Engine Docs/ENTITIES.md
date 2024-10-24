@@ -8,7 +8,7 @@ Entity instances can be customised from the editor by changing the values of the
 
 ### Programming New Properties
 
-New properties can be added to an entity class the same as you would implement any other C# property. In order for a property to appear in the editor, however, it must have a public getter, a setter at any protection level, and be decorated with the `JsonProperty` and `EditorModifiable` attributes.
+New properties can be added to an entity class the same as you would implement any other C# property. In order for a property to appear in the editor, however, it must have a public getter, a non-private (e.g. public, internal, protected) setter, and be decorated with the `JsonProperty` and `EditorModifiable` attributes.
 
 The `EditorModifiable` attribute requires two string parameters: the display name of the property and a description for the editor to show. An optional third parameter can also be given to specify a special edit type, which will be presented differently in the editor.
 
@@ -33,7 +33,7 @@ public string? Texture { get; protected set; } = texture;
 
 [JsonProperty]
 [EditorModifiable("Enabled", "Whether or not this entity will be rendered and run its Tick function every frame")]
-public bool Enabled { get; private set; } = true;
+public bool Enabled { get; protected set; } = true;
 ```
 
 #### Edit Types
