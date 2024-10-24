@@ -477,9 +477,26 @@ namespace RPGLevelEditor
                 return imageSource;
             }
 
-            return hideInvisibleEntitiesItem.IsChecked
-                ? transparentImage
-                : new BitmapImage(new Uri(ToolEntityTextureFolderPath + entity.GetType().Name + ".png"));
+            if (hideInvisibleEntitiesItem.IsChecked)
+            {
+                return transparentImage;
+            }
+
+            // If entity is invisible, work up the inheritance hierarchy of the class
+            // until a texture is found for the entity type
+            Type? currentType = entity.GetType();
+            BitmapImage? loadedTexture = null;
+            while (currentType is not null)
+            {
+                string texturePath = ToolEntityTextureFolderPath + currentType.Name + ".png";
+                if (File.Exists(texturePath))
+                {
+                    loadedTexture = new(new Uri(texturePath));
+                    break;
+                }
+                currentType = currentType?.BaseType;
+            }
+            return loadedTexture ?? transparentImage;
         }
 
         private void DrawEntity(Entity entity, bool erase)

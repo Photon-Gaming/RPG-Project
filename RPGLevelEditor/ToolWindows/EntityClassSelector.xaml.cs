@@ -69,8 +69,10 @@ namespace RPGLevelEditor.ToolWindows
             }
         }
 
-        private static IEnumerable<(Type EntityClass, EditorEntityAttribute Attribute)> GetEntityClasses()
+        private static (Type EntityClass, EditorEntityAttribute Attribute)[] GetEntityClasses()
         {
+            List<(Type EntityClass, EditorEntityAttribute Attribute)> entityClasses = new();
+
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 foreach (Type type in assembly.GetTypes())
@@ -83,9 +85,14 @@ namespace RPGLevelEditor.ToolWindows
                         continue;
                     }
 
-                    yield return (type, entityAttribute);
+                    entityClasses.Add((type, entityAttribute));
                 }
             }
+
+            // Sort entity classes alphabetically
+            entityClasses.Sort((c1, c2) => string.Compare(c1.Attribute.Name, c2.Attribute.Name, StringComparison.CurrentCultureIgnoreCase));
+
+            return entityClasses.ToArray();
         }
 
         private void selectionTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
