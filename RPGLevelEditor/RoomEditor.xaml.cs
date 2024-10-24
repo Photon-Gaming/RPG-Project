@@ -1176,7 +1176,6 @@ namespace RPGLevelEditor
             Microsoft.Xna.Framework.Vector2 oldPos = selectedEntity.Position;
             float originalRatio = oldSize.X / oldSize.Y;
 
-
             Microsoft.Xna.Framework.Vector2 newSize = oldSize;
             Microsoft.Xna.Framework.Vector2 newPos = oldPos;
 
@@ -1192,7 +1191,7 @@ namespace RPGLevelEditor
                     newSize.X = (float)Math.Abs(dragStartSize.X + ((mousePos.X - dragStartOffset.X) * 2));
                 }
             }
-            if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
+            else
             {
                 // Adjust position to move only selected edge
                 // (new position is calculated later after potential modifications to final size have been made)
