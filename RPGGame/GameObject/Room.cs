@@ -53,7 +53,9 @@ namespace RPGGame.GameObject
 
         public void TickLoadedEntities(GameTime gameTime)
         {
-            foreach (Entity.Entity entity in Entities.Where(e => e.Enabled))
+            Entity.Entity[] enabledEntities = Entities.Where(e => e.Enabled).ToArray();
+
+            foreach (Entity.Entity entity in enabledEntities)
             {
                 try
                 {
@@ -64,6 +66,22 @@ namespace RPGGame.GameObject
                 catch (Exception exc)
                 {
                     logger.LogCritical(exc, "Uncaught error in Tick function for Entity \"{Name}\" at ({PosX}, {PosY})",
+                        entity.Name, entity.Position.X, entity.Position.Y);
+                }
+            }
+
+            // Each AfterTick method needs to run after every entity has had its Tick method executed
+            foreach (Entity.Entity entity in enabledEntities)
+            {
+                try
+                {
+                    logger.LogTrace("After-Ticking entity Entity \"{Name}\" at ({PosX}, {PosY})",
+                        entity.Name, entity.Position.X, entity.Position.Y);
+                    entity.AfterTick(gameTime);
+                }
+                catch (Exception exc)
+                {
+                    logger.LogCritical(exc, "Uncaught error in AfterTick function for Entity \"{Name}\" at ({PosX}, {PosY})",
                         entity.Name, entity.Position.X, entity.Position.Y);
                 }
             }

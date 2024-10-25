@@ -60,9 +60,9 @@ namespace RPGGame.GameObject.Entity
         public Vector2 TopLeft => new(Position.X - (Size.X / 2), Position.Y - Size.Y);
         public Vector2 BottomRight => new(TopLeft.X + Size.X, TopLeft.Y + Size.Y);
 
-        private static Type[] actionMethodTypes = new[] { typeof(Entity), typeof(Dictionary<string, object?>) };
+        protected static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Entity");
 
-        private static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Entity");
+        private static Type[] actionMethodTypes = new[] { typeof(Entity), typeof(Dictionary<string, object?>) };
 
         /// <summary>
         /// Called every time the entity is loaded or enabled, for example when the player enters its room.
@@ -110,6 +110,12 @@ namespace RPGGame.GameObject.Entity
         /// Called every frame while the entity is loaded and enabled.
         /// </summary>
         public virtual void Tick(GameTime gameTime) { }
+
+        /// <summary>
+        /// Called every frame while the entity is loaded and enabled,
+        /// after all entities including this one have run their <see cref="Tick"/> method.
+        /// </summary>
+        public virtual void AfterTick(GameTime gameTime) { }
 
         public virtual bool Move(Vector2 targetPos, bool relative)
         {
