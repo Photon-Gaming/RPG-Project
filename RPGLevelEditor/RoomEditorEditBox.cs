@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections;
+using System.Reflection;
 using RPGGame.GameObject.Entity;
 
 namespace RPGLevelEditor
@@ -19,6 +20,15 @@ namespace RPGLevelEditor
         public PropertyEditBox.PropertyEditBox CreateEditBox(Type propertyType, EditType editType, object? initialValue,
             string description, string labelText, PropertyInfo? property = null)
         {
+            // The EditType of a list affects the list contents, not the list itself
+            if (propertyType.IsConstructedGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                Type listContentType = propertyType.GenericTypeArguments[0];
+                return new PropertyEditBox.ListEdit(
+                    labelText, description, property,
+                    (IEnumerable)(initialValue ?? Enumerable.Empty<object>()), _ => true, listContentType, editType, this);
+            }
+
             switch (editType)
             {
                 case EditType.Default:
@@ -52,6 +62,12 @@ namespace RPGLevelEditor
                         return new PropertyEditBox.Vector2Edit(
                             labelText, description, property,
                             (Microsoft.Xna.Framework.Vector2)(initialValue ?? new Microsoft.Xna.Framework.Vector2()), _ => true);
+                    }
+                    if (propertyType.IsEnum)
+                    {
+                        return new PropertyEditBox.EnumEdit(
+                            labelText, description, property,
+                            (Enum)(initialValue ?? 0), _ => true, propertyType);
                     }
                     break;
                 case EditType.ConstrainedNumeric:

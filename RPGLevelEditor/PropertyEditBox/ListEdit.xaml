@@ -1,0 +1,21 @@
+﻿<local:PropertyEditBox x:TypeArguments="collections:IEnumerable" x:Class="RPGLevelEditor.PropertyEditBox.ListEdit"
+                       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+                       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+                       xmlns:local="clr-namespace:RPGLevelEditor.PropertyEditBox"
+                       xmlns:collections="clr-namespace:System.Collections;assembly=System.Runtime"
+                       mc:Ignorable="d" 
+                       d:DesignWidth="400" d:Background="#F0F0F0">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock x:Name="propertyName" Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10" d:Text="Property Name (PropertyName):"/>
+        <Button Grid.Row="0" Margin="10,5" HorizontalAlignment="Right" VerticalAlignment="Center" Width="20" Height="20" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="14" Click="AddButton_Click">
+            <Image Source="pack://application:,,,/Resources/MenuIcons/plus.png" Stretch="None"/>
+        </Button>
+        <StackPanel Grid.Row="1" x:Name="valuesPanel" Orientation="Vertical" Margin="5" Background="#3F000000"/>
+    </Grid>
+</local:PropertyEditBox>
