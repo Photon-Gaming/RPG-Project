@@ -69,6 +69,8 @@ namespace RPGLevelEditor
             }
         }
 
+        private readonly Random rng = new();
+
         private static readonly BitmapImage placeholderImage = new(new Uri("pack://application:,,,/Resources/placeholder.png"));
         private static readonly BitmapImage collisionImage = new(new Uri("pack://application:,,,/Resources/collision.png"));
         private static readonly BitmapImage transparentImage = new(new Uri("pack://application:,,,/Resources/transparent.png"));
@@ -1086,7 +1088,8 @@ namespace RPGLevelEditor
         private void CreateEntityAtPosition(float x, float y, bool pushToUndoStack, Type entityType)
         {
             object? newInstance = Activator.CreateInstance(entityType,
-                $"Entity_{Guid.NewGuid()}",
+                // Generate a random name. Collisions just need to be unlikely, not impossible.
+                $"Entity_{rng.NextInt64():x16}",
                 new Microsoft.Xna.Framework.Vector2(x, y),
                 Microsoft.Xna.Framework.Vector2.One,
                 null);
