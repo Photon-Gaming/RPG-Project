@@ -67,7 +67,7 @@ namespace RPGLevelEditor
                     {
                         return new PropertyEditBox.EnumEdit(
                             labelText, description, property,
-                            (Enum)(initialValue ?? 0), _ => true, propertyType);
+                            (Enum)(initialValue ?? Enum.ToObject(propertyType, 0)), _ => true, propertyType);
                     }
                     break;
                 case EditType.ConstrainedNumeric:
