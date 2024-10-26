@@ -16,9 +16,9 @@ namespace RPGGame.GameObject.Entity
         [EditorModifiable("Linked Triggers", "A list of all the trigger entities that are part of this trigger group", EditType.EntityLink)]
         public List<string> LinkedTriggers { get; set; } = new();
 
-        public bool AnyTriggeredLastFrame { get; protected set; } = false;
+        public bool AnyTriggerConditionsMetLastFrame { get; protected set; } = false;
 
-        protected bool anyTriggeredThisFrame = false;
+        protected bool anyTriggerConditionsMetThisFrame = false;
 
         protected TriggerBase[] linkedTriggerEntities = Array.Empty<TriggerBase>();
 
@@ -41,18 +41,21 @@ namespace RPGGame.GameObject.Entity
         {
             base.Tick(gameTime);
 
-            anyTriggeredThisFrame = false;
+            anyTriggerConditionsMetThisFrame = false;
 
             foreach (TriggerBase trigger in linkedTriggerEntities)
             {
-                if (!trigger.TriggerConditionMetLastFrame && trigger.TriggerConditionMet())
+                if (trigger.TriggerConditionMet())
                 {
-                    FireEvent("OnTriggerAny");
-                    if (!AnyTriggeredLastFrame)
+                    if (!trigger.TriggerConditionMetLastFrame)
                     {
-                        FireEvent("OnTriggerGroup");
+                        FireEvent("OnTriggerAny");
+                        if (!AnyTriggerConditionsMetLastFrame)
+                        {
+                            FireEvent("OnTriggerGroup");
+                        }
                     }
-                    anyTriggeredThisFrame = true;
+                    anyTriggerConditionsMetThisFrame = true;
                 }
             }
         }
@@ -61,7 +64,7 @@ namespace RPGGame.GameObject.Entity
         {
             base.AfterTick(gameTime);
 
-            AnyTriggeredLastFrame = anyTriggeredThisFrame;
+            AnyTriggerConditionsMetLastFrame = anyTriggerConditionsMetThisFrame;
         }
     }
 
