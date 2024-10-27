@@ -45,6 +45,7 @@ namespace RPGGame.GameObject
                 if (spawnPoint is not null)
                 {
                     world.CurrentPlayer.Move(spawnPoint.Position, false, true);
+                    spawnPoint.PlayerSpawned();
                 }
             }
         }
