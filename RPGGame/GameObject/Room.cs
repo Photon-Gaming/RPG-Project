@@ -26,6 +26,7 @@ namespace RPGGame.GameObject
 
         public void OnLoad(World world)
         {
+            ContainingWorld = world;
             LoadedNamedEntities = Entities.ToDictionary(e => e.Name, e => e, StringComparer.OrdinalIgnoreCase);
 
             foreach (Entity.Entity entity in Entities.Where(entity => entity.Enabled))
@@ -38,7 +39,13 @@ namespace RPGGame.GameObject
             {
                 Entities.Add(world.CurrentPlayer);
                 LoadedNamedEntities[Entity.Player.PlayerEntityName] = world.CurrentPlayer;
-                ContainingWorld = world;
+                // If there are multiple enabled player spawn points, pick a random one to spawn the player at
+                Entity.PlayerSpawn? spawnPoint = Entities.OfType<Entity.PlayerSpawn>().Where(e => e.Enabled)
+                    .ChooseRandomOrDefault(null);
+                if (spawnPoint is not null)
+                {
+                    world.CurrentPlayer.Move(spawnPoint.Position, false, true);
+                }
             }
         }
 

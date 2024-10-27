@@ -117,7 +117,7 @@ namespace RPGGame.GameObject.Entity
         /// </summary>
         public virtual void AfterTick(GameTime gameTime) { }
 
-        public virtual bool Move(Vector2 targetPos, bool relative)
+        public virtual bool Move(Vector2 targetPos, bool relative, bool force = false)
         {
             if (relative)
             {
@@ -126,7 +126,7 @@ namespace RPGGame.GameObject.Entity
 
             Vector2 originalPosition = Position;
             Position = targetPos;
-            if (IsOutOfBounds())
+            if (!force && IsOutOfBounds())
             {
                 Position = originalPosition;
                 return false;
