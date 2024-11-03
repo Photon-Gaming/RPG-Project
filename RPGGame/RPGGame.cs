@@ -30,6 +30,8 @@ namespace RPGGame
         private readonly ScreenDrawing.TileDrawing tileDraw;
         private readonly ScreenDrawing.EntityDrawing entityDraw;
 
+        private readonly Input playerInput = new();
+
         public RPGGame()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -53,16 +55,13 @@ namespace RPGGame
             rpgContentLoader = new RPGContentLoader(Content.RootDirectory);
 
             currentWorld = rpgContentLoader.LoadWorld(defaultWorldName);
-            currentWorld.ChangePlayer(new GameObject.Entity.Player());
+            currentWorld.ChangePlayer(new GameObject.Entity.Player(playerInput));
             currentWorld.ChangeRoom(rpgContentLoader.LoadRoom(currentWorld.DefaultRoomName));
         }
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-            {
-                Exit();
-            }
+            playerInput.Update();
 
             if (currentWorld?.CurrentRoom is null)
             {
