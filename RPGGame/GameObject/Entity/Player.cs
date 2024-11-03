@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using Newtonsoft.Json;
 
 namespace RPGGame.GameObject.Entity
 {
@@ -15,11 +16,15 @@ namespace RPGGame.GameObject.Entity
         private const Keys keyDown = Keys.S;
         private const Keys keyRight = Keys.D;
 
+        [JsonProperty]
         [EditorModifiable("Enable Input?", "Whether or not the user can control the player.")]
         public bool InputEnabled { get; set; } = true;
 
+        [JsonProperty]
         [EditorModifiable("Speed", "The number of units the player moves per second of having the corresponding input key held down.")]
         public float Speed { get; set; } = 2.5f;
+
+        public Input PlayerInput { get; } = playerInput;
 
         public override void Tick(GameTime gameTime)
         {
@@ -35,19 +40,19 @@ namespace RPGGame.GameObject.Entity
         {
             Vector2 movementVector = new(0, 0);
 
-            if (playerInput.GetKeyDown(keyUp))
+            if (PlayerInput.GetKeyDown(keyUp))
             {
                 movementVector.Y--;
             }
-            if (playerInput.GetKeyDown(keyDown))
+            if (PlayerInput.GetKeyDown(keyDown))
             {
                 movementVector.Y++;
             }
-            if (playerInput.GetKeyDown(keyLeft))
+            if (PlayerInput.GetKeyDown(keyLeft))
             {
                 movementVector.X--;
             }
-            if (playerInput.GetKeyDown(keyRight))
+            if (PlayerInput.GetKeyDown(keyRight))
             {
                 movementVector.X++;
             }
