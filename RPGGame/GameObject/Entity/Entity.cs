@@ -31,7 +31,7 @@ namespace RPGGame.GameObject.Entity
     {
         [JsonProperty]
         [EditorModifiable("Name", "The unique name of this entity that other entities in this room will refer to it by")]
-        public string Name { get; protected set; } = name;
+        public string Name { get; init; } = name;
 
         [JsonProperty]
         [EditorModifiable("Position", "The location of the entity within the room", EditType.RoomCoordinate)]
@@ -47,7 +47,7 @@ namespace RPGGame.GameObject.Entity
 
         [JsonProperty]
         [EditorModifiable("Enabled", "Whether or not this entity will be rendered and run its Tick function every frame")]
-        public bool Enabled { get; protected set; } = true;
+        public bool Enabled { get; private set; } = true;
 
         /// <summary>
         /// Dictionary of event names to all the actions fired by that event.
@@ -329,13 +329,6 @@ namespace RPGGame.GameObject.Entity
                 if (!CurrentRoom.LoadedNamedEntities.TryGetValue(link.TargetEntityName, out Entity? targetEntity))
                 {
                     logger.LogError("Entity \"{Target}\" linked from \"{Source}\" for {Event}->{Action} could not be found",
-                        link.TargetEntityName, Name, eventName, link.TargetAction);
-                    continue;
-                }
-
-                if (!targetEntity.Enabled)
-                {
-                    logger.LogDebug("Entity \"{Target}\" linked from \"{Source}\" for {Event}->{Action} is disabled. Action method will not run",
                         link.TargetEntityName, Name, eventName, link.TargetAction);
                     continue;
                 }
