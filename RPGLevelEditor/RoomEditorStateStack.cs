@@ -49,6 +49,26 @@ namespace RPGLevelEditor
             }
         }
 
+        private class EntityResizeStackFrame(RoomEditor editorWindow, Entity entity, float x, float y, float w, float h) : StateStackFrame(editorWindow)
+        {
+            public Entity Entity { get; } = entity;
+            public float X { get; } = x;
+            public float Y { get; } = y;
+            public float Width { get; } = w;
+            public float Height { get; } = h;
+
+            public override void RestoreState(bool isUndo)
+            {
+                Stack<StateStackFrame> stack = isUndo ? EditorWindow.redoStack : EditorWindow.undoStack;
+                stack.Push(new EntityResizeStackFrame(EditorWindow, Entity, Entity.Position.X, Entity.Position.Y, Entity.Size.X, Entity.Size.Y));
+
+                EditorWindow.DrawEntity(Entity, true);
+                _ = Entity.Move(new Microsoft.Xna.Framework.Vector2(X, Y), false);
+                _ = Entity.Resize(new Microsoft.Xna.Framework.Vector2(Width, Height), false);
+                EditorWindow.SelectEntity(Entity);
+            }
+        }
+
         private class EntityCreateStackFrame(RoomEditor editorWindow, float x, float y) : StateStackFrame(editorWindow)
         {
             public float X { get; } = x;

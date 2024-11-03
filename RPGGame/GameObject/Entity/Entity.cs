@@ -24,6 +24,7 @@ namespace RPGGame.GameObject.Entity
     [FiresEvent("OnUnload", "Fired when the entity is loaded, before it runs its destroy logic")]
     [FiresEvent("OnDestroy", "Fired when the entity is loaded, after it runs its destroy logic")]
     [FiresEvent("OnMove", "Fired when the entity's position changes")]
+    [FiresEvent("OnResize", "Fired when the entity's size changes")]
     public class Entity(string name, Vector2 position, Vector2 size, string? texture) : ICloneable
     {
         [JsonProperty]
@@ -128,6 +129,30 @@ namespace RPGGame.GameObject.Entity
             return true;
         }
 
+        public virtual bool Resize(Vector2 targetSize, bool relative)
+        {
+            if (relative)
+            {
+                targetSize += Size;
+            }
+
+            if (targetSize.X <= 0 || targetSize.Y <= 0)
+            {
+                return false;
+            }
+
+            Vector2 originalSize = Size;
+            Size = targetSize;
+            if (IsOutOfBounds())
+            {
+                Size = originalSize;
+                return false;
+            }
+
+            FireEvent("OnResize");
+            return true;
+        }
+
         public virtual object Clone()
         {
             return new Entity(Name, Position, Size, Texture);
@@ -221,6 +246,48 @@ namespace RPGGame.GameObject.Entity
                 return;
             }
             Move(position, true);
+        }
+
+        [ActionMethod("Sets the entity size to an absolute number of units. Class-specific resize logic applies")]
+        [ActionMethodParameter("TargetSize", "The absolute size to resize the entity to", typeof(Vector2), EditType.RoomCoordinate)]
+        protected void SetSize(Entity sender, Dictionary<string, object?> parameters)
+        {
+            if (!parameters.TryGetValue("TargetSize", out object? sizeObj) || sizeObj is not Vector2 size)
+            {
+                logger.LogError("TargetSize parameter for SetSize action was not given or was of incorrect type" +
+                    " (fired by \"{Source}\" to \"{Target}\")",
+                    sender.Name, Name);
+                return;
+            }
+            Resize(size, false);
+        }
+
+        [ActionMethod("Sets the entity size to a number of units relative to the current size. Class-specific resize logic applies")]
+        [ActionMethodParameter("ResizeVector", "The number of units in each dimension to affect the size by", typeof(Vector2), EditType.RoomCoordinate)]
+        protected void Resize(Entity sender, Dictionary<string, object?> parameters)
+        {
+            if (!parameters.TryGetValue("ResizeVector", out object? sizeObj) || sizeObj is not Vector2 size)
+            {
+                logger.LogError("ResizeVector parameter for Resize action was not given or was of incorrect type" +
+                    " (fired by \"{Source}\" to \"{Target}\")",
+                    sender.Name, Name);
+                return;
+            }
+            Resize(size, true);
+        }
+
+        [ActionMethod("Sets the entity size to a number of units relative to the current size with multipliers. Class-specific resize logic applies")]
+        [ActionMethodParameter("ScaleVector", "The multiplier in each dimension to affect the size by", typeof(Vector2), EditType.RoomCoordinate)]
+        protected void Scale(Entity sender, Dictionary<string, object?> parameters)
+        {
+            if (!parameters.TryGetValue("ScaleVector", out object? sizeObj) || sizeObj is not Vector2 scale)
+            {
+                logger.LogError("ScaleVector parameter for Scale action was not given or was of incorrect type" +
+                    " (fired by \"{Source}\" to \"{Target}\")",
+                    sender.Name, Name);
+                return;
+            }
+            Resize(Size * scale, false);
         }
 
         [ActionMethod("Sets the render texture of the entity")]
