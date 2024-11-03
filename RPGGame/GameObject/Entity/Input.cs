@@ -39,12 +39,28 @@ namespace RPGGame.GameObject.Entity
 
         public override bool HasInputStarted()
         {
-            return CurrentRoom?.ContainingWorld?.CurrentPlayer?.PlayerInput.GetKeyPressed(ConfiguredInput) ?? false;
+            return CurrentRoom?.ContainingWorld?.CurrentPlayer?.PlayerInput.GetKeyboardKeyPressed(ConfiguredInput) ?? false;
         }
 
         public override bool HasInputEnded()
         {
-            return CurrentRoom?.ContainingWorld?.CurrentPlayer?.PlayerInput.GetKeyReleased(ConfiguredInput) ?? false;
+            return CurrentRoom?.ContainingWorld?.CurrentPlayer?.PlayerInput.GetKeyboardKeyReleased(ConfiguredInput) ?? false;
+        }
+    }
+
+    [EditorEntity("MouseButtonListener", "Reads for input from a specific button on the mouse", "Input.Global")]
+    public class MouseButtonListener(string name, Vector2 position, Vector2 size, string? texture) : InputListenerBase<MouseButton>(name, position, size, texture)
+    {
+        public override MouseButton ConfiguredInput { get; set; }
+
+        public override bool HasInputStarted()
+        {
+            return CurrentRoom?.ContainingWorld?.CurrentPlayer?.PlayerInput.GetMouseButtonPressed(ConfiguredInput) ?? false;
+        }
+
+        public override bool HasInputEnded()
+        {
+            return CurrentRoom?.ContainingWorld?.CurrentPlayer?.PlayerInput.GetMouseButtonReleased(ConfiguredInput) ?? false;
         }
     }
 }

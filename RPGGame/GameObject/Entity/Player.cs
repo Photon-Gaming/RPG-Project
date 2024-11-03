@@ -40,19 +40,19 @@ namespace RPGGame.GameObject.Entity
         {
             Vector2 movementVector = new(0, 0);
 
-            if (PlayerInput.GetKeyDown(keyUp))
+            if (PlayerInput.GetKeyboardKeyDown(keyUp))
             {
                 movementVector.Y--;
             }
-            if (PlayerInput.GetKeyDown(keyDown))
+            if (PlayerInput.GetKeyboardKeyDown(keyDown))
             {
                 movementVector.Y++;
             }
-            if (PlayerInput.GetKeyDown(keyLeft))
+            if (PlayerInput.GetKeyboardKeyDown(keyLeft))
             {
                 movementVector.X--;
             }
-            if (PlayerInput.GetKeyDown(keyRight))
+            if (PlayerInput.GetKeyboardKeyDown(keyRight))
             {
                 movementVector.X++;
             }

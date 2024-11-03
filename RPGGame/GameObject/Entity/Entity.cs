@@ -31,7 +31,7 @@ namespace RPGGame.GameObject.Entity
     {
         [JsonProperty]
         [EditorModifiable("Name", "The unique name of this entity that other entities in this room will refer to it by")]
-        public string Name { get; init; } = name;
+        public string Name { get; protected set; } = name;
 
         [JsonProperty]
         [EditorModifiable("Position", "The location of the entity within the room", EditType.RoomCoordinate)]
@@ -47,7 +47,7 @@ namespace RPGGame.GameObject.Entity
 
         [JsonProperty]
         [EditorModifiable("Enabled", "Whether or not this entity will be rendered and run its Tick function every frame")]
-        public bool Enabled { get; private set; } = true;
+        public bool Enabled { get; protected set; } = true;
 
         /// <summary>
         /// Dictionary of event names to all the actions fired by that event.
