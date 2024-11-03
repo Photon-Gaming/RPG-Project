@@ -37,6 +37,7 @@ namespace RPGGame.GameObject
 
             if (world.CurrentPlayer is not null)
             {
+                world.CurrentPlayer.CurrentRoom = this;
                 Entities.Add(world.CurrentPlayer);
                 LoadedNamedEntities[Entity.Player.PlayerEntityName] = world.CurrentPlayer;
                 // If there are multiple enabled player spawn points, pick a random one to spawn the player at
