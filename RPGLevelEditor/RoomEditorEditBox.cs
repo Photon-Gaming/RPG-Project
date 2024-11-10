@@ -37,13 +37,19 @@ namespace RPGLevelEditor
                     {
                         return new PropertyEditBox.FloatEdit(
                             labelText, description, property,
-                            (float)(initialValue ?? 0), _ => true);
+                            (float)(initialValue ?? 0f), _ => true);
                     }
                     if (propertyType == typeof(int))
                     {
                         return new PropertyEditBox.IntEdit(
                             labelText, description, property,
                             (int)(initialValue ?? 0), _ => true);
+                    }
+                    if (propertyType == typeof(long))
+                    {
+                        return new PropertyEditBox.LongEdit(
+                            labelText, description, property,
+                            (long)(initialValue ?? 0L), _ => true);
                     }
                     if (propertyType == typeof(string))
                     {

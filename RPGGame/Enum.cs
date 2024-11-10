@@ -14,4 +14,11 @@
         X1,
         X2
     }
+
+    public enum NumericBoundMode
+    {
+        Ignore,
+        Clamp,
+        Wrap
+    }
 }
