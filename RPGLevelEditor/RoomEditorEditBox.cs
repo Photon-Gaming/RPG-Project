@@ -51,6 +51,12 @@ namespace RPGLevelEditor
                             labelText, description, property,
                             (long)(initialValue ?? 0L), _ => true);
                     }
+                    if (propertyType == typeof(ulong))
+                    {
+                        return new PropertyEditBox.ULongEdit(
+                            labelText, description, property,
+                            (ulong)(initialValue ?? 0UL), _ => true);
+                    }
                     if (propertyType == typeof(string))
                     {
                         return new PropertyEditBox.StringEdit(
@@ -68,6 +74,12 @@ namespace RPGLevelEditor
                         return new PropertyEditBox.Vector2Edit(
                             labelText, description, property,
                             (Microsoft.Xna.Framework.Vector2)(initialValue ?? new Microsoft.Xna.Framework.Vector2()), _ => true);
+                    }
+                    if (propertyType == typeof(TimeSpan))
+                    {
+                        return new PropertyEditBox.TimeSpanEdit(
+                            labelText, description, property,
+                            (TimeSpan)(initialValue ?? TimeSpan.Zero), _ => true);
                     }
                     if (propertyType.IsEnum)
                     {

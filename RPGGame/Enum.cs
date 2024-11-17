@@ -21,4 +21,15 @@
         Clamp,
         Wrap
     }
+
+    public enum TimeUnit
+    {
+        Days,
+        Hours,
+        Minutes,
+        Seconds,
+        Milliseconds,
+        Microseconds,
+        Ticks
+    }
 }
