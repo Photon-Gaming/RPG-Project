@@ -27,7 +27,7 @@ namespace RPGGame.GameObject.Entity
     [FiresEvent("OnDestroy", "Fired when the entity is loaded, after it runs its destroy logic")]
     [FiresEvent("OnMove", "Fired when the entity's position changes")]
     [FiresEvent("OnResize", "Fired when the entity's size changes")]
-    public class Entity(string name, Vector2 position, Vector2 size, string? texture) : ICloneable
+    public class Entity(string name, Vector2 position, Vector2 size, string? texture)
     {
         [JsonProperty]
         [EditorModifiable("Name", "The unique name of this entity that other entities in this room will refer to it by")]
@@ -161,9 +161,20 @@ namespace RPGGame.GameObject.Entity
             return true;
         }
 
-        public virtual object Clone()
+        /// <summary>
+        /// Create a new instance of the entity class based on this entity.
+        /// </summary>
+        /// <remarks>
+        /// Does not produce a 1:1 copy of the original entity.
+        /// Only properties present in the Entity's JSON serialization will be copied.
+        /// </remarks>
+        public Entity Clone(string newName)
         {
-            return new Entity(Name, Position, Size, Texture);
+            // De-serializing and re-serializing the entity as JSON creates a copy of the entity with only the editable parameters transferred.
+            Entity clone = JsonConvert.DeserializeObject<Entity>(
+                JsonConvert.SerializeObject(this, RPGContentLoader.SerializerSettings), RPGContentLoader.SerializerSettings)!;
+            clone.Name = newName;
+            return clone;
         }
 
         public bool Collides(Entity other)

@@ -96,7 +96,7 @@ namespace RPGLevelEditor
         private class EntityPropertyEditStackFrame(RoomEditor editorWindow, Entity editedEntity) : StateStackFrame(editorWindow)
         {
             public Entity EditedEntity { get; } = editedEntity;
-            public Entity EntityClone { get; } = (Entity)editedEntity.Clone();
+            public Entity EntityClone { get; } = editedEntity.Clone(editedEntity.Name);
 
             public override void RestoreState(bool isUndo)
             {
