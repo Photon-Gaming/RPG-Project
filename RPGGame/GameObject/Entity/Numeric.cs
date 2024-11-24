@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace RPGGame.GameObject.Entity
 {
-    [EditorEntity("Counter", "Holds a value that can be incremented or decremented", "Numeric")]
+    [EditorEntity("Counter", "Holds a value that can be incremented or decremented", "Tool.Numeric")]
     [FiresEvent("OnMinimumReached", "Fired every time the minimum value of the counter is met or exceeded")]
     [FiresEvent("OnMaximumReached", "Fired every time the maximum value of the counter is met or exceeded")]
     public class Counter(string name, Vector2 position, Vector2 size, string? texture) : Entity(name, position, size, texture)

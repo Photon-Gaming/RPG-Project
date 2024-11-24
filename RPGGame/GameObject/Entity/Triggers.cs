@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace RPGGame.GameObject.Entity
 {
-    [EditorEntity("TriggerGroup", "Allows multiple triggers to be linked together to act as one trigger", "Triggers")]
+    [EditorEntity("TriggerGroup", "Allows multiple triggers to be linked together to act as one trigger", "Tool.Triggers")]
     [FiresEvent("OnTriggerAny", "Fired when any of the linked triggers' trigger conditions are met")]
     [FiresEvent("OnTriggerGroup", "Fired when any of the linked triggers' trigger conditions are met following at least one frame where none of the conditions were met")]
     public class TriggerGroup(string name, Vector2 position, Vector2 size, string? texture) : Entity(name, position, size, texture)
@@ -127,7 +127,7 @@ namespace RPGGame.GameObject.Entity
         }
     }
 
-    [EditorEntity("PlayerEnterTrigger", "A trigger entity that fires when the player walks into the trigger's bounding box.", "Triggers.Player")]
+    [EditorEntity("PlayerEnterTrigger", "A trigger entity that fires when the player walks into the trigger's bounding box.", "Tool.Triggers.Player")]
     public class PlayerEnterTrigger(string name, Vector2 position, Vector2 size, string? texture) : PlayerTriggerBase(name, position, size, texture)
     {
         public override bool TriggerConditionMet()
@@ -136,7 +136,7 @@ namespace RPGGame.GameObject.Entity
         }
     }
 
-    [EditorEntity("PlayerExitTrigger", "A trigger entity that fires when the player walks out of the trigger's bounding box.", "Triggers.Player")]
+    [EditorEntity("PlayerExitTrigger", "A trigger entity that fires when the player walks out of the trigger's bounding box.", "Tool.Triggers.Player")]
     public class PlayerExitTrigger(string name, Vector2 position, Vector2 size, string? texture) : PlayerTriggerBase(name, position, size, texture)
     {
         public override bool TriggerConditionMet()

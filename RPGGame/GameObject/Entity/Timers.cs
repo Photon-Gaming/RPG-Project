@@ -52,7 +52,7 @@ namespace RPGGame.GameObject.Entity
         }
     }
 
-    [EditorEntity("FrameTimer", "Fires an event after a specified number of frames are processed", "Timing.Periodic")]
+    [EditorEntity("FrameTimer", "Fires an event after a specified number of frames are processed", "Tool.Timing.Periodic")]
     public class FrameTimer(string name, Vector2 position, Vector2 size, string? texture) : TimerBase<ulong, ulong>(name, position, size, texture)
     {
         private ulong framesElapsed = 0;
@@ -75,7 +75,7 @@ namespace RPGGame.GameObject.Entity
         }
     }
 
-    [EditorEntity("ClockTimer", "Fires an event after a specified amount of time elapses", "Timing.Periodic")]
+    [EditorEntity("ClockTimer", "Fires an event after a specified amount of time elapses", "Tool.Timing.Periodic")]
     public class ClockTimer(string name, Vector2 position, Vector2 size, string? texture) : TimerBase<DateTime, TimeSpan>(name, position, size, texture)
     {
         public override DateTime GetCurrentTime()

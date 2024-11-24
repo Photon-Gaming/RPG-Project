@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace RPGGame.GameObject.Entity
 {
-    [EditorEntity("EntitySpawner", "Creates copies of a template entity", "Spawning")]
+    [EditorEntity("EntitySpawner", "Creates copies of a template entity", "Tool.Spawning")]
     public class EntitySpawner(string name, Vector2 position, Vector2 size, string? texture) : Entity(name, position, size, texture)
     {
         [JsonProperty]

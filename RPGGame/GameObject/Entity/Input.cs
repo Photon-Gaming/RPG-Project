@@ -32,7 +32,7 @@ namespace RPGGame.GameObject.Entity
         public abstract bool HasInputEnded();
     }
 
-    [EditorEntity("KeyboardListener", "Reads for input from a specific key on the keyboard", "Input.Global")]
+    [EditorEntity("KeyboardListener", "Reads for input from a specific key on the keyboard", "Tool.Input.Global")]
     public class KeyboardListener(string name, Vector2 position, Vector2 size, string? texture) : InputListenerBase<Keys>(name, position, size, texture)
     {
         public override bool HasInputStarted()
@@ -46,7 +46,7 @@ namespace RPGGame.GameObject.Entity
         }
     }
 
-    [EditorEntity("MouseButtonListener", "Reads for input from a specific button on the mouse", "Input.Global")]
+    [EditorEntity("MouseButtonListener", "Reads for input from a specific button on the mouse", "Tool.Input.Global")]
     public class MouseButtonListener(string name, Vector2 position, Vector2 size, string? texture) : InputListenerBase<MouseButton>(name, position, size, texture)
     {
         public override bool HasInputStarted()
