@@ -29,6 +29,13 @@ namespace RPGGame.GameObject.Entity
     [FiresEvent("OnResize", "Fired when the entity's size changes")]
     public class Entity(string name, Vector2 position, Vector2 size, string? texture)
     {
+        private readonly struct ActionMethodCall(ActionMethod method, Entity sender, Dictionary<string, object?> parameters)
+        {
+            public readonly ActionMethod Method = method;
+            public readonly Entity Sender = sender;
+            public readonly Dictionary<string, object?> Parameters = parameters;
+        }
+
         [JsonProperty]
         [EditorModifiable("Name", "The unique name of this entity that other entities in this room will refer to it by")]
         public string Name { get; protected set; } = name;
@@ -62,6 +69,8 @@ namespace RPGGame.GameObject.Entity
         public Vector2 BottomRight => new(TopLeft.X + Size.X, TopLeft.Y + Size.Y);
 
         protected static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Entity");
+
+        private Queue<ActionMethodCall> actionMethodQueue = new();
 
         /// <summary>
         /// Called every time the entity is loaded or enabled, for example when the player enters its room.
@@ -107,8 +116,24 @@ namespace RPGGame.GameObject.Entity
 
         /// <summary>
         /// Called every frame while the entity is loaded and enabled.
+        /// To implement custom tick logic, override the <see cref="TickLogic"/> method.
         /// </summary>
-        public virtual void Tick(GameTime gameTime) { }
+        public void Tick(GameTime gameTime)
+        {
+            try
+            {
+                TickLogic(gameTime);
+            }
+            catch (Exception exc)
+            {
+                logger.LogCritical(exc, "Uncaught error in TickLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
+                    Name, Position.X, Position.Y);
+            }
+
+            RunActionQueue();
+        }
+
+        protected virtual void TickLogic(GameTime gameTime) { }
 
         /// <summary>
         /// Called every frame while the entity is loaded and enabled,
@@ -344,12 +369,21 @@ namespace RPGGame.GameObject.Entity
 
                 logger.LogTrace("Running action method on \"{Target}\" linked from \"{Source}\" for {Event}->{Action}",
                     link.TargetEntityName, Name, eventName, link.TargetAction);
-                targetEntity.GetActionMethod(link.TargetAction)?.Invoke(this, link.Parameters);
+                targetEntity.QueueActionMethodCall(link.TargetAction, this, link.Parameters);
+            }
+        }
+
+        public void QueueActionMethodCall(string methodName, Entity sender, Dictionary<string, object?> parameters)
+        {
+            ActionMethod? method = GetActionMethod(methodName);
+            if (method is not null)
+            {
+                actionMethodQueue.Enqueue(new ActionMethodCall(method, sender, parameters));
             }
         }
 
         private Dictionary<string, ActionMethod> actionMethods = new();
-        public ActionMethod? GetActionMethod(string methodName)
+        private ActionMethod? GetActionMethod(string methodName)
         {
             // Action methods are cached so non-performant reflection doesn't have to be used each time.
             if (actionMethods.TryGetValue(methodName, out ActionMethod? outMethod))
@@ -366,6 +400,14 @@ namespace RPGGame.GameObject.Entity
             }
             actionMethods[methodName] = actionMethod;
             return actionMethod;
+        }
+
+        private void RunActionQueue()
+        {
+            while (actionMethodQueue.TryDequeue(out ActionMethodCall call))
+            {
+                call.Method.Invoke(call.Sender, call.Parameters);
+            }
         }
     }
 }

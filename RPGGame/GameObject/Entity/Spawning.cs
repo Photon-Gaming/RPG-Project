@@ -56,7 +56,7 @@ namespace RPGGame.GameObject.Entity
         }
 
         [ActionMethod("Spawn a copy of the template entity at a randomly selected spawn point")]
-        public void SpawnEntity(Entity sender, Dictionary<string, object?> parameters)
+        protected void SpawnEntity(Entity sender, Dictionary<string, object?> parameters)
         {
             if (templateEntity is null || CurrentRoom is null)
             {

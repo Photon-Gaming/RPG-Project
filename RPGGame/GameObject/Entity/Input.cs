@@ -13,9 +13,9 @@ namespace RPGGame.GameObject.Entity
         [EditorModifiable("Input to listen for", "The specific input that this entity instance will listen for")]
         public T ConfiguredInput { get; set; }
 
-        public override void Tick(GameTime gameTime)
+        protected override void TickLogic(GameTime gameTime)
         {
-            base.Tick(gameTime);
+            base.TickLogic(gameTime);
 
             if (HasInputStarted())
             {

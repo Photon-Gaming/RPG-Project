@@ -64,7 +64,7 @@ namespace RPGGame.GameObject.Entity
 
         [ActionMethod("Increment the value of the counter, applying the counter's bound logic and firing any relevant events")]
         [ActionMethodParameter("Value", "The value to add", typeof(long))]
-        public void IncrementValue(Entity sender, Dictionary<string, object?> parameters)
+        protected void IncrementValue(Entity sender, Dictionary<string, object?> parameters)
         {
             if (!parameters.TryGetValue("Value", out object? valueObj) || valueObj is not long value)
             {
@@ -79,7 +79,7 @@ namespace RPGGame.GameObject.Entity
 
         [ActionMethod("Decrement the value of the counter, applying the counter's bound logic and firing any relevant events")]
         [ActionMethodParameter("Value", "The value to subtract", typeof(long))]
-        public void DecrementValue(Entity sender, Dictionary<string, object?> parameters)
+        protected void DecrementValue(Entity sender, Dictionary<string, object?> parameters)
         {
             if (!parameters.TryGetValue("Value", out object? valueObj) || valueObj is not long value)
             {

@@ -11,9 +11,9 @@ namespace RPGGame.GameObject.Entity
 
         protected abstract bool LogicalOperation();
 
-        public override void Tick(GameTime gameTime)
+        protected override void TickLogic(GameTime gameTime)
         {
-            base.Tick(gameTime);
+            base.TickLogic(gameTime);
 
             if (LogicalOperation())
             {
@@ -30,7 +30,7 @@ namespace RPGGame.GameObject.Entity
         }
 
         [ActionMethod("Input to the logic gate.")]
-        public void Input(Entity sender, Dictionary<string, object?> parameters)
+        protected void Input(Entity sender, Dictionary<string, object?> parameters)
         {
             inputsThisFrame++;
         }

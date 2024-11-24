@@ -37,9 +37,9 @@ namespace RPGGame.GameObject.Entity
             }
         }
 
-        public override void Tick(GameTime gameTime)
+        protected override void TickLogic(GameTime gameTime)
         {
-            base.Tick(gameTime);
+            base.TickLogic(gameTime);
 
             anyTriggerConditionsMetThisFrame = false;
 
@@ -81,9 +81,9 @@ namespace RPGGame.GameObject.Entity
 
         protected bool triggerConditionMetThisFrame = false;
 
-        public override void Tick(GameTime gameTime)
+        protected override void TickLogic(GameTime gameTime)
         {
-            base.Tick(gameTime);
+            base.TickLogic(gameTime);
 
             TargetCurrentlyInside = IsTargetInside();
 

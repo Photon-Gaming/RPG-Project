@@ -12,7 +12,7 @@ namespace RPGGame.GameObject.Entity
         [ActionMethod("Write a message to the log with the given severity")]
         [ActionMethodParameter("Severity", "The severity of the log entry to write", typeof(LogLevel))]
         [ActionMethodParameter("Message", "The body of the log entry to write", typeof(string))]
-        public void WriteLog(Entity sender, Dictionary<string, object?> parameters)
+        protected void WriteLog(Entity sender, Dictionary<string, object?> parameters)
         {
             logger.Log(
                 (LogLevel)(parameters.GetValueOrDefault("Severity", LogLevel.None) ?? LogLevel.None),

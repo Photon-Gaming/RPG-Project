@@ -26,9 +26,9 @@ namespace RPGGame.GameObject.Entity
 
         public Input PlayerInput { get; } = playerInput;
 
-        public override void Tick(GameTime gameTime)
+        protected override void TickLogic(GameTime gameTime)
         {
-            base.Tick(gameTime);
+            base.TickLogic(gameTime);
 
             if (InputEnabled)
             {

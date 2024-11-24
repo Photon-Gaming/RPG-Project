@@ -29,9 +29,9 @@ namespace RPGGame.GameObject.Entity
             NextFireTime = GetNextFireTime();
         }
 
-        public override void Tick(GameTime gameTime)
+        protected override void TickLogic(GameTime gameTime)
         {
-            base.Tick(gameTime);
+            base.TickLogic(gameTime);
 
             // CompareTo is used as IComparable does not implement comparison operators
             if (GetCurrentTime().CompareTo(NextFireTime) >= 0)
@@ -67,9 +67,9 @@ namespace RPGGame.GameObject.Entity
             return framesElapsed + TimerDuration;
         }
 
-        public override void Tick(GameTime gameTime)
+        protected override void TickLogic(GameTime gameTime)
         {
-            base.Tick(gameTime);
+            base.TickLogic(gameTime);
 
             framesElapsed++;
         }
