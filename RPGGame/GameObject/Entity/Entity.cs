@@ -63,8 +63,6 @@ namespace RPGGame.GameObject.Entity
 
         protected static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Entity");
 
-        private static Type[] actionMethodTypes = new[] { typeof(Entity), typeof(Dictionary<string, object?>) };
-
         /// <summary>
         /// Called every time the entity is loaded or enabled, for example when the player enters its room.
         /// To implement custom init logic, override the <see cref="InitLogic"/> method.
