@@ -27,7 +27,7 @@ namespace RPGGame.GameObject.Entity
     [FiresEvent("OnDestroy", "Fired when the entity is loaded, after it runs its destroy logic")]
     [FiresEvent("OnMove", "Fired when the entity's position changes")]
     [FiresEvent("OnResize", "Fired when the entity's size changes")]
-    public class Entity(string name, Vector2 position, Vector2 size, string? texture)
+    public class Entity(string name, Vector2 position, Vector2 size)
     {
         private readonly struct ActionMethodCall(ActionMethod method, Entity sender, Dictionary<string, object?> parameters)
         {
@@ -50,7 +50,7 @@ namespace RPGGame.GameObject.Entity
 
         [JsonProperty]
         [EditorModifiable("Render Texture", "The optional name of the texture that the game will draw for this entity", EditType.EntityTexture)]
-        public string? Texture { get; protected set; } = texture;
+        public string? Texture { get; protected set; } = null;
 
         [JsonProperty]
         [EditorModifiable("Enabled", "Whether or not this entity will be rendered and run its Tick function every frame")]

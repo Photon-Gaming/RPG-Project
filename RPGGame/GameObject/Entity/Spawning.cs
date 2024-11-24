@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 namespace RPGGame.GameObject.Entity
 {
     [EditorEntity("EntitySpawner", "Creates copies of a template entity", "Tool.Spawning")]
-    public class EntitySpawner(string name, Vector2 position, Vector2 size, string? texture) : Entity(name, position, size, texture)
+    public class EntitySpawner(string name, Vector2 position, Vector2 size) : Entity(name, position, size)
     {
         [JsonProperty]
         [EditorModifiable("Spawn Points", "A list of points that will be randomly chosen from to spawn new entities at", EditType.EntityLink)]

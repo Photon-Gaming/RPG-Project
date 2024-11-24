@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 namespace RPGGame.GameObject.Entity
 {
     [FiresEvent("TimerElapsed", "Fired when the specified duration of the timer lapses")]
-    public abstract class TimerBase<TTime, TDuration>(string name, Vector2 position, Vector2 size, string? texture) : Entity(name, position, size, texture)
+    public abstract class TimerBase<TTime, TDuration>(string name, Vector2 position, Vector2 size) : Entity(name, position, size)
         where TTime : struct, IComparable<TTime>
         where TDuration : struct
     {
@@ -53,7 +53,7 @@ namespace RPGGame.GameObject.Entity
     }
 
     [EditorEntity("FrameTimer", "Fires an event after a specified number of frames are processed", "Tool.Timing.Periodic")]
-    public class FrameTimer(string name, Vector2 position, Vector2 size, string? texture) : TimerBase<ulong, ulong>(name, position, size, texture)
+    public class FrameTimer(string name, Vector2 position, Vector2 size) : TimerBase<ulong, ulong>(name, position, size)
     {
         private ulong framesElapsed = 0;
 
@@ -76,7 +76,7 @@ namespace RPGGame.GameObject.Entity
     }
 
     [EditorEntity("ClockTimer", "Fires an event after a specified amount of time elapses", "Tool.Timing.Periodic")]
-    public class ClockTimer(string name, Vector2 position, Vector2 size, string? texture) : TimerBase<DateTime, TimeSpan>(name, position, size, texture)
+    public class ClockTimer(string name, Vector2 position, Vector2 size) : TimerBase<DateTime, TimeSpan>(name, position, size)
     {
         public override DateTime GetCurrentTime()
         {

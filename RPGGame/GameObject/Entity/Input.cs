@@ -7,7 +7,7 @@ namespace RPGGame.GameObject.Entity
 {
     [FiresEvent("OnInputStart", "Fired every time the configured input starts")]
     [FiresEvent("OnInputEnd", "Fired every time the configured input ends")]
-    public abstract class InputListenerBase<T>(string name, Vector2 position, Vector2 size, string? texture) : Entity(name, position, size, texture) where T : struct, Enum
+    public abstract class InputListenerBase<T>(string name, Vector2 position, Vector2 size) : Entity(name, position, size) where T : struct, Enum
     {
         [JsonProperty]
         [EditorModifiable("Input to listen for", "The specific input that this entity instance will listen for")]
@@ -33,7 +33,7 @@ namespace RPGGame.GameObject.Entity
     }
 
     [EditorEntity("KeyboardListener", "Reads for input from a specific key on the keyboard", "Tool.Input.Global")]
-    public class KeyboardListener(string name, Vector2 position, Vector2 size, string? texture) : InputListenerBase<Keys>(name, position, size, texture)
+    public class KeyboardListener(string name, Vector2 position, Vector2 size) : InputListenerBase<Keys>(name, position, size)
     {
         public override bool HasInputStarted()
         {
@@ -47,7 +47,7 @@ namespace RPGGame.GameObject.Entity
     }
 
     [EditorEntity("MouseButtonListener", "Reads for input from a specific button on the mouse", "Tool.Input.Global")]
-    public class MouseButtonListener(string name, Vector2 position, Vector2 size, string? texture) : InputListenerBase<MouseButton>(name, position, size, texture)
+    public class MouseButtonListener(string name, Vector2 position, Vector2 size) : InputListenerBase<MouseButton>(name, position, size)
     {
         public override bool HasInputStarted()
         {

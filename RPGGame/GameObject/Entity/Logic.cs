@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 namespace RPGGame.GameObject.Entity
 {
     [FiresEvent("OnTrue", "Fired when the logical operation of the gate is true")]
-    public abstract class BooleanLogicBase(string name, Vector2 position, Vector2 size, string? texture) : Entity(name, position, size, texture)
+    public abstract class BooleanLogicBase(string name, Vector2 position, Vector2 size) : Entity(name, position, size)
     {
         private uint inputsThisFrame = 0;
         protected uint inputsLastFrame = 0;
@@ -37,7 +37,7 @@ namespace RPGGame.GameObject.Entity
     }
 
     [EditorEntity("ANDGate", "Fires an event when 2 or more inputs are received in a single frame", "Tool.Logic.Boolean")]
-    public class ANDGate(string name, Vector2 position, Vector2 size, string? texture) : BooleanLogicBase(name, position, size, texture)
+    public class ANDGate(string name, Vector2 position, Vector2 size) : BooleanLogicBase(name, position, size)
     {
         protected override bool LogicalOperation()
         {
@@ -46,7 +46,7 @@ namespace RPGGame.GameObject.Entity
     }
 
     [EditorEntity("ORGate", "Fires an event when 1 or more inputs are received in a single frame", "Tool.Logic.Boolean")]
-    public class ORGate(string name, Vector2 position, Vector2 size, string? texture) : BooleanLogicBase(name, position, size, texture)
+    public class ORGate(string name, Vector2 position, Vector2 size) : BooleanLogicBase(name, position, size)
     {
         protected override bool LogicalOperation()
         {
@@ -55,7 +55,7 @@ namespace RPGGame.GameObject.Entity
     }
 
     [EditorEntity("XORGate", "Fires an event when exactly 1 input is received in a single frame", "Tool.Logic.Boolean")]
-    public class XORGate(string name, Vector2 position, Vector2 size, string? texture) : BooleanLogicBase(name, position, size, texture)
+    public class XORGate(string name, Vector2 position, Vector2 size) : BooleanLogicBase(name, position, size)
     {
         protected override bool LogicalOperation()
         {

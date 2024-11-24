@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework;
 namespace RPGGame.GameObject.Entity
 {
     [EditorEntity("Logger", "Used to write a message to the console log.", "Tool.Debug")]
-    public class Logger(string name, Vector2 position, Vector2 size, string? texture) : Entity(name, position, size, texture)
+    public class Logger(string name, Vector2 position, Vector2 size) : Entity(name, position, size)
     {
         private const string messageFormat = "Log from Entity \"{Sender}\" via \"{Name}\": {Message}";
 

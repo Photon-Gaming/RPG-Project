@@ -1115,8 +1115,7 @@ namespace RPGLevelEditor
                 // Generate a random name. Collisions just need to be unlikely, not impossible.
                 $"Entity_{rng.NextInt64():x16}",
                 new Microsoft.Xna.Framework.Vector2(x, y),
-                Microsoft.Xna.Framework.Vector2.One,
-                null);
+                Microsoft.Xna.Framework.Vector2.One);
 
             if (newInstance is not Entity newEntity)
             {

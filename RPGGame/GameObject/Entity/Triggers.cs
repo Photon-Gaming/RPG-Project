@@ -10,7 +10,7 @@ namespace RPGGame.GameObject.Entity
     [EditorEntity("TriggerGroup", "Allows multiple triggers to be linked together to act as one trigger", "Tool.Triggers")]
     [FiresEvent("OnTriggerAny", "Fired when any of the linked triggers' trigger conditions are met")]
     [FiresEvent("OnTriggerGroup", "Fired when any of the linked triggers' trigger conditions are met following at least one frame where none of the conditions were met")]
-    public class TriggerGroup(string name, Vector2 position, Vector2 size, string? texture) : Entity(name, position, size, texture)
+    public class TriggerGroup(string name, Vector2 position, Vector2 size) : Entity(name, position, size)
     {
         [JsonProperty]
         [EditorModifiable("Linked Triggers", "A list of all the trigger entities that are part of this trigger group", EditType.EntityLink)]
@@ -69,7 +69,7 @@ namespace RPGGame.GameObject.Entity
     }
 
     [FiresEvent("OnTrigger", "Fired when the collision condition of the trigger is met.")]
-    public abstract class TriggerBase(string name, Vector2 position, Vector2 size, string? texture) : Entity(name, position, size, texture)
+    public abstract class TriggerBase(string name, Vector2 position, Vector2 size) : Entity(name, position, size)
     {
         [JsonProperty]
         [EditorModifiable("Collision Mode", "The type of detection the trigger will use to detect collision.")]
@@ -113,7 +113,7 @@ namespace RPGGame.GameObject.Entity
         public abstract bool TriggerConditionMet();
     };
 
-    public abstract class PlayerTriggerBase(string name, Vector2 position, Vector2 size, string? texture) : TriggerBase(name, position, size, texture)
+    public abstract class PlayerTriggerBase(string name, Vector2 position, Vector2 size) : TriggerBase(name, position, size)
     {
         public override bool IsTargetInside()
         {
@@ -128,7 +128,7 @@ namespace RPGGame.GameObject.Entity
     }
 
     [EditorEntity("PlayerEnterTrigger", "A trigger entity that fires when the player walks into the trigger's bounding box.", "Tool.Triggers.Player")]
-    public class PlayerEnterTrigger(string name, Vector2 position, Vector2 size, string? texture) : PlayerTriggerBase(name, position, size, texture)
+    public class PlayerEnterTrigger(string name, Vector2 position, Vector2 size) : PlayerTriggerBase(name, position, size)
     {
         public override bool TriggerConditionMet()
         {
@@ -137,7 +137,7 @@ namespace RPGGame.GameObject.Entity
     }
 
     [EditorEntity("PlayerExitTrigger", "A trigger entity that fires when the player walks out of the trigger's bounding box.", "Tool.Triggers.Player")]
-    public class PlayerExitTrigger(string name, Vector2 position, Vector2 size, string? texture) : PlayerTriggerBase(name, position, size, texture)
+    public class PlayerExitTrigger(string name, Vector2 position, Vector2 size) : PlayerTriggerBase(name, position, size)
     {
         public override bool TriggerConditionMet()
         {
