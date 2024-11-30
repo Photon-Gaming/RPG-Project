@@ -32,4 +32,14 @@
         Microseconds,
         Ticks
     }
+
+    public enum ComparisonType
+    {
+        Equal,
+        NotEqual,
+        Greater,
+        GreaterEqual,
+        Less,
+        LessEqual
+    }
 }
