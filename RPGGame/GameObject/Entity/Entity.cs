@@ -115,19 +115,23 @@ namespace RPGGame.GameObject.Entity
         protected virtual void DestroyLogic() { }
 
         /// <summary>
-        /// Called every frame while the entity is loaded and enabled.
+        /// Called every frame while the entity is loaded.
+        /// Logic will only run if entity is <see cref="Enabled"/>, action methods will always run.
         /// To implement custom tick logic, override the <see cref="TickLogic"/> method.
         /// </summary>
         public void Tick(GameTime gameTime)
         {
-            try
+            if (Enabled)
             {
-                TickLogic(gameTime);
-            }
-            catch (Exception exc)
-            {
-                logger.LogCritical(exc, "Uncaught error in TickLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
-                    Name, Position.X, Position.Y);
+                try
+                {
+                    TickLogic(gameTime);
+                }
+                catch (Exception exc)
+                {
+                    logger.LogCritical(exc, "Uncaught error in TickLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
+                        Name, Position.X, Position.Y);
+                }
             }
 
             RunActionQueue();

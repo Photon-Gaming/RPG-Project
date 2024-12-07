@@ -96,9 +96,7 @@ namespace RPGGame.GameObject
 
         public void TickLoadedEntities(GameTime gameTime)
         {
-            Entity.Entity[] enabledEntities = Entities.Where(e => e.Enabled).ToArray();
-
-            foreach (Entity.Entity entity in enabledEntities)
+            foreach (Entity.Entity entity in Entities)
             {
                 try
                 {
@@ -114,7 +112,7 @@ namespace RPGGame.GameObject
             }
 
             // Each AfterTick method needs to run after every entity has had its Tick method executed
-            foreach (Entity.Entity entity in enabledEntities)
+            foreach (Entity.Entity entity in Entities.Where(e => e.Enabled))
             {
                 try
                 {
