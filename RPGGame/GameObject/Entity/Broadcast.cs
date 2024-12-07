@@ -62,7 +62,6 @@ namespace RPGGame.GameObject.Entity
     {
         public string ParameterName { get; set; }
         public object? ParameterValueObj { get; }
-
     }
 
     [EditorEntity("ActionBroadcastParameter", "Holds the name and value of a single parameter for an ActionBroadcast entity", "Tool.Dynamic.EventAction")]
