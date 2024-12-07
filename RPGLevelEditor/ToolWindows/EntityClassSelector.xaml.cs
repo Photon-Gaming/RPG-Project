@@ -13,6 +13,7 @@ namespace RPGLevelEditor.ToolWindows
         public Type? SelectedEntityClass => (selectionTree.SelectedItem as TreeViewItem)?.Tag as Type;
 
         private readonly Dictionary<string, TreeViewItem> treeCategories = new();
+        private readonly Dictionary<string, int> immediateSubcategoryCount = new();
 
         public EntityClassSelector()
         {
@@ -47,7 +48,9 @@ namespace RPGLevelEditor.ToolWindows
                 Focusable = false  // Prevent categories from being selected directly
             };
 
-            GetOrCreateTreeCategory(parentCategories).Items.Add(newItem);
+            // Sort categories before selectable items
+            _ = immediateSubcategoryCount.TryAdd(parentCategories, 0);
+            GetOrCreateTreeCategory(parentCategories).Items.Insert(immediateSubcategoryCount[parentCategories]++, newItem);
             treeCategories[categories] = newItem;
 
             return newItem;
@@ -89,10 +92,10 @@ namespace RPGLevelEditor.ToolWindows
                 }
             }
 
-            // Sort entity classes alphabetically
-            entityClasses.Sort((c1, c2) => string.Compare(c1.Attribute.Name, c2.Attribute.Name, StringComparison.CurrentCultureIgnoreCase));
-
-            return entityClasses.ToArray();
+            return entityClasses
+                .OrderBy(c => c.Attribute.Categories, StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(c => c.Attribute.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToArray();
         }
 
         private void selectionTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)

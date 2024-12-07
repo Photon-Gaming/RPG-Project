@@ -703,7 +703,18 @@ namespace RPGLevelEditor
             addEventActionLinkButton.IsEnabled = true;
             entityTypeText.Visibility = Visibility.Visible;
 
-            entityTypeText.Text = $"Entity Type: {selectedEntity.GetType().Name}";
+            Type selectedEntityType = selectedEntity.GetType();
+            if (selectedEntityType.IsConstructedGenericType)
+            {
+                // Format generic types as they appear in C#
+                // (i.e. remove the suffix with the number of type arguments and put type arguments in square brackets)
+                entityTypeText.Text = $"Entity Type: {selectedEntityType.Name[..selectedEntityType.Name.IndexOf('`')]}" +
+                    $"<{string.Join(", ", selectedEntityType.GetGenericArguments().Select(a => a.Name))}>";
+            }
+            else
+            {
+                entityTypeText.Text = $"Entity Type: {selectedEntityType.FullName}";
+            }
 
             foreach ((PropertyInfo property, EditorModifiableAttribute editorAttribute) in GetEditableEntityProperties(selectedEntity))
             {
@@ -1474,8 +1485,20 @@ namespace RPGLevelEditor
                         {
                             return;
                         }
+                        Type selectedClass = classSelector.SelectedEntityClass ?? typeof(Entity);
+                        if (selectedClass.IsGenericType)
+                        {
+                            // Generic types require a type parameter to be instantiated.
+                            // Ask the user what type to use.
+                            ToolWindows.TypeSelector genericTypeSelector = new(selectedClass);
+                            if (!(genericTypeSelector.ShowDialog() ?? false))
+                            {
+                                return;
+                            }
+                            selectedClass = selectedClass.MakeGenericType(genericTypeSelector.SelectedType ?? typeof(object));
+                        }
                         CreateEntityAtPosition((float)relativeMousePos.X, (float)relativeMousePos.Y, true,
-                            classSelector.SelectedEntityClass ?? typeof(Entity));
+                            selectedClass);
                         break;
                     case ToolType.Entity:
                         SelectEntityAtPosition((float)relativeMousePos.X, (float)relativeMousePos.Y);
