@@ -695,11 +695,15 @@ namespace RPGLevelEditor
             {
                 entityApplyButton.IsEnabled = false;
                 addEventActionLinkButton.IsEnabled = false;
+                entityTypeText.Visibility = Visibility.Collapsed;
                 return;
             }
 
             entityApplyButton.IsEnabled = true;
             addEventActionLinkButton.IsEnabled = true;
+            entityTypeText.Visibility = Visibility.Visible;
+
+            entityTypeText.Text = $"Entity Type: {selectedEntity.GetType().Name}";
 
             foreach ((PropertyInfo property, EditorModifiableAttribute editorAttribute) in GetEditableEntityProperties(selectedEntity))
             {
