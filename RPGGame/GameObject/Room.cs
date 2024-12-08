@@ -126,7 +126,7 @@ namespace RPGGame.GameObject
             }
 
             // Each AfterTick method needs to run after every entity has had its Tick method executed
-            foreach (Entity.Entity entity in entityIterable.Where(e => e.Enabled))
+            foreach (Entity.Entity entity in entityIterable)
             {
                 try
                 {

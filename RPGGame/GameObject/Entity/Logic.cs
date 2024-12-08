@@ -5,63 +5,136 @@ using Newtonsoft.Json;
 
 namespace RPGGame.GameObject.Entity
 {
-    [FiresEvent("OnTrue", "Fired when the logical operation of the gate is true")]
+    [EditorEntity("Relay", "Consolidates multiple Event->Action links into a single entity that can all be run with a single input", "Tool.Logic")]
+    [FiresEvent("OnRelay", "Fired when the FireRelay action method is called")]
+    public class Relay(string name, Vector2 position, Vector2 size) : Entity(name, position, size)
+    {
+        [ActionMethod("Fires the OnRelay event")]
+        protected void FireRelay(Entity sender, Dictionary<string, object?> parameters)
+        {
+            FireEvent("OnRelay");
+        }
+    }
+
+    [FiresEvent("OnTrue", "Fired when the RunLogic action method is called and the logical operation of the gate is true")]
+    [FiresEvent("OnFalse", "Fired when the RunLogic action method is called and the logical operation of the gate is false")]
     public abstract class BooleanLogicBase(string name, Vector2 position, Vector2 size) : Entity(name, position, size)
     {
-        private uint inputsThisFrame = 0;
-        protected uint inputsLastFrame = 0;
+        protected bool inputOneState = false;
 
         protected abstract bool LogicalOperation();
 
-        protected override void TickLogic(GameTime gameTime)
+        [ActionMethod("Set the state of the first input to the logic gate")]
+        [ActionMethodParameter("State", "The state to set the first input to", typeof(bool))]
+        protected void SetInputOne(Entity sender, Dictionary<string, object?> parameters)
         {
-            base.TickLogic(gameTime);
-
-            if (LogicalOperation())
+            if (!parameters.TryGetValue("State", out object? stateObj) || stateObj is not bool state)
             {
-                FireEvent("OnTrue");
+                logger.LogError("State parameter for SetInputOne action was not given or was of incorrect type" +
+                    " (fired by \"{Source}\" to \"{Target}\")",
+                    sender.Name, Name);
+                return;
             }
+
+            inputOneState = state;
         }
 
-        public override void AfterTick(GameTime gameTime)
+        [ActionMethod("Fire either OnTrue or OnFalse depending on the logical operation of the gate")]
+        protected void RunLogic(Entity sender, Dictionary<string, object?> parameters)
         {
-            base.AfterTick(gameTime);
-
-            inputsLastFrame = inputsThisFrame;
-            inputsThisFrame = 0;
-        }
-
-        [ActionMethod("Input to the logic gate.")]
-        protected void Input(Entity sender, Dictionary<string, object?> parameters)
-        {
-            inputsThisFrame++;
+            FireEvent(LogicalOperation() ? "OnTrue" : "OnFalse");
         }
     }
 
-    [EditorEntity("ANDGate", "Fires an event when 2 or more inputs are received in a single frame", "Tool.Logic.Boolean")]
-    public class ANDGate(string name, Vector2 position, Vector2 size) : BooleanLogicBase(name, position, size)
+    [EditorEntity("BufferGate", "Fires the OnTrue event when the input is true, otherwise OnFalse", "Tool.Logic.Boolean.OneInput")]
+    public class BufferGate(string name, Vector2 position, Vector2 size) : BooleanLogicBase(name, position, size)
     {
         protected override bool LogicalOperation()
         {
-            return inputsLastFrame >= 2;
+            return inputOneState;
         }
     }
 
-    [EditorEntity("ORGate", "Fires an event when 1 or more inputs are received in a single frame", "Tool.Logic.Boolean")]
-    public class ORGate(string name, Vector2 position, Vector2 size) : BooleanLogicBase(name, position, size)
+    [EditorEntity("NOTGate", "Fires the OnTrue event when the input is false, otherwise OnFalse", "Tool.Logic.Boolean.OneInput")]
+    public class NOTGate(string name, Vector2 position, Vector2 size) : BooleanLogicBase(name, position, size)
     {
         protected override bool LogicalOperation()
         {
-            return inputsLastFrame >= 1;
+            return !inputOneState;
         }
     }
 
-    [EditorEntity("XORGate", "Fires an event when exactly 1 input is received in a single frame", "Tool.Logic.Boolean")]
-    public class XORGate(string name, Vector2 position, Vector2 size) : BooleanLogicBase(name, position, size)
+    public abstract class TwoInputBooleanLogicBase(string name, Vector2 position, Vector2 size) : BooleanLogicBase(name, position, size)
+    {
+        protected bool inputTwoState = false;
+
+        [ActionMethod("Set the state of the second input to the logic gate")]
+        [ActionMethodParameter("State", "The state to set the second input to", typeof(bool))]
+        protected void SetInputTwo(Entity sender, Dictionary<string, object?> parameters)
+        {
+            if (!parameters.TryGetValue("State", out object? stateObj) || stateObj is not bool state)
+            {
+                logger.LogError("State parameter for SetInputTwo action was not given or was of incorrect type" +
+                    " (fired by \"{Source}\" to \"{Target}\")",
+                    sender.Name, Name);
+                return;
+            }
+
+            inputTwoState = state;
+        }
+    }
+
+    [EditorEntity("ANDGate", "Fires the OnTrue event when both inputs are true, otherwise OnFalse", "Tool.Logic.Boolean.TwoInput")]
+    public class ANDGate(string name, Vector2 position, Vector2 size) : TwoInputBooleanLogicBase(name, position, size)
     {
         protected override bool LogicalOperation()
         {
-            return inputsLastFrame == 1;
+            return inputOneState && inputTwoState;
+        }
+    }
+
+    [EditorEntity("ORGate", "Fires the OnTrue event when either or both of the inputs are true, otherwise OnFalse", "Tool.Logic.Boolean.TwoInput")]
+    public class ORGate(string name, Vector2 position, Vector2 size) : TwoInputBooleanLogicBase(name, position, size)
+    {
+        protected override bool LogicalOperation()
+        {
+            return inputOneState || inputTwoState;
+        }
+    }
+
+    [EditorEntity("XORGate", "Fires the OnTrue event when only one of the inputs is true, otherwise OnFalse", "Tool.Logic.Boolean.TwoInput")]
+    public class XORGate(string name, Vector2 position, Vector2 size) : TwoInputBooleanLogicBase(name, position, size)
+    {
+        protected override bool LogicalOperation()
+        {
+            return inputOneState ^ inputTwoState;
+        }
+    }
+
+    [EditorEntity("NANDGate", "Fires the OnTrue event when zero or one of the inputs are true, otherwise OnFalse", "Tool.Logic.Boolean.TwoInput")]
+    public class NANDGate(string name, Vector2 position, Vector2 size) : TwoInputBooleanLogicBase(name, position, size)
+    {
+        protected override bool LogicalOperation()
+        {
+            return !(inputOneState && inputTwoState);
+        }
+    }
+
+    [EditorEntity("NORGate", "Fires the OnTrue event when neither inputs are true, otherwise OnFalse", "Tool.Logic.Boolean.TwoInput")]
+    public class NORGate(string name, Vector2 position, Vector2 size) : TwoInputBooleanLogicBase(name, position, size)
+    {
+        protected override bool LogicalOperation()
+        {
+            return !(inputOneState || inputTwoState);
+        }
+    }
+
+    [EditorEntity("XNORGate", "Fires the OnTrue event when none or both of the inputs is true, otherwise OnFalse", "Tool.Logic.Boolean.TwoInput")]
+    public class XNORGate(string name, Vector2 position, Vector2 size) : TwoInputBooleanLogicBase(name, position, size)
+    {
+        protected override bool LogicalOperation()
+        {
+            return !(inputOneState ^ inputTwoState);
         }
     }
 

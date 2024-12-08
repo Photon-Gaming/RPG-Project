@@ -52,7 +52,7 @@ namespace RPGGame.GameObject.Entity
 
             foreach (Entity entity in CurrentRoom.Entities.Where(e => Regex.IsMatch(e.Name, TargetEntityRegex)))
             {
-                entity.QueueActionMethodCall(TargetActionMethod, sender, parameterDictionary);
+                entity.RunActionMethod(TargetActionMethod, sender, parameterDictionary);
             }
         }
     }

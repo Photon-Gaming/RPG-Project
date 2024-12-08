@@ -103,15 +103,18 @@ namespace RPGGame.GameObject.Entity
 
     /// <summary>
     /// Marks a method as an action method so that it is displayed in the list of available action methods in the editor.
+    /// By default, action methods are not executed on disabled entities.
+    /// This can be overriden by passing <paramref name="executableWhenDisabled"/> as <see langword="true"/>.
     /// </summary>
     /// <remarks>
     /// Applied methods must conform to the signature of the <see cref="ActionMethod"/> delegate.
     /// </remarks>
     [AttributeUsage(AttributeTargets.Method)]
     [MeansImplicitUse]
-    public class ActionMethodAttribute(string description) : Attribute
+    public class ActionMethodAttribute(string description, bool executableWhenDisabled = false) : Attribute
     {
         public readonly string Description = description;
+        public readonly bool ExecutableWhenDisabled = executableWhenDisabled;
     }
 
     /// <summary>

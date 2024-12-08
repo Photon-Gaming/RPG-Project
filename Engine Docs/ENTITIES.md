@@ -54,7 +54,7 @@ The Event->Action system is the core for creating game logic and interactions in
 
 ### Events
 
-An event is simply a string that is used to group linked entity action methods by when they should be run. Every entity is capable of running ("firing") events from within its code using the `FireEvent` method. Only one parameter is required - the name of the event to fire. When an event is fired, all action methods linked to that event will be executed on the linked entity along with their stored parameters.
+An event is simply a string that is used to group linked entity action methods by when they should be run. Every entity is capable of running ("firing") events from within its code using the `FireEvent` method. Only one parameter is required - the name of the event to fire. When an event is fired, all action methods linked to that event will be executed on the linked entity along with their stored parameters, in the order that they are defined in the list of links.
 
 An example of firing events:
 
@@ -78,13 +78,9 @@ To do this, simply add the `FiresEvent` attribute to the entity's class - it wil
 For example:
 
 ```csharp
-[Serializable]
-[JsonObject(MemberSerialization.OptIn)]
-[FiresEvent("OnInit", "Fired when the entity is loaded, before it runs its initialisation logic")]
-[FiresEvent("OnLoad", "Fired when the entity is loaded, after it runs its initialisation logic")]
-[FiresEvent("OnUnload", "Fired when the entity is loaded, before it runs its destroy logic")]
-[FiresEvent("OnDestroy", "Fired when the entity is loaded, after it runs its destroy logic")]
+...
 [FiresEvent("OnMove", "Fired when the entity's position changes")]
+[FiresEvent("OnResize", "Fired when the entity's size changes")]
 public class Entity(string name, Vector2 position, Vector2 size, string? texture)
 {
     ...
@@ -101,6 +97,8 @@ Action methods must belong to an instance (i.e. they must not be static), have n
 
 Action methods should be decorated with the `ActionMethod` attribute, which takes a description of the method as a parameter to be displayed by the editor. If you want entries to be included in the Dictionary parameter, you should also include an `ActionMethodParameter` attribute for each parameter you want. This attribute takes three parameters, a name, description, and the data type of the parameter. There is an optional fourth parameter for the edit type (see the section on Properties above).
 
+Action methods are not executed on disabled entities by default. To override this on a per-method basis, pass `true` as an optional second parameter to the `ActionMethod` attribute.
+
 An example action method definition:
 
 ```csharp
@@ -114,14 +112,14 @@ protected void SetPosition(Entity sender, Dictionary<string, object?> parameters
 
 ## Engine Event Methods
 
-Every entity has an `Init`, `Destroy`, `Tick`, and `AfterTick` method. Each entity class can override these methods to implement its own logic for them. `AfterTick` can be overridden directly, whereas `Init`, `Destroy`, `Tick` have separate `InitLogic`, `DestroyLogic`, and `TickLogic` methods respectively which must be overridden instead. The purpose of each method is as follows:
+Every entity has `Init`, `Destroy`, `Tick`, and `AfterTick` methods which are automatically called by the engine. Each entity class can implement its own logic for these events by overriding the corresponding `InitLogic`, `DestroyLogic`, `TickLogic`, and `AfterTickLogic` methods respectively. The purpose of each method is as follows:
 
 | Method | Purpose |
 |--------|---------|
 | `Init` | Called every time an entity goes from being disabled to being enabled, including when the entity is first loaded, if it is enabled by default. |
 | `Destroy` | Called every time an entity goes from being enabled to being disabled, including when the entity is unloaded, if it was enabled at the time. |
-| `Tick` | Called every frame while the entity is loaded. `InitLogic` is only called if the entity is currently enabled, however. This is the method that processes the Event->Action queue for each entity. |
-| `AfterTick` | Called every frame while the entity is loaded and enabled, after *every* entity, including the current one, has run its corresponding `Tick` method for the frame. |
+| `Tick` | Called every frame while the entity is loaded. `TickLogic` is only called if the entity is currently enabled, however. |
+| `AfterTick` | Called every frame while the entity is loaded and, after *every* entity, including the current one, has run its corresponding `Tick` method for the frame. `AfterTickLogic` is only called if the entity is currently enabled, however. |
 
 ## Programming New Entity Classes
 

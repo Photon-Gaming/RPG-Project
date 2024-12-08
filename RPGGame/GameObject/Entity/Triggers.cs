@@ -60,9 +60,9 @@ namespace RPGGame.GameObject.Entity
             }
         }
 
-        public override void AfterTick(GameTime gameTime)
+        protected override void AfterTickLogic(GameTime gameTime)
         {
-            base.AfterTick(gameTime);
+            base.AfterTickLogic(gameTime);
 
             AnyTriggerConditionsMetLastFrame = anyTriggerConditionsMetThisFrame;
         }
@@ -101,9 +101,9 @@ namespace RPGGame.GameObject.Entity
             }
         }
 
-        public override void AfterTick(GameTime gameTime)
+        protected override void AfterTickLogic(GameTime gameTime)
         {
-            base.AfterTick(gameTime);
+            base.AfterTickLogic(gameTime);
 
             TriggerConditionMetLastFrame = triggerConditionMetThisFrame;
         }

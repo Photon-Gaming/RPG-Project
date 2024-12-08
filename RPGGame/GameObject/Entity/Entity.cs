@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
@@ -17,25 +18,22 @@ namespace RPGGame.GameObject.Entity
         public readonly Dictionary<string, object?> Parameters = new(parameters);
     }
 
+    public readonly struct ActionMethodInfo(ActionMethod? method, bool executableWhenDisabled)
+    {
+        public readonly ActionMethod? Method = method;
+        public readonly bool ExecutableWhenDisabled = executableWhenDisabled;
+
+        public static readonly ActionMethodInfo InvalidActionMethod = new(null, false);
+    }
+
     [Serializable]
     [JsonObject(MemberSerialization.OptIn)]
     [EditorEntity("Entity", "The base class for all entities. Has no special behaviour of its own, but can be rendered, moved, and scaled" +
         " - as well as be linked to and from in the Event->Action system.", "")]
-    [FiresEvent("OnInit", "Fired when the entity is loaded, before it runs its initialisation logic")]
-    [FiresEvent("OnLoad", "Fired when the entity is loaded, after it runs its initialisation logic")]
-    [FiresEvent("OnUnload", "Fired when the entity is loaded, before it runs its destroy logic")]
-    [FiresEvent("OnDestroy", "Fired when the entity is loaded, after it runs its destroy logic")]
     [FiresEvent("OnMove", "Fired when the entity's position changes")]
     [FiresEvent("OnResize", "Fired when the entity's size changes")]
     public class Entity(string name, Vector2 position, Vector2 size)
     {
-        private readonly struct ActionMethodCall(ActionMethod method, Entity sender, Dictionary<string, object?> parameters)
-        {
-            public readonly ActionMethod Method = method;
-            public readonly Entity Sender = sender;
-            public readonly Dictionary<string, object?> Parameters = parameters;
-        }
-
         [JsonProperty]
         [EditorModifiable("Name", "The unique name of this entity that other entities in this room will refer to it by")]
         public string Name { get; protected set; } = name;
@@ -68,9 +66,9 @@ namespace RPGGame.GameObject.Entity
         public Vector2 TopLeft => new(Position.X - (Size.X / 2), Position.Y - Size.Y);
         public Vector2 BottomRight => new(TopLeft.X + Size.X, TopLeft.Y + Size.Y);
 
-        protected static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Entity");
+        private static Type[] actionMethodTypes = new[] { typeof(Entity), typeof(Dictionary<string, object?>) };
 
-        private Queue<ActionMethodCall> actionMethodQueue = new();
+        protected static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Entity");
 
         /// <summary>
         /// Called every time the entity is loaded or enabled, for example when the player enters its room.
@@ -78,7 +76,6 @@ namespace RPGGame.GameObject.Entity
         /// </summary>
         public void Init()
         {
-            FireEvent("OnInit");
             try
             {
                 InitLogic();
@@ -88,7 +85,6 @@ namespace RPGGame.GameObject.Entity
                 logger.LogCritical(exc, "Uncaught error in InitLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
                     Name, Position.X, Position.Y);
             }
-            FireEvent("OnLoad");
         }
 
         protected virtual void InitLogic() { }
@@ -99,7 +95,6 @@ namespace RPGGame.GameObject.Entity
         /// </summary>
         public void Destroy()
         {
-            FireEvent("OnUnload");
             try
             {
                 DestroyLogic();
@@ -109,14 +104,13 @@ namespace RPGGame.GameObject.Entity
                 logger.LogCritical(exc, "Uncaught error in DestroyLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
                     Name, Position.X, Position.Y);
             }
-            FireEvent("OnDestroy");
         }
 
         protected virtual void DestroyLogic() { }
 
         /// <summary>
         /// Called every frame while the entity is loaded.
-        /// Logic will only run if entity is <see cref="Enabled"/>, action methods will always run.
+        /// Logic will only run if entity is <see cref="Enabled"/>.
         /// To implement custom tick logic, override the <see cref="TickLogic"/> method.
         /// </summary>
         public void Tick(GameTime gameTime)
@@ -133,17 +127,33 @@ namespace RPGGame.GameObject.Entity
                         Name, Position.X, Position.Y);
                 }
             }
-
-            RunActionQueue();
         }
 
         protected virtual void TickLogic(GameTime gameTime) { }
 
         /// <summary>
-        /// Called every frame while the entity is loaded and enabled,
+        /// Called every frame while the entity is loaded,
         /// after all entities including this one have run their <see cref="Tick"/> method.
+        /// Logic will only run if entity is <see cref="Enabled"/>.
+        /// To implement custom after-tick logic, override the <see cref="AfterTickLogic"/> method.
         /// </summary>
-        public virtual void AfterTick(GameTime gameTime) { }
+        public void AfterTick(GameTime gameTime)
+        {
+            if (Enabled)
+            {
+                try
+                {
+                    AfterTickLogic(gameTime);
+                }
+                catch (Exception exc)
+                {
+                    logger.LogCritical(exc, "Uncaught error in AfterTickLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
+                        Name, Position.X, Position.Y);
+                }
+            }
+        }
+
+        protected virtual void AfterTickLogic(GameTime gameTime) { }
 
         public virtual bool Move(Vector2 targetPos, bool relative, bool force = false)
         {
@@ -254,7 +264,7 @@ namespace RPGGame.GameObject.Entity
 
         // Action Methods
 
-        [ActionMethod("Enables the entity, starting its Tick method and making it visible if it has a texture assigned")]
+        [ActionMethod("Enables the entity, starting its Tick method and making it visible if it has a texture assigned", true)]
         protected void Enable(Entity sender, Dictionary<string, object?> parameters)
         {
             Enable();
@@ -373,45 +383,51 @@ namespace RPGGame.GameObject.Entity
 
                 logger.LogTrace("Running action method on \"{Target}\" linked from \"{Source}\" for {Event}->{Action}",
                     link.TargetEntityName, Name, eventName, link.TargetAction);
-                targetEntity.QueueActionMethodCall(link.TargetAction, this, link.Parameters);
+                targetEntity.RunActionMethod(link.TargetAction, this, link.Parameters);
             }
         }
 
-        public void QueueActionMethodCall(string methodName, Entity sender, Dictionary<string, object?> parameters)
+        public void RunActionMethod(string methodName, Entity sender, Dictionary<string, object?> parameters)
         {
-            ActionMethod? method = GetActionMethod(methodName);
-            if (method is not null)
+            ActionMethodInfo methodInfo = GetActionMethod(methodName);
+            if (Enabled || methodInfo.ExecutableWhenDisabled)
             {
-                actionMethodQueue.Enqueue(new ActionMethodCall(method, sender, parameters));
+                methodInfo.Method?.Invoke(sender, parameters);
             }
         }
 
-        private Dictionary<string, ActionMethod> actionMethods = new();
-        private ActionMethod? GetActionMethod(string methodName)
+        private Dictionary<string, ActionMethodInfo> actionMethods = new();
+        private ActionMethodInfo GetActionMethod(string methodName)
         {
             // Action methods are cached so non-performant reflection doesn't have to be used each time.
-            if (actionMethods.TryGetValue(methodName, out ActionMethod? outMethod))
+            if (actionMethods.TryGetValue(methodName, out ActionMethodInfo outMethod))
             {
                 return outMethod;
             }
 
-            ActionMethod? actionMethod = (ActionMethod?)Delegate.CreateDelegate(typeof(ActionMethod), this, methodName, false, false);
-            if (actionMethod is null)
+            MethodInfo? methodInfo = GetType().GetMethod(methodName,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                actionMethodTypes);
+            if (methodInfo is null)
             {
                 logger.LogError("Action method with name \"{Name}\" could not be found on Entity \"{Entity}\" of type {Type}",
                     methodName, Name, GetType().ToString());
-                return null;
+                return ActionMethodInfo.InvalidActionMethod;
             }
-            actionMethods[methodName] = actionMethod;
-            return actionMethod;
-        }
 
-        private void RunActionQueue()
-        {
-            while (actionMethodQueue.TryDequeue(out ActionMethodCall call))
+            ActionMethod? actionMethod = (ActionMethod?)Delegate.CreateDelegate(typeof(ActionMethod), this, methodInfo, false);
+            if (actionMethod is null)
             {
-                call.Method.Invoke(call.Sender, call.Parameters);
+                logger.LogError("Unexpected error getting action method with name \"{Name}\" on Entity \"{Entity}\" of type {Type}",
+                    methodName, Name, GetType().ToString());
+                return ActionMethodInfo.InvalidActionMethod;
             }
+
+            ActionMethodInfo actionMethodInfo = new(actionMethod,
+                methodInfo.GetCustomAttribute<ActionMethodAttribute>()?.ExecutableWhenDisabled ?? false);
+
+            actionMethods[methodName] = actionMethodInfo;
+            return actionMethodInfo;
         }
     }
 }
