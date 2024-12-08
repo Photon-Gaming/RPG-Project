@@ -43,12 +43,15 @@ namespace RPGGame
                 Type? paramType = Type.GetType(typeName);
                 JValue? objValue = param.Value[nameof(ObjectWrapper.Object)]?.Value<JValue>();
                 object? obj = objValue?.Value;
-                // If the value is a string, convert it to whatever the original type was - otherwise keep the primitive type
                 parameters[param.Name] = paramType is null || obj is null || objValue is null
                     ? null
+                    // If the JSON value is a string, convert it to whatever the original type was
                     : objValue.Type == JTokenType.String
                         ? TypeDescriptor.GetConverter(paramType).ConvertFrom(null, CultureInfo.CurrentCulture, (string)obj)
-                        : obj;
+                        // If the JSON value is an integer and the original type is an enum, cast to the enum type
+                        : objValue.Type == JTokenType.Integer && paramType.IsEnum
+                            ? Enum.ToObject(paramType, obj)
+                            : obj;
             }
 
             return parameters;

@@ -1,0 +1,24 @@
+﻿<local:PropertyEditBox x:TypeArguments="system:TimeSpan" x:Class="RPGLevelEditor.PropertyEditBox.TimeSpanEdit"
+                       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+                       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+                       xmlns:local="clr-namespace:RPGLevelEditor.PropertyEditBox"
+                       xmlns:system="clr-namespace:System;assembly=System.Runtime"
+                       xmlns:rpg="clr-namespace:RPGGame;assembly=RPGGame"
+                       mc:Ignorable="d" 
+                       d:DesignWidth="400" d:Background="#F0F0F0">
+    <Grid>
+        <TextBlock x:Name="propertyName" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10" d:Text="Property Name (PropertyName):"/>
+        <TextBox x:Name="propertyValue" VerticalAlignment="Center" Margin="290,10,10,40" MinWidth="100" TextChanged="propertyValue_TextChanged"/>
+        <ComboBox x:Name="timeUnitSelect" VerticalAlignment="Center" Margin="290,40,10,10" MinWidth="100" SelectedIndex="3" SelectionChanged="TimeUnitSelect_SelectionChanged">
+            <ComboBoxItem Content="days" Tag="{x:Static rpg:TimeUnit.Days}"/>
+            <ComboBoxItem Content="hours" Tag="{x:Static rpg:TimeUnit.Hours}"/>
+            <ComboBoxItem Content="minutes" Tag="{x:Static rpg:TimeUnit.Minutes}"/>
+            <ComboBoxItem Content="seconds" Tag="{x:Static rpg:TimeUnit.Seconds}"/>
+            <ComboBoxItem Content="milliseconds" Tag="{x:Static rpg:TimeUnit.Milliseconds}"/>
+            <ComboBoxItem Content="microseconds" Tag="{x:Static rpg:TimeUnit.Microseconds}"/>
+            <ComboBoxItem Content=".NET ticks" Tag="{x:Static rpg:TimeUnit.Ticks}"/>
+        </ComboBox>
+    </Grid>
+</local:PropertyEditBox>

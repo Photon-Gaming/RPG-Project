@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace RPGGame
 {

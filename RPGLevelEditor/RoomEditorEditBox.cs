@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections;
+using System.Reflection;
 using RPGGame.GameObject.Entity;
 
 namespace RPGLevelEditor
@@ -19,6 +20,15 @@ namespace RPGLevelEditor
         public PropertyEditBox.PropertyEditBox CreateEditBox(Type propertyType, EditType editType, object? initialValue,
             string description, string labelText, PropertyInfo? property = null)
         {
+            // The EditType of a list affects the list contents, not the list itself
+            if (propertyType.IsConstructedGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                Type listContentType = propertyType.GenericTypeArguments[0];
+                return new PropertyEditBox.ListEdit(
+                    labelText, description, property,
+                    (IEnumerable)(initialValue ?? Enumerable.Empty<object>()), _ => true, listContentType, editType, this);
+            }
+
             switch (editType)
             {
                 case EditType.Default:
@@ -27,13 +37,25 @@ namespace RPGLevelEditor
                     {
                         return new PropertyEditBox.FloatEdit(
                             labelText, description, property,
-                            (float)(initialValue ?? 0), _ => true);
+                            (float)(initialValue ?? 0f), _ => true);
                     }
                     if (propertyType == typeof(int))
                     {
                         return new PropertyEditBox.IntEdit(
                             labelText, description, property,
                             (int)(initialValue ?? 0), _ => true);
+                    }
+                    if (propertyType == typeof(long))
+                    {
+                        return new PropertyEditBox.LongEdit(
+                            labelText, description, property,
+                            (long)(initialValue ?? 0L), _ => true);
+                    }
+                    if (propertyType == typeof(ulong))
+                    {
+                        return new PropertyEditBox.ULongEdit(
+                            labelText, description, property,
+                            (ulong)(initialValue ?? 0UL), _ => true);
                     }
                     if (propertyType == typeof(string))
                     {
@@ -52,6 +74,18 @@ namespace RPGLevelEditor
                         return new PropertyEditBox.Vector2Edit(
                             labelText, description, property,
                             (Microsoft.Xna.Framework.Vector2)(initialValue ?? new Microsoft.Xna.Framework.Vector2()), _ => true);
+                    }
+                    if (propertyType == typeof(TimeSpan))
+                    {
+                        return new PropertyEditBox.TimeSpanEdit(
+                            labelText, description, property,
+                            (TimeSpan)(initialValue ?? TimeSpan.Zero), _ => true);
+                    }
+                    if (propertyType.IsEnum)
+                    {
+                        return new PropertyEditBox.EnumEdit(
+                            labelText, description, property,
+                            (Enum)(initialValue ?? Enum.ToObject(propertyType, 0)), _ => true, propertyType);
                     }
                     break;
                 case EditType.ConstrainedNumeric:

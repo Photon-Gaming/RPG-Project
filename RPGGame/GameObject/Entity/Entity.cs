@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
@@ -17,15 +18,21 @@ namespace RPGGame.GameObject.Entity
         public readonly Dictionary<string, object?> Parameters = new(parameters);
     }
 
+    public readonly struct ActionMethodInfo(ActionMethod? method, bool executableWhenDisabled)
+    {
+        public readonly ActionMethod? Method = method;
+        public readonly bool ExecutableWhenDisabled = executableWhenDisabled;
+
+        public static readonly ActionMethodInfo InvalidActionMethod = new(null, false);
+    }
+
     [Serializable]
     [JsonObject(MemberSerialization.OptIn)]
-    [FiresEvent("OnInit", "Fired when the entity is loaded, before it runs its initialisation logic")]
-    [FiresEvent("OnLoad", "Fired when the entity is loaded, after it runs its initialisation logic")]
-    [FiresEvent("OnUnload", "Fired when the entity is loaded, before it runs its destroy logic")]
-    [FiresEvent("OnDestroy", "Fired when the entity is loaded, after it runs its destroy logic")]
+    [EditorEntity("Entity", "The base class for all entities. Has no special behaviour of its own, but can be rendered, moved, and scaled" +
+        " - as well as be linked to and from in the Event->Action system.", "")]
     [FiresEvent("OnMove", "Fired when the entity's position changes")]
     [FiresEvent("OnResize", "Fired when the entity's size changes")]
-    public class Entity(string name, Vector2 position, Vector2 size, string? texture) : ICloneable
+    public class Entity(string name, Vector2 position, Vector2 size)
     {
         [JsonProperty]
         [EditorModifiable("Name", "The unique name of this entity that other entities in this room will refer to it by")]
@@ -41,11 +48,11 @@ namespace RPGGame.GameObject.Entity
 
         [JsonProperty]
         [EditorModifiable("Render Texture", "The optional name of the texture that the game will draw for this entity", EditType.EntityTexture)]
-        public string? Texture { get; protected set; } = texture;
+        public string? Texture { get; protected set; } = null;
 
         [JsonProperty]
         [EditorModifiable("Enabled", "Whether or not this entity will be rendered and run its Tick function every frame")]
-        public bool Enabled { get; private set; } = true;
+        public bool Enabled { get; protected set; } = true;
 
         /// <summary>
         /// Dictionary of event names to all the actions fired by that event.
@@ -53,7 +60,7 @@ namespace RPGGame.GameObject.Entity
         [JsonProperty]
         public Dictionary<string, List<EventActionLink>> EventActionLinks = new();
 
-        public Room? CurrentRoom { get; internal set; } = null;
+        public Room? CurrentRoom { get; set; } = null;
 
         // Entity origin is the bottom middle, tile origin is the top left
         public Vector2 TopLeft => new(Position.X - (Size.X / 2), Position.Y - Size.Y);
@@ -61,7 +68,7 @@ namespace RPGGame.GameObject.Entity
 
         private static Type[] actionMethodTypes = new[] { typeof(Entity), typeof(Dictionary<string, object?>) };
 
-        private static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Entity");
+        protected static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Entity");
 
         /// <summary>
         /// Called every time the entity is loaded or enabled, for example when the player enters its room.
@@ -69,7 +76,6 @@ namespace RPGGame.GameObject.Entity
         /// </summary>
         public void Init()
         {
-            FireEvent("OnInit");
             try
             {
                 InitLogic();
@@ -79,7 +85,6 @@ namespace RPGGame.GameObject.Entity
                 logger.LogCritical(exc, "Uncaught error in InitLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
                     Name, Position.X, Position.Y);
             }
-            FireEvent("OnLoad");
         }
 
         protected virtual void InitLogic() { }
@@ -90,7 +95,6 @@ namespace RPGGame.GameObject.Entity
         /// </summary>
         public void Destroy()
         {
-            FireEvent("OnUnload");
             try
             {
                 DestroyLogic();
@@ -100,17 +104,58 @@ namespace RPGGame.GameObject.Entity
                 logger.LogCritical(exc, "Uncaught error in DestroyLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
                     Name, Position.X, Position.Y);
             }
-            FireEvent("OnDestroy");
         }
 
         protected virtual void DestroyLogic() { }
 
         /// <summary>
-        /// Called every frame while the entity is loaded and enabled.
+        /// Called every frame while the entity is loaded.
+        /// Logic will only run if entity is <see cref="Enabled"/>.
+        /// To implement custom tick logic, override the <see cref="TickLogic"/> method.
         /// </summary>
-        public virtual void Tick(GameTime gameTime) { }
+        public void Tick(GameTime gameTime)
+        {
+            if (Enabled)
+            {
+                try
+                {
+                    TickLogic(gameTime);
+                }
+                catch (Exception exc)
+                {
+                    logger.LogCritical(exc, "Uncaught error in TickLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
+                        Name, Position.X, Position.Y);
+                }
+            }
+        }
 
-        public virtual bool Move(Vector2 targetPos, bool relative)
+        protected virtual void TickLogic(GameTime gameTime) { }
+
+        /// <summary>
+        /// Called every frame while the entity is loaded,
+        /// after all entities including this one have run their <see cref="Tick"/> method.
+        /// Logic will only run if entity is <see cref="Enabled"/>.
+        /// To implement custom after-tick logic, override the <see cref="AfterTickLogic"/> method.
+        /// </summary>
+        public void AfterTick(GameTime gameTime)
+        {
+            if (Enabled)
+            {
+                try
+                {
+                    AfterTickLogic(gameTime);
+                }
+                catch (Exception exc)
+                {
+                    logger.LogCritical(exc, "Uncaught error in AfterTickLogic function for Entity \"{Name}\" at ({PosX}, {PosY})",
+                        Name, Position.X, Position.Y);
+                }
+            }
+        }
+
+        protected virtual void AfterTickLogic(GameTime gameTime) { }
+
+        public virtual bool Move(Vector2 targetPos, bool relative, bool force = false)
         {
             if (relative)
             {
@@ -119,7 +164,7 @@ namespace RPGGame.GameObject.Entity
 
             Vector2 originalPosition = Position;
             Position = targetPos;
-            if (IsOutOfBounds())
+            if (!force && IsOutOfBounds())
             {
                 Position = originalPosition;
                 return false;
@@ -153,9 +198,20 @@ namespace RPGGame.GameObject.Entity
             return true;
         }
 
-        public virtual object Clone()
+        /// <summary>
+        /// Create a new instance of the entity class based on this entity.
+        /// </summary>
+        /// <remarks>
+        /// Does not produce a 1:1 copy of the original entity.
+        /// Only properties present in the Entity's JSON serialization will be copied.
+        /// </remarks>
+        public Entity Clone(string newName)
         {
-            return new Entity(Name, Position, Size, Texture);
+            // De-serializing and re-serializing the entity as JSON creates a copy of the entity with only the editable parameters transferred.
+            Entity clone = JsonConvert.DeserializeObject<Entity>(
+                JsonConvert.SerializeObject(this, RPGContentLoader.SerializerSettings), RPGContentLoader.SerializerSettings)!;
+            clone.Name = newName;
+            return clone;
         }
 
         public bool Collides(Entity other)
@@ -208,7 +264,7 @@ namespace RPGGame.GameObject.Entity
 
         // Action Methods
 
-        [ActionMethod("Enables the entity, starting its Tick method and making it visible if it has a texture assigned")]
+        [ActionMethod("Enables the entity, starting its Tick method and making it visible if it has a texture assigned", true)]
         protected void Enable(Entity sender, Dictionary<string, object?> parameters)
         {
             Enable();
@@ -316,6 +372,14 @@ namespace RPGGame.GameObject.Entity
                 return;
             }
 
+            if (!CurrentRoom.CurrentlyTickingEntities)
+            {
+                logger.LogWarning(
+                    "Ignoring event \"{Event}\" fired by \"{Source}\" as the engine is not currently ticking entities",
+                    eventName, Name);
+                return;
+            }
+
             foreach (EventActionLink link in links)
             {
                 if (!CurrentRoom.LoadedNamedEntities.TryGetValue(link.TargetEntityName, out Entity? targetEntity))
@@ -325,37 +389,53 @@ namespace RPGGame.GameObject.Entity
                     continue;
                 }
 
-                if (!targetEntity.Enabled)
-                {
-                    logger.LogDebug("Entity \"{Target}\" linked from \"{Source}\" for {Event}->{Action} is disabled. Action method will not run",
-                        link.TargetEntityName, Name, eventName, link.TargetAction);
-                    continue;
-                }
-
                 logger.LogTrace("Running action method on \"{Target}\" linked from \"{Source}\" for {Event}->{Action}",
                     link.TargetEntityName, Name, eventName, link.TargetAction);
-                targetEntity.GetActionMethod(link.TargetAction)?.Invoke(this, link.Parameters);
+                targetEntity.RunActionMethod(link.TargetAction, this, link.Parameters);
             }
         }
 
-        private Dictionary<string, ActionMethod> actionMethods = new();
-        public ActionMethod? GetActionMethod(string methodName)
+        public void RunActionMethod(string methodName, Entity sender, Dictionary<string, object?> parameters)
+        {
+            ActionMethodInfo methodInfo = GetActionMethod(methodName);
+            if (Enabled || methodInfo.ExecutableWhenDisabled)
+            {
+                methodInfo.Method?.Invoke(sender, parameters);
+            }
+        }
+
+        private Dictionary<string, ActionMethodInfo> actionMethods = new();
+        private ActionMethodInfo GetActionMethod(string methodName)
         {
             // Action methods are cached so non-performant reflection doesn't have to be used each time.
-            if (actionMethods.TryGetValue(methodName, out ActionMethod? outMethod))
+            if (actionMethods.TryGetValue(methodName, out ActionMethodInfo outMethod))
             {
                 return outMethod;
             }
 
-            ActionMethod? actionMethod = (ActionMethod?)Delegate.CreateDelegate(typeof(ActionMethod), this, methodName, false, false);
-            if (actionMethod is null)
+            MethodInfo? methodInfo = GetType().GetMethod(methodName,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                actionMethodTypes);
+            if (methodInfo is null)
             {
                 logger.LogError("Action method with name \"{Name}\" could not be found on Entity \"{Entity}\" of type {Type}",
                     methodName, Name, GetType().ToString());
-                return null;
+                return ActionMethodInfo.InvalidActionMethod;
             }
-            actionMethods[methodName] = actionMethod;
-            return actionMethod;
+
+            ActionMethod? actionMethod = (ActionMethod?)Delegate.CreateDelegate(typeof(ActionMethod), this, methodInfo, false);
+            if (actionMethod is null)
+            {
+                logger.LogError("Unexpected error getting action method with name \"{Name}\" on Entity \"{Entity}\" of type {Type}",
+                    methodName, Name, GetType().ToString());
+                return ActionMethodInfo.InvalidActionMethod;
+            }
+
+            ActionMethodInfo actionMethodInfo = new(actionMethod,
+                methodInfo.GetCustomAttribute<ActionMethodAttribute>()?.ExecutableWhenDisabled ?? false);
+
+            actionMethods[methodName] = actionMethodInfo;
+            return actionMethodInfo;
         }
     }
 }

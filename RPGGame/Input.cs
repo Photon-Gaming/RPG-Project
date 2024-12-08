@@ -4,36 +4,103 @@ namespace RPGGame
 {
     public class Input
     {
-        private KeyboardState oldState;
-        private KeyboardState newState;
+        private KeyboardState oldKeyboardState;
+        private KeyboardState newKeyboardState;
+
+        private MouseState oldMouseState;
+        private MouseState newMouseState;
 
         /// <summary>
         /// Should be called once per frame to process new player input.
         /// </summary>
         public void Update()
         {
-            oldState = newState;
-            newState = Keyboard.GetState();
+            oldKeyboardState = newKeyboardState;
+            newKeyboardState = Keyboard.GetState();
+
+            oldMouseState = newMouseState;
+            newMouseState = Mouse.GetState();
         }
 
-        public bool GetKeyDown(Keys key)
+        /// <summary>
+        /// Read whether the given key on the keyboard is currently being held down.
+        /// </summary>
+        public bool GetKeyboardKeyDown(Keys key)
         {
-            return newState.IsKeyDown(key);
+            return newKeyboardState.IsKeyDown(key);
         }
 
-        public bool GetKeyUp(Keys key)
+        /// <summary>
+        /// Read whether the given key on the keyboard is currently not being held down.
+        /// </summary>
+        public bool GetKeyboardKeyUp(Keys key)
         {
-            return newState.IsKeyUp(key);
+            return newKeyboardState.IsKeyUp(key);
         }
 
-        public bool GetKeyPressed(Keys key)
+        /// <summary>
+        /// Read whether the given key on the keyboard was just pressed down this frame.
+        /// </summary>
+        public bool GetKeyboardKeyPressed(Keys key)
         {
-            return newState.IsKeyDown(key) && oldState.IsKeyUp(key);
+            return newKeyboardState.IsKeyDown(key) && oldKeyboardState.IsKeyUp(key);
         }
 
-        public bool GetKeyReleased(Keys key)
+
+        /// <summary>
+        /// Read whether the given key on the keyboard was just released from being pressed down this frame.
+        /// </summary>
+        public bool GetKeyboardKeyReleased(Keys key)
         {
-            return newState.IsKeyUp(key) && oldState.IsKeyDown(key);
+            return newKeyboardState.IsKeyUp(key) && oldKeyboardState.IsKeyDown(key);
+        }
+
+        /// <summary>
+        /// Read whether the given button on the mouse is currently being held down.
+        /// </summary>
+        public bool GetMouseButtonDown(MouseButton button)
+        {
+            return GetMouseButtonState(newMouseState, button) == ButtonState.Pressed;
+        }
+
+        /// <summary>
+        /// Read whether the given button on the mouse is currently not being held down.
+        /// </summary>
+        public bool GetMouseButtonUp(MouseButton button)
+        {
+            return GetMouseButtonState(newMouseState, button) == ButtonState.Released;
+        }
+
+        /// <summary>
+        /// Read whether the given button on the mouse was just pressed down this frame.
+        /// </summary>
+        public bool GetMouseButtonPressed(MouseButton button)
+        {
+            return GetMouseButtonState(newMouseState, button) == ButtonState.Pressed
+                && GetMouseButtonState(oldMouseState, button) == ButtonState.Released;
+        }
+
+
+        /// <summary>
+        /// Read whether the given button on the mouse was just released from being pressed down this frame.
+        /// </summary>
+        public bool GetMouseButtonReleased(MouseButton button)
+        {
+            return GetMouseButtonState(newMouseState, button) == ButtonState.Released
+                && GetMouseButtonState(oldMouseState, button) == ButtonState.Pressed;
+        }
+
+        private static ButtonState GetMouseButtonState(MouseState state, MouseButton button)
+        {
+            return button switch
+            {
+                MouseButton.Left => state.LeftButton,
+                MouseButton.Right => state.RightButton,
+                MouseButton.Middle => state.MiddleButton,
+                MouseButton.X1 => state.XButton1,
+                MouseButton.X2 => state.XButton2,
+                _ => ButtonState.Released
+            };
         }
     }
 }

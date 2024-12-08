@@ -84,6 +84,8 @@ namespace RPGLevelEditor
             }
         }
 
+        private readonly Random rng = new();
+
         private static readonly BitmapImage placeholderImage = new(new Uri("pack://application:,,,/Resources/placeholder.png"));
         private static readonly BitmapImage collisionImage = new(new Uri("pack://application:,,,/Resources/collision.png"));
         private static readonly BitmapImage transparentImage = new(new Uri("pack://application:,,,/Resources/transparent.png"));
@@ -496,9 +498,27 @@ namespace RPGLevelEditor
                 return imageSource;
             }
 
-            return hideInvisibleEntitiesItem.IsChecked
-                ? transparentImage
-                : new BitmapImage(new Uri(ToolEntityTextureFolderPath + entity.GetType().Name + ".png"));
+            if (hideInvisibleEntitiesItem.IsChecked)
+            {
+                return transparentImage;
+            }
+
+            // If entity is invisible, work up the inheritance hierarchy of the class
+            // until a texture is found for the entity type
+            Type? currentType = entity.GetType();
+            BitmapImage? loadedTexture = null;
+            while (currentType is not null)
+            {
+                string texturePath = ToolEntityTextureFolderPath + currentType.Name + ".png";
+                try
+                {
+                    loadedTexture = new BitmapImage(new Uri(texturePath));
+                    break;
+                }
+                catch (IOException) { }
+                currentType = currentType.BaseType;
+            }
+            return loadedTexture ?? transparentImage;
         }
 
         private void DrawEntity(Entity entity, bool erase)
@@ -675,11 +695,26 @@ namespace RPGLevelEditor
             {
                 entityApplyButton.IsEnabled = false;
                 addEventActionLinkButton.IsEnabled = false;
+                entityTypeText.Visibility = Visibility.Collapsed;
                 return;
             }
 
             entityApplyButton.IsEnabled = true;
             addEventActionLinkButton.IsEnabled = true;
+            entityTypeText.Visibility = Visibility.Visible;
+
+            Type selectedEntityType = selectedEntity.GetType();
+            if (selectedEntityType.IsConstructedGenericType)
+            {
+                // Format generic types as they appear in C#
+                // (i.e. remove the suffix with the number of type arguments and put type arguments in square brackets)
+                entityTypeText.Text = $"Entity Type: {selectedEntityType.Name[..selectedEntityType.Name.IndexOf('`')]}" +
+                    $"<{string.Join(", ", selectedEntityType.GetGenericArguments().Select(a => a.Name))}>";
+            }
+            else
+            {
+                entityTypeText.Text = $"Entity Type: {selectedEntityType.FullName}";
+            }
 
             foreach ((PropertyInfo property, EditorModifiableAttribute editorAttribute) in GetEditableEntityProperties(selectedEntity))
             {
@@ -885,9 +920,9 @@ namespace RPGLevelEditor
             PushUndoStack(new EntityResizeStackFrame(this, entity, entity.Position.X, entity.Position.Y, entity.Size.X, entity.Size.Y));
         }
 
-        private void PushEntityCreateUndoStack(float x, float y)
+        private void PushEntityCreateUndoStack(float x, float y, Type type)
         {
-            PushUndoStack(new EntityCreateStackFrame(this, x, y));
+            PushUndoStack(new EntityCreateStackFrame(this, x, y, type));
         }
 
         private void PushEntityPropertyEditUndoStack(Entity entity)
@@ -1089,13 +1124,20 @@ namespace RPGLevelEditor
                 e.Collides(new Microsoft.Xna.Framework.Vector2(x, y))));
         }
 
-        private void CreateEntityAtPosition(float x, float y, bool pushToUndoStack)
+        private void CreateEntityAtPosition(float x, float y, bool pushToUndoStack, Type entityType)
         {
-            Entity newEntity = new(
-                $"Entity_{Guid.NewGuid()}",
+            object? newInstance = Activator.CreateInstance(entityType,
+                // Generate a random name. Collisions just need to be unlikely, not impossible.
+                $"Entity_{rng.NextInt64():x16}",
                 new Microsoft.Xna.Framework.Vector2(x, y),
-                Microsoft.Xna.Framework.Vector2.One,
-                null);
+                Microsoft.Xna.Framework.Vector2.One);
+
+            if (newInstance is not Entity newEntity)
+            {
+                return;
+            }
+
+            newEntity.CurrentRoom = OpenRoom;
 
             if (newEntity.IsOutOfBounds() || OpenRoom.Entities.Any(e => e.Collides(newEntity)))
             {
@@ -1104,7 +1146,7 @@ namespace RPGLevelEditor
 
             if (pushToUndoStack)
             {
-                PushEntityCreateUndoStack(x, y);
+                PushEntityCreateUndoStack(x, y, entityType);
             }
 
             OpenRoom.Entities.Add(newEntity);
@@ -1438,7 +1480,25 @@ namespace RPGLevelEditor
                         EditTileAtPosition((int)relativeMousePos.X, (int)relativeMousePos.Y);
                         break;
                     case ToolType.Entity when Keyboard.Modifiers == ModifierKeys.Control:
-                        CreateEntityAtPosition((float)relativeMousePos.X, (float)relativeMousePos.Y, true);
+                        ToolWindows.EntityClassSelector classSelector = new();
+                        if (!(classSelector.ShowDialog() ?? false))
+                        {
+                            return;
+                        }
+                        Type selectedClass = classSelector.SelectedEntityClass ?? typeof(Entity);
+                        if (selectedClass.IsGenericType)
+                        {
+                            // Generic types require a type parameter to be instantiated.
+                            // Ask the user what type to use.
+                            ToolWindows.TypeSelector genericTypeSelector = new(selectedClass);
+                            if (!(genericTypeSelector.ShowDialog() ?? false))
+                            {
+                                return;
+                            }
+                            selectedClass = selectedClass.MakeGenericType(genericTypeSelector.SelectedType ?? typeof(object));
+                        }
+                        CreateEntityAtPosition((float)relativeMousePos.X, (float)relativeMousePos.Y, true,
+                            selectedClass);
                         break;
                     case ToolType.Entity:
                         SelectEntityAtPosition((float)relativeMousePos.X, (float)relativeMousePos.Y);
