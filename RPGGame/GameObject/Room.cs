@@ -22,6 +22,10 @@ namespace RPGGame.GameObject
 
         public World? ContainingWorld { get; private set; }
 
+        // The list of entities is copied here so that the main list can be modified while iterating
+        private bool entityIterableOutdated = true;
+        private List<Entity.Entity> entityIterable = new();
+
         private static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Room");
 
         public void OnLoad(World world)
@@ -69,6 +73,8 @@ namespace RPGGame.GameObject
                 return;
             }
 
+            entityIterableOutdated = true;
+
             Entities.Add(entity);
             LoadedNamedEntities[entity.Name] = entity;
             entity.CurrentRoom = this;
@@ -81,6 +87,8 @@ namespace RPGGame.GameObject
 
         public void RemoveEntity(Entity.Entity entity)
         {
+            entityIterableOutdated = true;
+
             if (!Entities.Remove(entity) && !LoadedNamedEntities.Remove(entity.Name))
             {
                 logger.LogWarning("Entity with name {Name} is not loaded but an attempt was made to unload it.", entity.Name);
@@ -96,7 +104,13 @@ namespace RPGGame.GameObject
 
         public void TickLoadedEntities(GameTime gameTime)
         {
-            foreach (Entity.Entity entity in Entities)
+            // Create clone of Entity list so that it can be modified while iterating
+            if (entityIterableOutdated)
+            {
+                entityIterable.Clear();
+                entityIterable.AddRange(Entities);
+            }
+            foreach (Entity.Entity entity in entityIterable)
             {
                 try
                 {
@@ -112,7 +126,7 @@ namespace RPGGame.GameObject
             }
 
             // Each AfterTick method needs to run after every entity has had its Tick method executed
-            foreach (Entity.Entity entity in Entities.Where(e => e.Enabled))
+            foreach (Entity.Entity entity in entityIterable.Where(e => e.Enabled))
             {
                 try
                 {
