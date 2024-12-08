@@ -22,6 +22,8 @@ namespace RPGGame.GameObject
 
         public World? ContainingWorld { get; private set; }
 
+        public bool CurrentlyTickingEntities { get; private set; } = false;
+
         // The list of entities is copied here so that the main list can be modified while iterating
         private bool entityIterableOutdated = true;
         private List<Entity.Entity> entityIterable = new();
@@ -110,6 +112,8 @@ namespace RPGGame.GameObject
                 entityIterable.Clear();
                 entityIterable.AddRange(Entities);
             }
+
+            CurrentlyTickingEntities = true;
             foreach (Entity.Entity entity in entityIterable)
             {
                 try
@@ -124,6 +128,7 @@ namespace RPGGame.GameObject
                         entity.Name, entity.Position.X, entity.Position.Y);
                 }
             }
+            CurrentlyTickingEntities = false;
 
             // Each AfterTick method needs to run after every entity has had its Tick method executed
             foreach (Entity.Entity entity in entityIterable)

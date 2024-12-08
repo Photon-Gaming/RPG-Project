@@ -372,6 +372,14 @@ namespace RPGGame.GameObject.Entity
                 return;
             }
 
+            if (!CurrentRoom.CurrentlyTickingEntities)
+            {
+                logger.LogWarning(
+                    "Ignoring event \"{Event}\" fired by \"{Source}\" as the engine is not currently ticking entities",
+                    eventName, Name);
+                return;
+            }
+
             foreach (EventActionLink link in links)
             {
                 if (!CurrentRoom.LoadedNamedEntities.TryGetValue(link.TargetEntityName, out Entity? targetEntity))

@@ -56,6 +56,8 @@ The Event->Action system is the core for creating game logic and interactions in
 
 An event is simply a string that is used to group linked entity action methods by when they should be run. Every entity is capable of running ("firing") events from within its code using the `FireEvent` method. Only one parameter is required - the name of the event to fire. When an event is fired, all action methods linked to that event will be executed on the linked entity along with their stored parameters, in the order that they are defined in the list of links.
 
+The `FireEvent` method can only be used when the engine is currently in the process of running entity `Tick` methods. This means calls to `FireEvent` have to be inside either: the `TickLogic` method, an action method, or a method that was called either directly or indirectly by the `TickLogic` method.
+
 An example of firing events:
 
 ```csharp
