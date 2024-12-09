@@ -69,10 +69,11 @@ namespace RPGLevelEditor
             }
         }
 
-        private class EntityCreateStackFrame(RoomEditor editorWindow, float x, float y) : StateStackFrame(editorWindow)
+        private class EntityCreateStackFrame(RoomEditor editorWindow, float x, float y, Type type) : StateStackFrame(editorWindow)
         {
             public float X { get; } = x;
             public float Y { get; } = y;
+            public Type EntityType { get; } = type;
 
             public override void RestoreState(bool isUndo)
             {
@@ -87,7 +88,7 @@ namespace RPGLevelEditor
                 }
                 else
                 {
-                    EditorWindow.CreateEntityAtPosition(X, Y, false);
+                    EditorWindow.CreateEntityAtPosition(X, Y, false, EntityType);
                 }
             }
         }
@@ -95,7 +96,7 @@ namespace RPGLevelEditor
         private class EntityPropertyEditStackFrame(RoomEditor editorWindow, Entity editedEntity) : StateStackFrame(editorWindow)
         {
             public Entity EditedEntity { get; } = editedEntity;
-            public Entity EntityClone { get; } = (Entity)editedEntity.Clone();
+            public Entity EntityClone { get; } = editedEntity.Clone(editedEntity.Name);
 
             public override void RestoreState(bool isUndo)
             {

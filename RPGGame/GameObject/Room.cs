@@ -12,21 +12,31 @@ namespace RPGGame.GameObject
     public class Room(Tile[,] tileMap, List<Entity.Entity> entities, Color backgroundColor) : ICloneable
     {
         [JsonProperty]
-        public Tile[,] TileMap { get; protected set; } = tileMap;
+        public Tile[,] TileMap { get; } = tileMap;
         [JsonProperty]
-        public List<Entity.Entity> Entities { get; protected set; } = entities;
+        public List<Entity.Entity> Entities { get; } = entities;
         [JsonProperty]
         public Color BackgroundColor { get; set; } = backgroundColor;
 
-        public Dictionary<string, Entity.Entity> LoadedNamedEntities { get; protected set; } = new();
+        public Dictionary<string, Entity.Entity> LoadedNamedEntities { get; private set; } = new();
+
+        public World? ContainingWorld { get; private set; }
+
+        public bool CurrentlyTickingEntities { get; private set; } = false;
+
+        // The list of entities is copied here so that the main list can be modified while iterating
+        private bool entityIterableOutdated = true;
+        private List<Entity.Entity> entityIterable = new();
 
         private static readonly ILogger logger = RPGGame.loggerFactory.CreateLogger("Room");
 
         public void OnLoad(World world)
         {
+            ContainingWorld = world;
             LoadedNamedEntities = Entities.ToDictionary(e => e.Name, e => e, StringComparer.OrdinalIgnoreCase);
 
-            foreach (Entity.Entity entity in Entities.Where(entity => entity.Enabled))
+            // Use ToArray so that entity Init methods can mutate the entity list while we're still iterating
+            foreach (Entity.Entity entity in Entities.Where(entity => entity.Enabled).ToArray())
             {
                 logger.LogDebug("Loading Entity \"{Name}\"", entity.Name);
                 entity.Init();
@@ -37,6 +47,14 @@ namespace RPGGame.GameObject
                 world.CurrentPlayer.CurrentRoom = this;
                 Entities.Add(world.CurrentPlayer);
                 LoadedNamedEntities[Entity.Player.PlayerEntityName] = world.CurrentPlayer;
+                // If there are multiple enabled player spawn points, pick a random one to spawn the player at
+                Entity.PlayerSpawn? spawnPoint = Entities.OfType<Entity.PlayerSpawn>().Where(e => e.Enabled)
+                    .ChooseRandomOrDefault(null);
+                if (spawnPoint is not null)
+                {
+                    world.CurrentPlayer.Move(spawnPoint.Position, false, true);
+                    spawnPoint.EntitySpawned();
+                }
             }
         }
 
@@ -49,9 +67,54 @@ namespace RPGGame.GameObject
             }
         }
 
+        public void AddEntity(Entity.Entity entity)
+        {
+            if (LoadedNamedEntities.ContainsKey(entity.Name))
+            {
+                logger.LogWarning("An entity already exists with the name {Name}. The new entity will not be loaded.", entity.Name);
+                return;
+            }
+
+            entityIterableOutdated = true;
+
+            Entities.Add(entity);
+            LoadedNamedEntities[entity.Name] = entity;
+            entity.CurrentRoom = this;
+            if (entity.Enabled)
+            {
+                logger.LogDebug("Loading Entity \"{Name}\"", entity.Name);
+                entity.Init();
+            }
+        }
+
+        public void RemoveEntity(Entity.Entity entity)
+        {
+            entityIterableOutdated = true;
+
+            if (!Entities.Remove(entity) && !LoadedNamedEntities.Remove(entity.Name))
+            {
+                logger.LogWarning("Entity with name {Name} is not loaded but an attempt was made to unload it.", entity.Name);
+                return;
+            }
+
+            if (entity.Enabled)
+            {
+                logger.LogDebug("Unloading Entity \"{Name}\"", entity.Name);
+                entity.Destroy();
+            }
+        }
+
         public void TickLoadedEntities(GameTime gameTime)
         {
-            foreach (Entity.Entity entity in Entities.Where(e => e.Enabled))
+            // Create clone of Entity list so that it can be modified while iterating
+            if (entityIterableOutdated)
+            {
+                entityIterable.Clear();
+                entityIterable.AddRange(Entities);
+            }
+
+            CurrentlyTickingEntities = true;
+            foreach (Entity.Entity entity in entityIterable)
             {
                 try
                 {
@@ -62,6 +125,23 @@ namespace RPGGame.GameObject
                 catch (Exception exc)
                 {
                     logger.LogCritical(exc, "Uncaught error in Tick function for Entity \"{Name}\" at ({PosX}, {PosY})",
+                        entity.Name, entity.Position.X, entity.Position.Y);
+                }
+            }
+            CurrentlyTickingEntities = false;
+
+            // Each AfterTick method needs to run after every entity has had its Tick method executed
+            foreach (Entity.Entity entity in entityIterable)
+            {
+                try
+                {
+                    logger.LogTrace("After-Ticking entity Entity \"{Name}\" at ({PosX}, {PosY})",
+                        entity.Name, entity.Position.X, entity.Position.Y);
+                    entity.AfterTick(gameTime);
+                }
+                catch (Exception exc)
+                {
+                    logger.LogCritical(exc, "Uncaught error in AfterTick function for Entity \"{Name}\" at ({PosX}, {PosY})",
                         entity.Name, entity.Position.X, entity.Position.Y);
                 }
             }
@@ -77,7 +157,7 @@ namespace RPGGame.GameObject
 
         public object Clone()
         {
-            return new Room((Tile[,])TileMap.Clone(), Entities.Select(e => (Entity.Entity)e.Clone()).ToList(), BackgroundColor);
+            return new Room((Tile[,])TileMap.Clone(), Entities.Select(e => e.Clone(e.Name)).ToList(), BackgroundColor);
         }
     }
 }

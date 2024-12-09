@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using Newtonsoft.Json;
 
 namespace RPGGame.GameObject.Entity
 {
-    public class Player(Input playerInput) : Entity(PlayerEntityName, new Vector2(0.5f, 1), Vector2.One, PlayerTexture)
+    public class Player : Entity
     {
+
         public const string PlayerEntityName = "Player";
         public const string PlayerTexture = "player";
 
@@ -15,15 +17,26 @@ namespace RPGGame.GameObject.Entity
         private const Keys keyDown = Keys.S;
         private const Keys keyRight = Keys.D;
 
+        [JsonProperty]
         [EditorModifiable("Enable Input?", "Whether or not the user can control the player.")]
         public bool InputEnabled { get; set; } = true;
 
+        [JsonProperty]
         [EditorModifiable("Speed", "The number of units the player moves per second of having the corresponding input key held down.")]
         public float Speed { get; set; } = 2.5f;
 
-        public override void Tick(GameTime gameTime)
+        public Input PlayerInput { get; }
+
+        public Player(Input playerInput) : base(PlayerEntityName, new Vector2(0.5f, 1), Vector2.One)
         {
-            base.Tick(gameTime);
+            PlayerInput = playerInput;
+
+            Texture = PlayerTexture;
+        }
+
+        protected override void TickLogic(GameTime gameTime)
+        {
+            base.TickLogic(gameTime);
 
             if (InputEnabled)
             {
@@ -35,19 +48,19 @@ namespace RPGGame.GameObject.Entity
         {
             Vector2 movementVector = new(0, 0);
 
-            if (playerInput.GetKeyDown(keyUp))
+            if (PlayerInput.GetKeyboardKeyDown(keyUp))
             {
                 movementVector.Y--;
             }
-            if (playerInput.GetKeyDown(keyDown))
+            if (PlayerInput.GetKeyboardKeyDown(keyDown))
             {
                 movementVector.Y++;
             }
-            if (playerInput.GetKeyDown(keyLeft))
+            if (PlayerInput.GetKeyboardKeyDown(keyLeft))
             {
                 movementVector.X--;
             }
-            if (playerInput.GetKeyDown(keyRight))
+            if (PlayerInput.GetKeyboardKeyDown(keyRight))
             {
                 movementVector.X++;
             }

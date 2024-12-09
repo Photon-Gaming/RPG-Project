@@ -7,9 +7,9 @@
         mc:Ignorable="d"
         Title="ScrollableMessageBox" Height="250" Width="500">
     <Grid>
-        <ScrollViewer Margin="10,10,10,40">
+        <ScrollViewer Margin="10,10,10,40" HorizontalScrollBarVisibility="Auto">
             <TextBlock x:Name="textBlock" Padding="5" Background="#F0F0F0"/>
         </ScrollViewer>
-        <Button HorizontalAlignment="Right" VerticalAlignment="Bottom" Content="OK" Padding="20,1" Margin="10" Click="Button_Click"/>
+        <Button HorizontalAlignment="Right" VerticalAlignment="Bottom" Content="OK" Padding="20,1" Margin="10" Click="Button_Click" IsDefault="True"/>
     </Grid>
 </Window>
