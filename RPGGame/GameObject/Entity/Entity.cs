@@ -305,7 +305,7 @@ namespace RPGGame.GameObject.Entity
         }
 
         [ActionMethod("Sets the entity size to an absolute number of units. Class-specific resize logic applies")]
-        [ActionMethodParameter("TargetSize", "The absolute size to resize the entity to", typeof(Vector2), EditType.RoomCoordinate)]
+        [ActionMethodParameter("TargetSize", "The absolute size to resize the entity to", typeof(Vector2))]
         protected void SetSize(Entity sender, Dictionary<string, object?> parameters)
         {
             if (!parameters.TryGetValue("TargetSize", out object? sizeObj) || sizeObj is not Vector2 size)
@@ -319,7 +319,7 @@ namespace RPGGame.GameObject.Entity
         }
 
         [ActionMethod("Sets the entity size to a number of units relative to the current size. Class-specific resize logic applies")]
-        [ActionMethodParameter("ResizeVector", "The number of units in each dimension to affect the size by", typeof(Vector2), EditType.RoomCoordinate)]
+        [ActionMethodParameter("ResizeVector", "The number of units in each dimension to affect the size by", typeof(Vector2))]
         protected void Resize(Entity sender, Dictionary<string, object?> parameters)
         {
             if (!parameters.TryGetValue("ResizeVector", out object? sizeObj) || sizeObj is not Vector2 size)
@@ -333,7 +333,7 @@ namespace RPGGame.GameObject.Entity
         }
 
         [ActionMethod("Sets the entity size to a number of units relative to the current size with multipliers. Class-specific resize logic applies")]
-        [ActionMethodParameter("ScaleVector", "The multiplier in each dimension to affect the size by", typeof(Vector2), EditType.RoomCoordinate)]
+        [ActionMethodParameter("ScaleVector", "The multiplier in each dimension to affect the size by", typeof(Vector2))]
         protected void Scale(Entity sender, Dictionary<string, object?> parameters)
         {
             if (!parameters.TryGetValue("ScaleVector", out object? sizeObj) || sizeObj is not Vector2 scale)
