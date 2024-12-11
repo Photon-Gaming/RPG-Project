@@ -1548,8 +1548,12 @@ namespace RPGLevelEditor
             }
 
             // Entity resizing/movement from canvas dragging
-            if (selectedEntity is null)
+            if (selectedEntity is null || selectingEntity || selectingPosition)
             {
+                // Don't show move cursor when hovering over entity
+                // if in a state where clicking won't start movement
+                selectedEntityImage.Cursor = tileGridDisplay.Cursor;
+                selectedEntityBorder.Cursor = tileGridDisplay.Cursor;
                 return;
             }
 

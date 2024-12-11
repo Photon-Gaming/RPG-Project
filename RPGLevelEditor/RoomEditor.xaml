@@ -113,7 +113,7 @@
                 <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Green" Width="{Binding ActualWidth, ElementName=tileGridDisplay, Mode=OneWay}" Height="3" Margin="0,0,0,-3"/>
                 <!-- Selected entity -->
                 <Grid x:Name="selectedEntityContainer" MouseMove="tileGridDisplay_MouseMove" MouseUp="tileGridDisplay_MouseUp">
-                    <Image x:Name="selectedEntityImage" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor" Cursor="SizeAll" MouseDown="selectedEntityImage_MouseDown" MouseMove="tileGridDisplay_MouseMove" MouseUp="tileGridDisplay_MouseUp"/>
+                    <Image x:Name="selectedEntityImage" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseDown="selectedEntityImage_MouseDown" MouseMove="tileGridDisplay_MouseMove" MouseUp="tileGridDisplay_MouseUp"/>
                     <Rectangle x:Name="selectedEntityBorder" HorizontalAlignment="Left" VerticalAlignment="Top" Stroke="Blue" StrokeThickness="2" MouseDown="selectedEntityBorder_MouseDown" MouseMove="tileGridDisplay_MouseMove" MouseUp="tileGridDisplay_MouseUp"/>
                     <Ellipse x:Name="selectedEntityOrigin" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Red" Width="8" Height="8" MouseMove="tileGridDisplay_MouseMove" MouseUp="tileGridDisplay_MouseUp"/>
                 </Grid>
