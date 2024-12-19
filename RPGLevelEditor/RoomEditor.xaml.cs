@@ -1332,21 +1332,13 @@ namespace RPGLevelEditor
                 newPos.Y = dragStartPosition.Y + (newSize.Y - dragStartSize.Y);
             }
 
-            if (selectedEntity.Resize(newSize, false))
+            if (selectedEntity.MoveAndResize(newPos, newSize, false))
             {
                 // If any part of the resize/move fails, return both values to what they were previously
                 // to effectively cancel the operation
-                if (selectedEntity.Move(newPos, false))
+                if (OpenRoom.Entities.Any(ent => ent.Collides(selectedEntity)))
                 {
-                    if (OpenRoom.Entities.Any(ent => ent.Collides(selectedEntity)))
-                    {
-                        _ = selectedEntity.Move(oldPos, false);
-                        _ = selectedEntity.Resize(oldSize, false);
-                    }
-                }
-                else
-                {
-                    _ = selectedEntity.Resize(oldSize, false);
+                    _ = selectedEntity.MoveAndResize(oldPos, oldSize, false, true);
                 }
                 UpdateSelectedEntity(false);
             }

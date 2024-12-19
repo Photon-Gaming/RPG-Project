@@ -174,7 +174,7 @@ namespace RPGGame.GameObject.Entity
             return true;
         }
 
-        public virtual bool Resize(Vector2 targetSize, bool relative)
+        public virtual bool Resize(Vector2 targetSize, bool relative, bool force = false)
         {
             if (relative)
             {
@@ -188,13 +188,33 @@ namespace RPGGame.GameObject.Entity
 
             Vector2 originalSize = Size;
             Size = targetSize;
-            if (IsOutOfBounds())
+            if (!force && IsOutOfBounds())
             {
                 Size = originalSize;
                 return false;
             }
 
             FireEvent("OnResize");
+            return true;
+        }
+
+        public virtual bool MoveAndResize(Vector2 targetPos, Vector2 targetSize, bool relative, bool force = false)
+        {
+            Vector2 originalPosition = Position;
+            Vector2 originalSize = Size;
+
+            // Force the move and the resize as both need to happen to be able to perform the bounds check.
+            // The move may cause a previously invalid resize to become valid and vice versa.
+            Move(targetPos, relative, true);
+            Resize(targetSize, relative, true);
+
+            if (!force && IsOutOfBounds())
+            {
+                Position = originalPosition;
+                Size = originalSize;
+                return false;
+            }
+
             return true;
         }
 
