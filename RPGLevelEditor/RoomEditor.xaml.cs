@@ -1069,6 +1069,20 @@ namespace RPGLevelEditor
             }
         }
 
+        private void SelectPosition(Point coordinate)
+        {
+            if (selectingPosition && selectedPositionTarget is not null && selectedEntity is not null)
+            {
+                selectingPosition = false;
+                tileGridDisplay.Cursor = null;
+
+                selectedPositionTarget.Value =
+                    new Microsoft.Xna.Framework.Vector2((float)coordinate.X, (float)coordinate.Y);
+
+                selectedPositionTarget = null;
+            }
+        }
+
         private void SelectEntity(Entity? entity)
         {
             if (selectingEntity && selectedEntity is not null && entity is not null
@@ -1318,21 +1332,13 @@ namespace RPGLevelEditor
                 newPos.Y = dragStartPosition.Y + (newSize.Y - dragStartSize.Y);
             }
 
-            if (selectedEntity.Resize(newSize, false))
+            if (selectedEntity.MoveAndResize(newPos, newSize, false))
             {
                 // If any part of the resize/move fails, return both values to what they were previously
                 // to effectively cancel the operation
-                if (selectedEntity.Move(newPos, false))
+                if (OpenRoom.Entities.Any(ent => ent.Collides(selectedEntity)))
                 {
-                    if (OpenRoom.Entities.Any(ent => ent.Collides(selectedEntity)))
-                    {
-                        _ = selectedEntity.Move(oldPos, false);
-                        _ = selectedEntity.Resize(oldSize, false);
-                    }
-                }
-                else
-                {
-                    _ = selectedEntity.Resize(oldSize, false);
+                    _ = selectedEntity.MoveAndResize(oldPos, oldSize, false, true);
                 }
                 UpdateSelectedEntity(false);
             }
@@ -1456,15 +1462,9 @@ namespace RPGLevelEditor
                 Point relativeMousePos = e.GetPosition(tileGridDisplay);
                 relativeMousePos = new Point(relativeMousePos.X / TileSize.X, relativeMousePos.Y / TileSize.Y);
 
-                if (selectingPosition && selectedPositionTarget is not null && selectedEntity is not null)
+                if (selectingPosition)
                 {
-                    selectingPosition = false;
-                    tileGridDisplay.Cursor = null;
-
-                    selectedPositionTarget.Value =
-                        new Microsoft.Xna.Framework.Vector2((float)relativeMousePos.X, (float)relativeMousePos.Y);
-
-                    selectedPositionTarget = null;
+                    SelectPosition(relativeMousePos);
                     return;
                 }
 
@@ -1548,8 +1548,12 @@ namespace RPGLevelEditor
             }
 
             // Entity resizing/movement from canvas dragging
-            if (selectedEntity is null)
+            if (selectedEntity is null || selectingEntity || selectingPosition)
             {
+                // Don't show move cursor when hovering over entity
+                // if in a state where clicking won't start movement
+                selectedEntityImage.Cursor = tileGridDisplay.Cursor;
+                selectedEntityBorder.Cursor = tileGridDisplay.Cursor;
                 return;
             }
 
@@ -1766,6 +1770,15 @@ namespace RPGLevelEditor
                 return;
             }
 
+            if (selectingPosition)
+            {
+                Point relativeMousePos = e.GetPosition(tileGridDisplay);
+                relativeMousePos = new Point(relativeMousePos.X / TileSize.X, relativeMousePos.Y / TileSize.Y);
+
+                SelectPosition(relativeMousePos);
+                return;
+            }
+
             PushEntityMoveUndoStack(selectedEntity);
 
             movingEntity = true;
@@ -1787,6 +1800,15 @@ namespace RPGLevelEditor
                 // We're current selecting an entity for an entity name link property.
                 // Instead of resizing, use the entity's name for the property.
                 SelectEntity(selectedEntity);
+                return;
+            }
+
+            if (selectingPosition)
+            {
+                Point relativeMousePos = e.GetPosition(tileGridDisplay);
+                relativeMousePos = new Point(relativeMousePos.X / TileSize.X, relativeMousePos.Y / TileSize.Y);
+
+                SelectPosition(relativeMousePos);
                 return;
             }
 
